@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Klaro Cookie Consent CSS */
+@import url('https://cdn.jsdelivr.net/npm/klaro@0.7.18/dist/klaro.min.css');
+
+@layer base {
+  :root {
+    --skinbloom-black: #000000;
+    --skinbloom-white: #ffffff;
+    --skinbloom-cream: #fafafa;
+    --skinbloom-grey: #6b7280;
+  }
+
+  body {
+    @apply bg-skinbloom-cream text-skinbloom-black antialiased;
+  }
+
+  * {
+    @apply focus-visible:outline-skinbloom-black focus-visible:outline-2 focus-visible:outline-offset-2;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
