@@ -218,7 +218,7 @@ export async function getBlockedSlots(
   if (toDate) params.append("toDate", toDate);
 
   const queryString = params.toString();
-  const url = `${API_BASE_URL}/admin/blocked-slots${queryString ? `?${queryString}` : ""}`;
+  const url = `${API_BASE_URL}/BlockedTimeSlots${queryString ? `?${queryString}` : ""}`;
 
   const response = await fetch(url);
 
@@ -233,7 +233,7 @@ export async function getBlockedSlots(
 export async function createBlockedSlot(
   data: CreateBlockedSlot
 ): Promise<BlockedTimeSlot> {
-  const response = await fetch(`${API_BASE_URL}/admin/blocked-slots`, {
+  const response = await fetch(`${API_BASE_URL}/BlockedTimeSlots`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -251,7 +251,7 @@ export async function createBlockedSlot(
 
 // Delete Blocked Time Slot
 export async function deleteBlockedSlot(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/admin/blocked-slots/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/BlockedTimeSlots/${id}`, {
     method: "DELETE",
   });
 
