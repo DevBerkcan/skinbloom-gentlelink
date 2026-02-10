@@ -80,10 +80,10 @@ export function DateTimePicker({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-skinbloom-black mb-2">
+        <h2 className="text-2xl font-bold text-barber-black mb-2">
           Wähle Datum & Uhrzeit
         </h2>
-        <p className="text-skinbloom-grey-600">
+        <p className="text-barber-grey-600">
           Schritt 2 von 3 • {service.name}
         </p>
       </div>
@@ -94,13 +94,13 @@ export function DateTimePicker({
           isIconOnly
           variant="flat"
           onPress={goToPreviousWeek}
-          className="bg-skinbloom-grey-100"
+          className="bg-barber-grey-100"
         >
           <ChevronLeft size={20} />
         </Button>
 
         <div className="text-center">
-          <div className="flex items-center justify-center gap-2 text-skinbloom-grey-700">
+          <div className="flex items-center justify-center gap-2 text-barber-grey-700">
             <Calendar size={18} />
             <span className="font-semibold">
               {currentWeekStart.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })}
@@ -114,7 +114,7 @@ export function DateTimePicker({
           isIconOnly
           variant="flat"
           onPress={goToNextWeek}
-          className="bg-skinbloom-grey-100"
+          className="bg-barber-grey-100"
         >
           <ChevronRight size={20} />
         </Button>
@@ -143,10 +143,10 @@ export function DateTimePicker({
               className={`
                 py-3 px-2 rounded-xl transition-all text-center
                 ${isSelected
-                  ? 'bg-skinbloom-red text-white shadow-lg scale-105'
+                  ? 'bg-barber-red text-white shadow-lg scale-105'
                   : isDisabled
-                    ? 'bg-skinbloom-grey-100 text-skinbloom-grey-400 cursor-not-allowed'
-                    : 'bg-white border-2 border-skinbloom-grey-200 hover:border-skinbloom-red hover:scale-105'
+                    ? 'bg-barber-grey-100 text-barber-grey-400 cursor-not-allowed'
+                    : 'bg-white border-2 border-barber-grey-200 hover:border-barber-red hover:scale-105'
                 }
               `}
             >
@@ -157,7 +157,7 @@ export function DateTimePicker({
                 {formatDayNumber(date).split('.')[0]}
               </div>
               {isToday(date) && !isSelected && (
-                <div className="w-1.5 h-1.5 bg-skinbloom-red rounded-full mx-auto mt-1" />
+                <div className="w-1.5 h-1.5 bg-barber-red rounded-full mx-auto mt-1" />
               )}
             </motion.button>
           );
@@ -167,7 +167,7 @@ export function DateTimePicker({
       {/* Zeitslots */}
       {selectedDate && (
         <div className="space-y-4">
-          <h3 className="font-semibold text-skinbloom-black">
+          <h3 className="font-semibold text-barber-black">
             Verfügbare Zeiten am {new Date(selectedDate + 'T00:00:00').toLocaleDateString('de-DE', {
               weekday: 'long',
               day: '2-digit',
@@ -177,10 +177,10 @@ export function DateTimePicker({
 
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-skinbloom-red mx-auto" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-barber-red mx-auto" />
             </div>
           ) : availableSlots.length === 0 ? (
-            <div className="text-center py-8 text-skinbloom-grey-600">
+            <div className="text-center py-8 text-barber-grey-600">
               Keine verfügbaren Termine an diesem Tag
             </div>
           ) : (
@@ -196,10 +196,10 @@ export function DateTimePicker({
                   className={`
                     py-3 px-2 rounded-lg font-semibold text-sm transition-all
                     ${selectedTime === slot.startTime
-                      ? 'bg-skinbloom-red text-white shadow-lg scale-105'
+                      ? 'bg-barber-red text-white shadow-lg scale-105'
                       : slot.isAvailable
-                        ? 'bg-white border-2 border-skinbloom-grey-200 hover:border-skinbloom-red hover:scale-105'
-                        : 'bg-skinbloom-grey-100 text-skinbloom-grey-400 cursor-not-allowed'
+                        ? 'bg-white border-2 border-barber-grey-200 hover:border-barber-red hover:scale-105'
+                        : 'bg-barber-grey-100 text-barber-grey-400 cursor-not-allowed'
                     }
                   `}
                 >

@@ -11,10 +11,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        skinbloom: {
-          black: "#000000", // Main color
+        barber: {
+          red: "#DC2626", // Main red
+          darkRed: "#991B1B", // Darker red
           white: "#FFFFFF",
-          cream: "#FAFAFA", // Very light grey for backgrounds
+          cream: "#FEF3F2", // Warm off-white
+          gold: "#D4AF37", // Accent gold
+          black: "#0A0A0A",
           grey: {
             50: "#F9FAFB",
             100: "#F3F4F6",
@@ -30,8 +33,8 @@ const config: Config = {
         },
       },
       backgroundImage: {
-        "skinbloom-subtle":
-          "linear-gradient(180deg, #FAFAFA 0%, #FFFFFF 100%)",
+        "barber-stripes":
+          "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(220, 38, 38, 0.03) 10px, rgba(220, 38, 38, 0.03) 20px)",
       },
       animation: {
         "float-slow": "float 3s ease-in-out infinite",

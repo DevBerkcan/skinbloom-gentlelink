@@ -18,28 +18,28 @@ export interface LinkConfig {
 
 export const profileConfig = {
   name: "Skinbloom Aesthetics",
-  title: "Beauty Salon Basel",
-  description: "Professionelle ästhetische Behandlungen – natürliche Schönheit & individuelle Beratung",
-  address: "Elisabethenstrasse 41, 4051 Basel",
-  image: "/logo.png",
+  title: "Skinbloom Aesthetics Basel",
+  description: "Premium Herrenfriseur & Barbershop",
+  address: "Elisabethenstrasse 41, 4051 Basel, Schweiz",
+  image: "/profile.jpg", // Platziere dein Bild im public Ordner
 };
 
 export const socialLinks: LinkConfig[] = [
   {
-    label: "Jetzt Termin vereinbaren",
+    label: "Online buchen",
     href: "/booking",
     icon: Calendar,
     variant: "primary",
   },
   {
     label: "Instagram",
-    href: "https://www.instagram.com/skinbloom.aesthetics/",
+    href: "https://www.instagram.com/skinbloom._aesthetics/",
     icon: Instagram,
     variant: "secondary",
   },
   {
     label: "Route zu uns (Google Maps)",
-    href: "https://www.google.com/maps/dir/?api=1&destination=Elisabethenstrasse+41,+4051+Basel",
+    href: "https://maps.app.goo.gl/25KhxpkJsFeeNsNQ8",
     icon: MapPin,
     variant: "secondary",
   },
@@ -49,22 +49,10 @@ export const socialLinks: LinkConfig[] = [
     icon: MessageCircle,
     variant: "secondary",
   },
-  {
-    label: "E-Mail",
-    href: "mailto:info@skinbloom-aesthetics.ch",
-    icon: Mail,
-    variant: "secondary",
-  },
-  {
-    label: "Telefon",
-    href: "tel:+41782418704",
-    icon: Phone,
-    variant: "secondary",
-  },
 ];
 
 export const siteConfig = {
   name: "Skinbloom Aesthetics - Link in Bio",
-  description: "Professionelle ästhetische Behandlungen in Basel - Jetzt Termin vereinbaren bei Skinbloom Aesthetics",
-  url: "https://skinbloom-aesthetics.ch",
+  description: "Premium Skinbloom in Basel - Online Termin buchen bei Skinbloom Aesthetics",
+  url: "https://skinbloom-aesthetics.vercel.app", // Wird nach Vercel Deployment aktualisiert
 };

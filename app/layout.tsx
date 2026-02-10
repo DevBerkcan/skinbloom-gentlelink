@@ -4,39 +4,38 @@ import { Suspense } from "react";
 import { NextUIProvider } from "@nextui-org/react";
 import { KlaroCookieConsent } from "@/components/KlaroCookieConsent";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
-import { MicrosoftClarity } from "@/components/analytics/MicrosoftClarity";
 import { TrackingProvider } from "@/components/analytics/TrackingProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Skinbloom Aesthetics – Link in Bio | Ästhetische Behandlungen Basel",
+  title: "Skinbloom Aesthetics – Link in Bio",
   description:
-    "Professionelle ästhetische Behandlungen in Basel – natürliche Schönheit & individuelle Beratung bei Skinbloom Aesthetics. Jetzt online Termin vereinbaren!",
+    "Premium Barbershop in Düsseldorf – moderne Cuts, Fades & Bartpflege bei Skinbloom Aesthetics. Jetzt online Termin buchen!",
   keywords: [
     "Skinbloom Aesthetics",
-    "Beauty Salon Basel",
-    "Ästhetische Behandlungen",
-    "Gesichtsbehandlung",
-    "Anti-Aging",
-    "Beauty Basel",
-    "Kosmetikstudio",
-    "Elisabethenstrasse",
+    "Skinbloom Aesthetics",
+    "Skinbloom Aesthetics",
+    "Skinbloom",
+    "Fade Haircut",
+    "Bartpflege",
+    "Herrenfriseur",
+    "Berliner Allee",
   ],
   openGraph: {
-    title: "Skinbloom Aesthetics – Ästhetische Behandlungen Basel",
+    title: "Skinbloom Aesthetics – Skinbloom Aesthetics",
     description:
-      "Professionelle ästhetische Behandlungen in Basel – natürliche Schönheit & individuelle Beratung. Jetzt online Termin vereinbaren!",
+      "Skinbloom Aesthetics in Basel – moderne Cuts, Fades & Bartpflege. Jetzt online buchen!",
     type: "website",
-    locale: "de_CH",
+    locale: "de_DE",
     siteName: "Skinbloom Aesthetics",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Skinbloom Aesthetics – Ästhetische Behandlungen Basel",
+    title: "Skinbloom Aesthetics – Premium Skinbloom Aesthetics Basel",
     description:
-      "Professionelle ästhetische Behandlungen in Basel – natürliche Schönheit & individuelle Beratung. Jetzt Termin vereinbaren!",
+      "Skinbloom Aesthetics in Basel – moderne Cuts, Fades & Bartpflege. Online buchen!",
   },
   viewport: {
     width: "device-width",
@@ -57,7 +56,6 @@ export default function RootLayout({
     <html lang="de">
       <body className={inter.className}>
         <GoogleAnalytics />
-        <MicrosoftClarity />
         <NextUIProvider>
           <Suspense fallback={null}>
             <TrackingProvider>

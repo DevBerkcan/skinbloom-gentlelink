@@ -1,6 +1,6 @@
 # Vercel Deployment Anleitung 🚀
 
-Schritt-für-Schritt Anleitung zum Deployen der Barber Dario Linktree-Seite auf Vercel.
+Schritt-für-Schritt Anleitung zum Deployen der Skinbloom Aesthetics Linktree-Seite auf Vercel.
 
 ## 📋 Voraussetzungen
 
@@ -23,7 +23,7 @@ git init
 git add .
 
 # Commit erstellen
-git commit -m "Initial commit - Barber Dario Linktree"
+git commit -m "Initial commit - Skinbloom Aesthetics Linktree"
 
 # GitHub Repository erstellen (auf github.com)
 # Dann remote hinzufügen:
@@ -90,16 +90,16 @@ Bei einem dieser Anbieter:
 - [Google Domains](https://domains.google.com)
 
 Empfohlene Domains:
-- `barberdario.de`
-- `barber-dario.de`
-- `dariobarber.de`
+- `https://www.skinbloom-aesthetics.ch/`
+- `https://www.skinbloom-aesthetics.ch/`
+- `https://www.skinbloom-aesthetics.ch/`
 
 ### Domain mit Vercel verbinden
 
 1. **Vercel Dashboard** → Dein Projekt
 2. Klicke auf **"Settings"** → **"Domains"**
 3. Klicke auf **"Add"**
-4. Gib deine Domain ein: `barberdario.de`
+4. Gib deine Domain ein: `https://www.skinbloom-aesthetics.ch/`
 5. Folge den Anweisungen:
 
 #### A) Bei Domain-Provider (z.B. Namecheap):
@@ -129,9 +129,9 @@ Wenn du eine eigene Domain hast, aktualisiere `lib/config.ts`:
 
 ```typescript
 export const siteConfig = {
-  name: "Barber Dario - Link in Bio",
-  description: "Premium Barbershop in Düsseldorf",
-  url: "https://barberdario.de", // Deine echte Domain
+  name: "Skinbloom Aesthetics - Link in Bio",
+  description: "Skinbloom Aesthetics",
+  url: "https://skinbloom-aesthetics.ch", // Deine echte Domain
 };
 ```
 
@@ -147,8 +147,8 @@ Vercel deployed automatisch! ✨
 ### 2. Social Media Links aktualisieren
 
 Teile deine neue URL:
-- Instagram Bio: `barberdario.de`
-- TikTok Bio: `barberdario.de`
+- Instagram Bio: `skinbloom-aesthetics.ch`
+- TikTok Bio: `skinbloom-aesthetics.ch`
 - Google My Business
 - Visitenkarten
 

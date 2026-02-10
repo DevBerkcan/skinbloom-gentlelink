@@ -8,12 +8,12 @@ export const Footer = () => {
   const socialLinks = [
     {
       name: "Instagram",
-      href: "https://instagram.com/skinbloom.aesthetics",
+      href: "https://www.instagram.com/skinbloom._aesthetics/",
       icon: Instagram,
     },
     {
       name: "Facebook",
-      href: "https://facebook.com/skinbloom.aesthetics",
+      href: "https://www.facebook.com/profile.php?id=61565493292168",
       icon: Facebook,
     },
     {
@@ -44,7 +44,7 @@ export const Footer = () => {
             transition={{ delay: 0.9 + index * 0.1 }}
             whileHover={{ scale: 1.2, rotate: 5 }}
             whileTap={{ scale: 0.9 }}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-skinbloom-grey-200 text-skinbloom-grey-600 transition-colors hover:bg-skinbloom-black hover:text-skinbloom-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-barber-grey-200 text-barber-grey-600 transition-colors hover:bg-barber-red hover:text-barber-white"
           >
             <social.icon size={18} />
           </motion.a>
@@ -52,27 +52,27 @@ export const Footer = () => {
       </div>
 
       {/* Legal links */}
-      <div className="mb-4 flex items-center justify-center gap-4 text-xs text-skinbloom-grey-500">
+      <div className="mb-4 flex items-center justify-center gap-4 text-xs text-barber-grey-500">
         <a
           href="/impressum"
-          className="transition-colors hover:text-skinbloom-black hover:underline"
+          className="transition-colors hover:text-barber-red hover:underline"
         >
           Impressum
         </a>
-        <span className="text-skinbloom-grey-300">•</span>
+        <span className="text-barber-grey-300">•</span>
         <a
           href="/datenschutz"
-          className="transition-colors hover:text-skinbloom-black hover:underline"
+          className="transition-colors hover:text-barber-red hover:underline"
         >
           Datenschutz
         </a>
-        <span className="text-skinbloom-grey-300">•</span>
+        <span className="text-barber-grey-300">•</span>
         <KlaroCookieSettingsButton />
       </div>
 
       {/* Copyright */}
-      <p className="text-xs text-skinbloom-grey-400">
-        © {new Date().getFullYear()} Skinbloom Aesthetics. Alle Rechte vorbehalten.
+      <p className="text-xs text-barber-grey-400">
+        © {new Date().getFullYear()} Barber Dario. Alle Rechte vorbehalten.
       </p>
     </motion.footer>
   );

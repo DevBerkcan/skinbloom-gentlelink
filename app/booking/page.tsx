@@ -170,12 +170,12 @@ export default function BookingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-skinbloom-cream via-skinbloom-grey-50 to-skinbloom-white">
+    <div className="min-h-screen bg-gradient-to-br from-barber-cream via-barber-grey-50 to-barber-white">
       <div className="max-w-3xl mx-auto px-4 py-12">
         {/* Back to Home Button */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-skinbloom-grey-600 hover:text-skinbloom-black transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-barber-grey-600 hover:text-barber-red transition-colors mb-6"
         >
           <Home size={20} />
           <span>Zurück zur Startseite</span>
@@ -191,10 +191,10 @@ export default function BookingPage() {
                     w-10 h-10 rounded-full flex items-center justify-center font-bold
                     transition-all duration-300
                     ${currentStep > step
-                      ? "bg-skinbloom-grey-900 text-white"
+                      ? "bg-barber-red text-white"
                       : currentStep === step
-                        ? "bg-skinbloom-black text-white ring-4 ring-skinbloom-grey-800/20"
-                        : "bg-skinbloom-grey-200 text-skinbloom-grey-500"
+                        ? "bg-barber-red text-white ring-4 ring-barber-red/20"
+                        : "bg-barber-grey-200 text-barber-grey-500"
                     }
                   `}
                 >
@@ -203,7 +203,7 @@ export default function BookingPage() {
                 {step < 3 && (
                   <div
                     className={`w-16 h-1 mx-2 rounded transition-all ${
-                      currentStep > step ? "bg-skinbloom-grey-900" : "bg-skinbloom-grey-200"
+                      currentStep > step ? "bg-barber-red" : "bg-barber-grey-200"
                     }`}
                   />
                 )}
@@ -227,7 +227,7 @@ export default function BookingPage() {
         </AnimatePresence>
 
         {/* Main Content Card */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 ring-1 ring-skinbloom-grey-100">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 ring-1 ring-barber-grey-100">
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
               <motion.div
@@ -292,7 +292,7 @@ export default function BookingPage() {
               variant="flat"
               onPress={() => setCurrentStep(currentStep - 1)}
               startContent={<ChevronLeft size={20} />}
-              className="bg-skinbloom-grey-100 font-semibold"
+              className="bg-barber-grey-100 font-semibold"
             >
               Zurück
             </Button>
@@ -304,7 +304,7 @@ export default function BookingPage() {
             <Button
               onPress={() => setCurrentStep(currentStep + 1)}
               isDisabled={!canProceed()}
-              className="bg-gradient-to-r from-skinbloom-grey-900 to-skinbloom-black text-white font-semibold px-8"
+              className="bg-gradient-to-r from-barber-red to-barber-darkRed text-white font-semibold px-8"
             >
               Weiter
             </Button>
@@ -313,7 +313,7 @@ export default function BookingPage() {
               onPress={handleSubmit}
               isDisabled={!canProceed() || submitting}
               isLoading={submitting}
-              className="bg-gradient-to-r from-skinbloom-grey-900 to-skinbloom-black text-white font-semibold px-8"
+              className="bg-gradient-to-r from-barber-red to-barber-darkRed text-white font-semibold px-8"
             >
               {submitting ? "Wird gebucht..." : "Termin buchen"}
             </Button>

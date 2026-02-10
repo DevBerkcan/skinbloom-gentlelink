@@ -32,7 +32,7 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
   useEffect(() => {
     async function loadBooking() {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5067/api";
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:7020/api";
         const response = await fetch(`${API_URL}/bookings/${params.id}`);
 
         if (!response.ok) {
@@ -157,10 +157,10 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                 <div className="flex-1">
                   <div className="text-sm text-barber-grey-600 mb-1">Standort</div>
                   <div className="font-semibold text-barber-black">
-                    Barber Dario
+                    Skinbloom Aesthetics
                   </div>
                   <div className="text-barber-grey-700">
-                    Berliner Allee 43, 40212 Düsseldorf
+                    Elisabethenstrasse 41, 4051 Basel, Schweiz
                   </div>
                 </div>
               </div>

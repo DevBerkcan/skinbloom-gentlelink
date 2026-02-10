@@ -8,33 +8,33 @@ export const metadata = {
 
 export default function DatenschutzPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-skinbloom-cream via-skinbloom-grey-50 to-skinbloom-white">
+    <div className="min-h-screen bg-gradient-to-br from-barber-cream via-barber-grey-50 to-barber-white">
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Back Button */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-skinbloom-grey-600 hover:text-skinbloom-red transition-colors mb-8"
+          className="inline-flex items-center gap-2 text-barber-grey-600 hover:text-barber-red transition-colors mb-8"
         >
           <ArrowLeft size={20} />
           Zurück zur Startseite
         </Link>
 
         {/* Content */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 ring-1 ring-skinbloom-grey-100">
-          <h1 className="text-4xl font-bold text-skinbloom-black mb-8">Datenschutzerklärung</h1>
+        <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 ring-1 ring-barber-grey-100">
+          <h1 className="text-4xl font-bold text-barber-black mb-8">Datenschutzerklärung</h1>
 
-          <div className="space-y-8 text-skinbloom-grey-700">
+          <div className="space-y-8 text-barber-grey-700">
             <section>
-              <h2 className="text-2xl font-bold text-skinbloom-black mb-4">1. Datenschutz auf einen Blick</h2>
+              <h2 className="text-2xl font-bold text-barber-black mb-4">1. Datenschutz auf einen Blick</h2>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">Allgemeine Hinweise</h3>
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">Allgemeine Hinweise</h3>
               <p className="mb-4">
                 Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren
                 personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten
                 sind alle Daten, mit denen Sie persönlich identifiziert werden können.
               </p>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">
                 Datenerfassung auf dieser Website
               </h3>
               <p className="mb-2"><strong>Wer ist verantwortlich für die Datenerfassung auf dieser Website?</strong></p>
@@ -70,11 +70,11 @@ export default function DatenschutzPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-skinbloom-black mb-4">
+              <h2 className="text-2xl font-bold text-barber-black mb-4">
                 2. Hosting und Content Delivery Networks (CDN)
               </h2>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">Vercel</h3>
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">Vercel</h3>
               <p className="mb-2">
                 Wir hosten unsere Website bei Vercel Inc., 340 S Lemon Ave #4133, Walnut, CA 91789, USA.
               </p>
@@ -85,7 +85,7 @@ export default function DatenschutzPage() {
                   href="https://vercel.com/legal/privacy-policy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-skinbloom-red hover:underline"
+                  className="text-barber-red hover:underline"
                 >
                   https://vercel.com/legal/privacy-policy
                 </a>
@@ -97,18 +97,18 @@ export default function DatenschutzPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-skinbloom-black mb-4">
+              <h2 className="text-2xl font-bold text-barber-black mb-4">
                 3. Allgemeine Hinweise und Pflichtinformationen
               </h2>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">Datenschutz</h3>
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">Datenschutz</h3>
               <p className="mb-4">
                 Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir
                 behandeln Ihre personenbezogenen Daten vertraulich und entsprechend der gesetzlichen
                 Datenschutzvorschriften sowie dieser Datenschutzerklärung.
               </p>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">
                 Widerruf Ihrer Einwilligung zur Datenverarbeitung
               </h3>
               <p className="mb-4">
@@ -117,7 +117,7 @@ export default function DatenschutzPage() {
                 bis zum Widerruf erfolgten Datenverarbeitung bleibt vom Widerruf unberührt.
               </p>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">
                 Recht auf Datenübertragbarkeit
               </h3>
               <p className="mb-4">
@@ -126,7 +126,7 @@ export default function DatenschutzPage() {
                 maschinenlesbaren Format aushändigen zu lassen.
               </p>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">
                 Auskunft, Löschung und Berichtigung
               </h3>
               <p className="mb-4">
@@ -138,11 +138,11 @@ export default function DatenschutzPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-skinbloom-black mb-4">
+              <h2 className="text-2xl font-bold text-barber-black mb-4">
                 4. Datenerfassung auf dieser Website
               </h2>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">Server-Log-Dateien</h3>
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">Server-Log-Dateien</h3>
               <p className="mb-4">
                 Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten
                 Server-Log-Dateien, die Ihr Browser automatisch an uns übermittelt. Dies sind:
@@ -160,7 +160,7 @@ export default function DatenschutzPage() {
                 Erfassung dieser Daten erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO.
               </p>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">Kontaktformular & Buchungssystem</h3>
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">Kontaktformular & Buchungssystem</h3>
               <p className="mb-4">
                 Wenn Sie unser Buchungssystem nutzen oder uns per E-Mail kontaktieren, werden Ihre Angaben
                 (Name, E-Mail-Adresse, Telefonnummer, gewünschter Termin) zur Bearbeitung der Anfrage und
@@ -181,11 +181,11 @@ export default function DatenschutzPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-skinbloom-black mb-4">
+              <h2 className="text-2xl font-bold text-barber-black mb-4">
                 5. Analyse-Tools und Werbung
               </h2>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">Google Analytics</h3>
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">Google Analytics</h3>
               <p className="mb-4">
                 Diese Website nutzt Funktionen des Webanalysedienstes Google Analytics. Anbieter ist die
                 Google Ireland Limited („Google"), Gordon House, Barrow Street, Dublin 4, Irland.
@@ -215,13 +215,13 @@ export default function DatenschutzPage() {
                   href="https://tools.google.com/dlpage/gaoptout"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-skinbloom-red hover:underline"
+                  className="text-barber-red hover:underline"
                 >
                   https://tools.google.com/dlpage/gaoptout
                 </a>
               </p>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">UTM-Parameter & Tracking</h3>
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">UTM-Parameter & Tracking</h3>
               <p className="mb-4">
                 Diese Website verwendet UTM-Parameter zur Analyse der Herkunft von Website-Besuchern. Diese
                 Daten werden gespeichert, um nachzuvollziehen, über welche Marketingkanäle (z.B. Instagram,
@@ -234,7 +234,7 @@ export default function DatenschutzPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-skinbloom-black mb-4">6. Newsletter (optional)</h2>
+              <h2 className="text-2xl font-bold text-barber-black mb-4">6. Newsletter (optional)</h2>
               <p className="mb-4">
                 Wenn Sie den auf der Website angebotenen Newsletter beziehen möchten, benötigen wir von
                 Ihnen eine E-Mail-Adresse sowie Informationen, welche uns die Überprüfung gestatten, dass
@@ -249,9 +249,9 @@ export default function DatenschutzPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-skinbloom-black mb-4">7. Plugins und Tools</h2>
+              <h2 className="text-2xl font-bold text-barber-black mb-4">7. Plugins und Tools</h2>
 
-              <h3 className="text-xl font-semibold text-skinbloom-black mt-4 mb-2">Google Maps</h3>
+              <h3 className="text-xl font-semibold text-barber-black mt-4 mb-2">Google Maps</h3>
               <p className="mb-4">
                 Diese Seite nutzt über eine API den Kartendienst Google Maps. Anbieter ist die Google
                 Ireland Limited („Google"), Gordon House, Barrow Street, Dublin 4, Irland.
@@ -269,14 +269,14 @@ export default function DatenschutzPage() {
               </p>
             </section>
 
-            <section className="bg-skinbloom-cream p-6 rounded-xl">
-              <h2 className="text-2xl font-bold text-skinbloom-black mb-4">Kontakt bei Datenschutzfragen</h2>
+            <section className="bg-barber-cream p-6 rounded-xl">
+              <h2 className="text-2xl font-bold text-barber-black mb-4">Kontakt bei Datenschutzfragen</h2>
               <p className="mb-2">
                 Bei Fragen zum Datenschutz können Sie sich jederzeit an uns wenden:
               </p>
               <p className="mb-2">
                 <strong>E-Mail:</strong>{" "}
-                <a href="mailto:info@barberdario.de" className="text-skinbloom-red hover:underline">
+                <a href="mailto:info@barberdario.de" className="text-barber-red hover:underline">
                   info@barberdario.de
                 </a>
               </p>
@@ -285,16 +285,16 @@ export default function DatenschutzPage() {
               </p>
             </section>
 
-            <p className="text-sm text-skinbloom-grey-600 italic mt-8">
+            <p className="text-sm text-barber-grey-600 italic mt-8">
               Stand: Dezember 2025
             </p>
           </div>
 
           {/* Back Button Bottom */}
-          <div className="mt-12 pt-8 border-t border-skinbloom-grey-200">
+          <div className="mt-12 pt-8 border-t border-barber-grey-200">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-skinbloom-red hover:text-skinbloom-darkRed font-semibold transition-colors"
+              className="inline-flex items-center gap-2 text-barber-red hover:text-barber-darkRed font-semibold transition-colors"
             >
               <ArrowLeft size={20} />
               Zurück zur Startseite

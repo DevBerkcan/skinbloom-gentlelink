@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Input } from "@nextui-org/input";
 import { Checkbox } from "@nextui-org/checkbox";
-import { MapPin, Sparkles, Calendar } from "lucide-react";
+import { MapPin, Scissors, Calendar } from "lucide-react";
 import type { Service, CustomerInfo } from "@/lib/api/booking";
 
 interface ContactFormProps {
@@ -75,10 +75,10 @@ export function ContactForm({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-skinbloom-black mb-2">
+        <h2 className="text-2xl font-bold text-barber-black mb-2">
           Kontaktdaten
         </h2>
-        <p className="text-skinbloom-grey-600">
+        <p className="text-barber-grey-600">
           Schritt 3 von 3
         </p>
       </div>
@@ -87,35 +87,35 @@ export function ContactForm({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-skinbloom-cream rounded-xl p-6 space-y-4"
+        className="bg-barber-cream rounded-xl p-6 space-y-4"
       >
         <div className="flex items-start gap-3">
-          <Calendar className="text-skinbloom-red flex-shrink-0 mt-1" size={20} />
+          <Calendar className="text-barber-red flex-shrink-0 mt-1" size={20} />
           <div>
-            <div className="font-semibold text-skinbloom-black">
+            <div className="font-semibold text-barber-black">
               {formatDate(selectedDate)}
             </div>
-            <div className="text-skinbloom-grey-600 text-sm">
+            <div className="text-barber-grey-600 text-sm">
               {selectedTime} Uhr
             </div>
           </div>
         </div>
 
         <div className="flex items-start gap-3">
-          <Sparkles className="text-skinbloom-black flex-shrink-0 mt-1" size={20} />
+          <Scissors className="text-barber-red flex-shrink-0 mt-1" size={20} />
           <div>
-            <div className="font-semibold text-skinbloom-black">
+            <div className="font-semibold text-barber-black">
               {service.name}
             </div>
-            <div className="text-skinbloom-grey-600 text-sm">
-              {service.durationMinutes} Minuten • ab CHF {service.price.toFixed(2)}
+            <div className="text-barber-grey-600 text-sm">
+              {service.durationMinutes} Minuten • ab {service.price.toFixed(2)} EUR
             </div>
           </div>
         </div>
 
         <div className="flex items-start gap-3">
-          <MapPin className="text-skinbloom-red flex-shrink-0 mt-1" size={20} />
-          <div className="text-skinbloom-grey-700 text-sm">
+          <MapPin className="text-barber-red flex-shrink-0 mt-1" size={20} />
+          <div className="text-barber-grey-700 text-sm">
             Berliner Allee 43, 40212 Düsseldorf
           </div>
         </div>
@@ -135,12 +135,12 @@ export function ContactForm({
             errorMessage={errors.firstName}
             isInvalid={!!errors.firstName}
             classNames={{
-              input: "text-skinbloom-black",
+              input: "text-barber-black",
               inputWrapper: [
                 "border-2",
                 errors.firstName
                   ? "border-red-500"
-                  : "border-skinbloom-grey-200 focus-within:border-skinbloom-red"
+                  : "border-barber-grey-200 focus-within:border-barber-red"
               ]
             }}
           />
@@ -156,12 +156,12 @@ export function ContactForm({
             errorMessage={errors.lastName}
             isInvalid={!!errors.lastName}
             classNames={{
-              input: "text-skinbloom-black",
+              input: "text-barber-black",
               inputWrapper: [
                 "border-2",
                 errors.lastName
                   ? "border-red-500"
-                  : "border-skinbloom-grey-200 focus-within:border-skinbloom-red"
+                  : "border-barber-grey-200 focus-within:border-barber-red"
               ]
             }}
           />
@@ -179,12 +179,12 @@ export function ContactForm({
           errorMessage={errors.email}
           isInvalid={!!errors.email}
           classNames={{
-            input: "text-skinbloom-black",
+            input: "text-barber-black",
             inputWrapper: [
               "border-2",
               errors.email
                 ? "border-red-500"
-                : "border-skinbloom-grey-200 focus-within:border-skinbloom-red"
+                : "border-barber-grey-200 focus-within:border-barber-red"
             ]
           }}
         />
@@ -201,12 +201,12 @@ export function ContactForm({
           errorMessage={errors.phone}
           isInvalid={!!errors.phone}
           classNames={{
-            input: "text-skinbloom-black",
+            input: "text-barber-black",
             inputWrapper: [
               "border-2",
               errors.phone
                 ? "border-red-500"
-                : "border-skinbloom-grey-200 focus-within:border-skinbloom-red"
+                : "border-barber-grey-200 focus-within:border-barber-red"
             ]
           }}
         />
@@ -215,13 +215,13 @@ export function ContactForm({
           isSelected={privacyAccepted}
           onValueChange={onPrivacyChange}
           classNames={{
-            wrapper: "before:border-skinbloom-grey-300",
+            wrapper: "before:border-barber-grey-300",
             icon: "text-white"
           }}
         >
-          <span className="text-sm text-skinbloom-grey-700">
+          <span className="text-sm text-barber-grey-700">
             Ich habe die{" "}
-            <a href="/datenschutz" className="text-skinbloom-red underline" target="_blank">
+            <a href="/datenschutz" className="text-barber-red underline" target="_blank">
               Datenschutzhinweise
             </a>{" "}
             gelesen und stimme diesen zu.

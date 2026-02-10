@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
               Admin Login
             </h1>
             <p className="text-barber-grey-600">
-              Barber Dario Buchungssystem
+              Skinbloom Aesthetics Buchungssystem
             </p>
           </div>
 

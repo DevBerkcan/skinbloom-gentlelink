@@ -1,6 +1,6 @@
 // API Client für Booking-Endpunkte
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5067/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:7020/api";
 
 export interface Service {
   id: string;

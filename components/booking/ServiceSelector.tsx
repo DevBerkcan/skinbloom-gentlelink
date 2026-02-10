@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Card, CardBody } from "@nextui-org/card";
-import { Sparkles, Clock } from "lucide-react";
+import { Scissors, Clock } from "lucide-react";
 import type { Service } from "@/lib/api/booking";
 
 interface ServiceSelectorProps {
@@ -15,10 +15,10 @@ export function ServiceSelector({ services, selectedService, onSelect }: Service
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-skinbloom-black mb-2">
+        <h2 className="text-2xl font-bold text-barber-black mb-2">
           Wähle deine Leistung
         </h2>
-        <p className="text-skinbloom-grey-600">
+        <p className="text-barber-grey-600">
           Schritt 1 von 3
         </p>
       </div>
@@ -37,34 +37,34 @@ export function ServiceSelector({ services, selectedService, onSelect }: Service
               className={`
                 transition-all cursor-pointer
                 ${selectedService?.id === service.id
-                  ? 'border-2 border-skinbloom-red bg-skinbloom-cream ring-2 ring-skinbloom-red/20'
-                  : 'border-2 border-skinbloom-grey-200 hover:border-skinbloom-red/50'
+                  ? 'border-2 border-barber-red bg-barber-cream ring-2 ring-barber-red/20'
+                  : 'border-2 border-barber-grey-200 hover:border-barber-red/50'
                 }
               `}
             >
               <CardBody className="p-6">
                 <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0 p-3 bg-skinbloom-black/10 rounded-xl">
-                    <Sparkles className="text-skinbloom-black" size={24} />
+                  <div className="flex-shrink-0 p-3 bg-barber-red/10 rounded-xl">
+                    <Scissors className="text-barber-red" size={24} />
                   </div>
 
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-skinbloom-black">
+                    <h3 className="font-semibold text-lg text-barber-black">
                       {service.name}
                     </h3>
                     {service.description && (
-                      <p className="text-sm text-skinbloom-grey-600 mt-1">
+                      <p className="text-sm text-barber-grey-600 mt-1">
                         {service.description}
                       </p>
                     )}
 
                     <div className="flex items-center gap-4 mt-3">
-                      <span className="flex items-center gap-1 text-sm text-skinbloom-grey-500">
+                      <span className="flex items-center gap-1 text-sm text-barber-grey-500">
                         <Clock size={16} />
                         {service.durationMinutes} Min
                       </span>
-                      <span className="text-lg font-bold text-skinbloom-black">
-                        ab CHF {service.price.toFixed(2)}
+                      <span className="text-lg font-bold text-barber-red">
+                        ab {service.price.toFixed(2)} EUR
                       </span>
                     </div>
                   </div>
@@ -73,7 +73,7 @@ export function ServiceSelector({ services, selectedService, onSelect }: Service
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="flex-shrink-0 w-6 h-6 bg-skinbloom-red rounded-full flex items-center justify-center"
+                      className="flex-shrink-0 w-6 h-6 bg-barber-red rounded-full flex items-center justify-center"
                     >
                       <svg
                         className="w-4 h-4 text-white"

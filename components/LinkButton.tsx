@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Scissors } from "lucide-react";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useState } from "react";
 
 interface LinkButtonProps {
   href: string;
@@ -20,6 +21,7 @@ export const LinkButton = ({
   variant = "primary",
 }: LinkButtonProps) => {
   const { trackEvent } = useAnalytics();
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
     trackEvent("link_click", {
@@ -37,6 +39,8 @@ export const LinkButton = ({
       target="_blank"
       rel="noopener noreferrer"
       onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
@@ -56,8 +60,8 @@ export const LinkButton = ({
         hover:shadow-xl focus-visible:shadow-xl
         ${
           isPrimary
-            ? "bg-gradient-to-r from-skinbloom-grey-900 to-skinbloom-black text-skinbloom-white hover:from-skinbloom-black hover:to-skinbloom-grey-800"
-            : "border-2 border-skinbloom-grey-200 bg-skinbloom-white text-skinbloom-black hover:border-skinbloom-black hover:bg-skinbloom-cream"
+            ? "bg-gradient-to-r from-barber-red to-barber-darkRed text-barber-white hover:from-barber-darkRed hover:to-barber-red"
+            : "border-2 border-barber-grey-200 bg-barber-white text-barber-black hover:border-barber-red hover:bg-barber-cream"
         }
       `}
       aria-label={`${label} öffnen`}
@@ -65,7 +69,7 @@ export const LinkButton = ({
       {/* Background gradient effect on hover */}
       <motion.div
         className={`absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-10 ${
-          isPrimary ? "bg-skinbloom-white" : "bg-skinbloom-grey-900"
+          isPrimary ? "bg-barber-white" : "bg-barber-red"
         }`}
         initial={false}
       />
@@ -78,7 +82,7 @@ export const LinkButton = ({
       >
         <Icon
           size={24}
-          className={isPrimary ? "text-skinbloom-white" : "text-skinbloom-black"}
+          className={isPrimary ? "text-barber-white" : "text-barber-red"}
         />
       </motion.div>
 
@@ -90,7 +94,7 @@ export const LinkButton = ({
       {/* Arrow indicator */}
       <motion.svg
         className={`relative z-10 h-5 w-5 ${
-          isPrimary ? "text-skinbloom-white" : "text-skinbloom-grey-400"
+          isPrimary ? "text-barber-white" : "text-barber-grey-400"
         }`}
         fill="none"
         viewBox="0 0 24 24"
@@ -115,6 +119,22 @@ export const LinkButton = ({
           transition: { duration: 0.6 },
         }}
       />
+
+      {/* Scissors hover effect */}
+      {isHovered && (
+        <motion.div
+          initial={{ x: -20, y: -10, opacity: 0, rotate: -45 }}
+          animate={{ x: 5, y: -5, opacity: 0.3, rotate: -30 }}
+          exit={{ x: 20, y: 0, opacity: 0, rotate: -15 }}
+          transition={{ duration: 0.3 }}
+          className="absolute left-2 top-2 pointer-events-none"
+        >
+          <Scissors
+            size={16}
+            className={isPrimary ? "text-barber-white" : "text-barber-red"}
+          />
+        </motion.div>
+      )}
     </motion.a>
   );
 };

@@ -21,12 +21,12 @@ export function AdminNav() {
   };
 
   return (
-    <nav className="bg-skinbloom-black text-white shadow-lg">
+    <nav className="bg-barber-black text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
             <Link href="/admin/dashboard" className="text-xl font-bold">
-              Skinbloom Admin
+              Barber Dario Admin
             </Link>
 
             <div className="flex gap-4">
@@ -40,8 +40,8 @@ export function AdminNav() {
                     href={item.href}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                       isActive
-                        ? "bg-skinbloom-red text-white"
-                        : "text-skinbloom-grey-300 hover:bg-skinbloom-grey-800 hover:text-white"
+                        ? "bg-barber-red text-white"
+                        : "text-barber-grey-300 hover:bg-barber-grey-800 hover:text-white"
                     }`}
                   >
                     <Icon size={18} />
@@ -54,7 +54,7 @@ export function AdminNav() {
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-skinbloom-grey-300 hover:bg-skinbloom-grey-800 hover:text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-barber-grey-300 hover:bg-barber-grey-800 hover:text-white rounded-lg transition-colors"
           >
             <LogOut size={18} />
             <span>Abmelden</span>
