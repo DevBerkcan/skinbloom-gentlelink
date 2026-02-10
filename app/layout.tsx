@@ -12,16 +12,14 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Skinbloom Aesthetics – Link in Bio",
   description:
-    "Premium Barbershop in Düsseldorf – moderne Cuts, Fades & Bartpflege bei Skinbloom Aesthetics. Jetzt online Termin buchen!",
+    "Skinbloom Aesthetics in Basel – Hautpflege bei Skinbloom Aesthetics. Jetzt online Termin buchen!",
   keywords: [
     "Skinbloom Aesthetics",
     "Skinbloom Aesthetics",
     "Skinbloom Aesthetics",
     "Skinbloom",
-    "Fade Haircut",
-    "Bartpflege",
-    "Herrenfriseur",
-    "Berliner Allee",
+    "Hautpflege",
+    "Elisabethenstrasse 41, 4051 Basel, Schweiz",
   ],
   openGraph: {
     title: "Skinbloom Aesthetics – Skinbloom Aesthetics",
