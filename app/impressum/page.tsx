@@ -68,9 +68,9 @@ export default function ImpressumPage() {
               <h2 className="text-2xl font-bold text-barber-black mb-4">
                 Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV
               </h2>
-              <p>Inhaber: Dario [Nachname]</p>
-              <p>Berliner Allee 43</p>
-              <p>40212 Düsseldorf</p>
+              <p>Inhaber: Marianna Topchanali</p>
+              <p>Elisabethenstrasse 41</p>
+              <p>4051 Basel, Schweiz</p>
             </section>
 
             <section>

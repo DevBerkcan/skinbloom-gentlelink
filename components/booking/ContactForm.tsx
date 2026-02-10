@@ -116,7 +116,7 @@ export function ContactForm({
         <div className="flex items-start gap-3">
           <MapPin className="text-barber-red flex-shrink-0 mt-1" size={20} />
           <div className="text-barber-grey-700 text-sm">
-            Berliner Allee 43, 40212 Düsseldorf
+            Elisabethenstrasse 41, 4051 Basel, Schweiz
           </div>
         </div>
       </motion.div>

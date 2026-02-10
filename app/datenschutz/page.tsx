@@ -276,17 +276,17 @@ export default function DatenschutzPage() {
               </p>
               <p className="mb-2">
                 <strong>E-Mail:</strong>{" "}
-                <a href="mailto:info@barberdario.de" className="text-barber-red hover:underline">
-                  info@barberdario.de
+                <a href="mailto:info@skinbloom-aesthetics.ch" className="text-barber-red hover:underline">
+                  info@skinbloom-aesthetics.ch
                 </a>
               </p>
               <p>
-                <strong>Telefon:</strong> +49 157 35985449
+                <strong>Telefon:</strong> +41 78 241 87 04
               </p>
             </section>
 
             <p className="text-sm text-barber-grey-600 italic mt-8">
-              Stand: Dezember 2025
+              Stand: Februar 2026
             </p>
           </div>
 

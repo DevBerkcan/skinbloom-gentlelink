@@ -228,7 +228,7 @@ export default function MyBookingsPage() {
                         <div>
                           <div className="text-sm text-barber-grey-600 mb-1">Standort</div>
                           <div className="font-semibold text-barber-black">
-                            Berliner Allee 43, Düsseldorf
+                            Elisabethenstrasse 41, Basel, Schweiz
                           </div>
                         </div>
                       </div>

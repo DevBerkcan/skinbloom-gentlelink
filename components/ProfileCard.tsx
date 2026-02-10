@@ -74,7 +74,7 @@ export const ProfileCard = () => {
         className="mx-auto mb-6 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full shadow-lg ring-4 ring-barber-white"
       >
         <Image
-          src="/logo.jpg"
+          src="/logo.png"
           alt="Skinbloom Aesthetics Logo"
           width={96}
           height={96}

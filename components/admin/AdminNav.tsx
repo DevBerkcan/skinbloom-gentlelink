@@ -26,7 +26,7 @@ export function AdminNav() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
             <Link href="/admin/dashboard" className="text-xl font-bold">
-              Barber Dario Admin
+              Skinbloom Aesthetics  Admin
             </Link>
 
             <div className="flex gap-4">
