@@ -75,10 +75,10 @@ export function ContactForm({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-barber-black mb-2">
+        <h2 className="text-2xl font-bold text-[#1E1E1E] mb-2">
           Kontaktdaten
         </h2>
-        <p className="text-barber-grey-600">
+        <p className="text-[#8A8A8A]">
           Schritt 3 von 3
         </p>
       </div>
@@ -87,35 +87,35 @@ export function ContactForm({
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-barber-cream rounded-xl p-6 space-y-4"
+        className="bg-[#F5EDEB] rounded-xl p-6 space-y-4"
       >
         <div className="flex items-start gap-3">
-          <Calendar className="text-barber-red flex-shrink-0 mt-1" size={20} />
+          <Calendar className="text-[#E8C7C3] flex-shrink-0 mt-1" size={20} />
           <div>
-            <div className="font-semibold text-barber-black">
+            <div className="font-semibold text-[#1E1E1E]">
               {formatDate(selectedDate)}
             </div>
-            <div className="text-barber-grey-600 text-sm">
+            <div className="text-[#8A8A8A] text-sm">
               {selectedTime} Uhr
             </div>
           </div>
         </div>
 
         <div className="flex items-start gap-3">
-          <Scissors className="text-barber-red flex-shrink-0 mt-1" size={20} />
+          <Scissors className="text-[#E8C7C3] flex-shrink-0 mt-1" size={20} />
           <div>
-            <div className="font-semibold text-barber-black">
+            <div className="font-semibold text-[#1E1E1E]">
               {service.name}
             </div>
-            <div className="text-barber-grey-600 text-sm">
-              {service.durationMinutes} Minuten • ab {service.price.toFixed(2)} CHF
+            <div className="text-[#8A8A8A] text-sm">
+              {service.durationMinutes} Minuten • {service.price.toFixed(2)} CHF
             </div>
           </div>
         </div>
 
         <div className="flex items-start gap-3">
-          <MapPin className="text-barber-red flex-shrink-0 mt-1" size={20} />
-          <div className="text-barber-grey-700 text-sm">
+          <MapPin className="text-[#E8C7C3] flex-shrink-0 mt-1" size={20} />
+          <div className="text-[#6B6B6B] text-sm">
             Elisabethenstrasse 41, 4051 Basel, Schweiz
           </div>
         </div>
@@ -135,12 +135,12 @@ export function ContactForm({
             errorMessage={errors.firstName}
             isInvalid={!!errors.firstName}
             classNames={{
-              input: "text-barber-black",
+              input: "text-[#1E1E1E]",
               inputWrapper: [
                 "border-2",
                 errors.firstName
                   ? "border-red-500"
-                  : "border-barber-grey-200 focus-within:border-barber-red"
+                  : "border-[#E8C7C3] focus-within:border-[#E8C7C3]"
               ]
             }}
           />
@@ -156,12 +156,12 @@ export function ContactForm({
             errorMessage={errors.lastName}
             isInvalid={!!errors.lastName}
             classNames={{
-              input: "text-barber-black",
+              input: "text-[#1E1E1E]",
               inputWrapper: [
                 "border-2",
                 errors.lastName
                   ? "border-red-500"
-                  : "border-barber-grey-200 focus-within:border-barber-red"
+                  : "border-[#E8C7C3] focus-within:border-[#E8C7C3]"
               ]
             }}
           />
@@ -179,12 +179,12 @@ export function ContactForm({
           errorMessage={errors.email}
           isInvalid={!!errors.email}
           classNames={{
-            input: "text-barber-black",
+            input: "text-[#1E1E1E]",
             inputWrapper: [
               "border-2",
               errors.email
                 ? "border-red-500"
-                : "border-barber-grey-200 focus-within:border-barber-red"
+                : "border-[#E8C7C3] focus-within:border-[#E8C7C3]"
             ]
           }}
         />
@@ -192,7 +192,7 @@ export function ContactForm({
         <Input
           type="tel"
           label="Telefon*"
-          placeholder="+49 123 456789"
+          placeholder="+41 123 456789"
           value={customerInfo.phone}
           onValueChange={(value) => {
             onCustomerInfoChange({ ...customerInfo, phone: value });
@@ -201,12 +201,12 @@ export function ContactForm({
           errorMessage={errors.phone}
           isInvalid={!!errors.phone}
           classNames={{
-            input: "text-barber-black",
+            input: "text-[#1E1E1E]",
             inputWrapper: [
               "border-2",
               errors.phone
                 ? "border-red-500"
-                : "border-barber-grey-200 focus-within:border-barber-red"
+                : "border-[#E8C7C3] focus-within:border-[#E8C7C3]"
             ]
           }}
         />
@@ -215,13 +215,13 @@ export function ContactForm({
           isSelected={privacyAccepted}
           onValueChange={onPrivacyChange}
           classNames={{
-            wrapper: "before:border-barber-grey-300",
+            wrapper: "before:border-[#E8C7C3]",
             icon: "text-white"
           }}
         >
-          <span className="text-sm text-barber-grey-700">
+          <span className="text-sm text-[#6B6B6B]">
             Ich habe die{" "}
-            <a href="/datenschutz" className="text-barber-red underline" target="_blank">
+            <a href="/datenschutz" className="text-[#E8C7C3] underline" target="_blank">
               Datenschutzhinweise
             </a>{" "}
             gelesen und stimme diesen zu.

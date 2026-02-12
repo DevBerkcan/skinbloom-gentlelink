@@ -1,3 +1,4 @@
+// components/ProfileCard.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -12,7 +13,6 @@ export const ProfileCard = () => {
       transition={{ duration: 0.5 }}
       className="relative mb-8 text-center"
     >
-      {/* Floating scissors decoration with cutting animation */}
       <motion.div
         animate={{
           y: [0, -15, 0],
@@ -23,7 +23,7 @@ export const ProfileCard = () => {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute -top-6 right-8 text-barber-red opacity-40"
+        className="absolute -top-6 right-8 text-[#E8C7C3] opacity-40"
         aria-hidden="true"
       >
         <motion.div
@@ -40,7 +40,6 @@ export const ProfileCard = () => {
         </motion.div>
       </motion.div>
 
-      {/* Second scissors on the left for balance */}
       <motion.div
         initial={{ opacity: 0, scale: 0 }}
         animate={{
@@ -60,18 +59,17 @@ export const ProfileCard = () => {
             delay: 0.5,
           },
         }}
-        className="absolute -top-4 left-6 text-barber-gold opacity-30"
+        className="absolute -top-4 left-6 text-[#C09995] opacity-30"
         aria-hidden="true"
       >
         <Scissors size={28} strokeWidth={2} />
       </motion.div>
 
-      {/* Logo/Avatar */}
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-        className="mx-auto mb-6 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full shadow-lg ring-4 ring-barber-white"
+        className="mx-auto mb-6 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full shadow-lg ring-4 ring-white"
       >
         <Image
           src="/logo.png"
@@ -83,46 +81,42 @@ export const ProfileCard = () => {
         />
       </motion.div>
 
-      {/* Salon Name */}
       <motion.h1
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="mb-3 text-3xl font-extrabold tracking-tight text-barber-black"
+        className="mb-3 text-3xl font-extrabold tracking-tight text-[#1E1E1E]"
       >
-        SKINBLOOM AESTHETICS<span className="text-barber-red">.</span>
+        SKINBLOOM AESTHETICS<span className="text-[#E8C7C3]">.</span>
       </motion.h1>
 
-      {/* Subtitle */}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="mb-4 px-4 text-base text-barber-grey-600 text-balance"
+        className="mb-4 px-4 text-base text-[#8A8A8A] text-balance"
       >
-        Dein Skinbloom Aesthetics
+        Deine ästhetische Hautpflege in Basel
       </motion.p>
 
-      {/* Location & Booking Info */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
-        className="flex flex-col items-center justify-center gap-2 text-sm text-barber-grey-500"
+        className="flex flex-col items-center justify-center gap-2 text-sm text-[#8A8A8A]"
       >
         <div className="flex items-center gap-2">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-barber-red" />
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#E8C7C3]" />
           <span>Elisabethenstrasse 41, 4051 Basel, Schweiz</span>
         </div>
         <span className="text-xs">Termin nur mit Online-Buchung</span>
       </motion.div>
 
-      {/* Decorative line */}
       <motion.div
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ delay: 0.6, duration: 0.5 }}
-        className="mx-auto mt-6 h-1 w-16 rounded-full bg-gradient-to-r from-barber-red via-barber-gold to-barber-red"
+        className="mx-auto mt-6 h-1 w-16 rounded-full bg-gradient-to-r from-[#E8C7C3] via-[#C09995] to-[#E8C7C3]"
       />
     </motion.div>
   );

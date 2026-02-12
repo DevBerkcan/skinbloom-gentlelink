@@ -3,7 +3,7 @@
 import { ProfileCard } from "@/components/ProfileCard";
 import { LinkButton } from "@/components/LinkButton";
 import { Footer } from "@/components/Footer";
-import { AnimatedScissorsDecor } from "@/components/FloatingScissors";
+import { FloatingSparkles } from "@/components/FloatingSparkles";
 import { ShareButton } from "@/components/ShareButton";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { socialLinks } from "@/lib/config";
@@ -18,7 +18,7 @@ export default function Home() {
       <div className="fixed inset-0 bg-gradient-to-br from-barber-cream via-barber-grey-50 to-barber-white" />
 
       {/* Animierte schwebende Scheren */}
-      <AnimatedScissorsDecor />
+      <FloatingSparkles />
 
       {/* Floating Share Button */}
       <ShareButton variant="floating" />

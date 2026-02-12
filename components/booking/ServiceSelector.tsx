@@ -1,4 +1,3 @@
-// components/booking/ServiceSelector.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,29 +19,27 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
   const [loading, setLoading] = useState(true);
   const [loadingServices, setLoadingServices] = useState<Record<string, boolean>>({});
 
-useEffect(() => {
-  async function loadCategories() {
-    try {
-      const data = await getServiceCategories();
-      setCategories(data);
-      // Don't set expandedId - start with all categories closed
-    } catch {
-      const defaultCategory: ServiceCategory = {
-        id: "default",
-        name: "Alle Services",
-        description: null,
-        displayOrder: 0,
-        isActive: true,
-        services: fallbackServices
-      };
-      setCategories([defaultCategory]);
-      // Don't set expandedId - start closed
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await getServiceCategories();
+        setCategories(data);
+      } catch {
+        const defaultCategory: ServiceCategory = {
+          id: "default",
+          name: "Alle Services",
+          description: null,
+          displayOrder: 0,
+          isActive: true,
+          services: fallbackServices
+        };
+        setCategories([defaultCategory]);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
-  loadCategories();
-}, [fallbackServices]);
+    loadCategories();
+  }, [fallbackServices]);
 
   const handleToggleCategory = async (categoryId: string) => {
     if (expandedId === categoryId) {
@@ -52,18 +49,15 @@ useEffect(() => {
 
     setExpandedId(categoryId);
 
-    // Check if we already have services for this category
     const category = categories.find(c => c.id === categoryId);
     if (category && category.services.length > 0) {
-      return; // Already have services
+      return;
     }
 
-    // Fetch services for this category
     setLoadingServices(prev => ({ ...prev, [categoryId]: true }));
     
     try {
       const services = await getServicesByCategory(categoryId);
-      
       setCategories(prevCategories => 
         prevCategories.map(cat => 
           cat.id === categoryId 
@@ -81,7 +75,7 @@ useEffect(() => {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <p className="text-barber-grey-600">Services werden geladen...</p>
+        <p className="text-[#8A8A8A]">Services werden geladen...</p>
       </div>
     );
   }
@@ -89,10 +83,10 @@ useEffect(() => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-barber-black mb-2">
+        <h2 className="text-2xl font-bold text-[#1E1E1E] mb-2">
           Wähle deine Leistung
         </h2>
-        <p className="text-barber-grey-600">
+        <p className="text-[#8A8A8A]">
           Schritt 1 von 3
         </p>
       </div>
@@ -103,29 +97,29 @@ useEffect(() => {
           const isExpanded = expandedId === category.id;
           
           return (
-            <div key={category.id} className="border-2 border-barber-grey-200 rounded-xl overflow-hidden">
+            <div key={category.id} className="border-2 border-[#E8C7C3] rounded-xl overflow-hidden">
               <button
                 onClick={() => handleToggleCategory(category.id)}
-                className="w-full flex items-center justify-between p-4 bg-barber-grey-50 hover:bg-barber-grey-100 transition-colors"
+                className="w-full flex items-center justify-between p-4 bg-[#F5EDEB] hover:bg-[#F0E6E4] transition-colors"
               >
                 <div className="text-left">
-                  <h3 className="font-bold text-barber-black">{category.name}</h3>
+                  <h3 className="font-bold text-[#1E1E1E]">{category.name}</h3>
                   {category.description && (
-                    <p className="text-sm text-barber-grey-600">{category.description}</p>
+                    <p className="text-sm text-[#8A8A8A]">{category.description}</p>
                   )}
                 </div>
-                {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                {isExpanded ? <ChevronUp size={20} className="text-[#8A8A8A]" /> : <ChevronDown size={20} className="text-[#8A8A8A]" />}
               </button>
               
               {isExpanded && (
                 <div className="p-4 space-y-3">
                   {isLoading ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-6 h-6 text-barber-red animate-spin" />
-                      <span className="ml-2 text-barber-grey-600">Services werden geladen...</span>
+                      <Loader2 className="w-6 h-6 text-[#E8C7C3] animate-spin" />
+                      <span className="ml-2 text-[#8A8A8A]">Services werden geladen...</span>
                     </div>
                   ) : category.services.length === 0 ? (
-                    <p className="text-center py-4 text-barber-grey-600">
+                    <p className="text-center py-4 text-[#8A8A8A]">
                       Keine Services in dieser Kategorie
                     </p>
                   ) : (
@@ -137,37 +131,37 @@ useEffect(() => {
                         className={`
                           transition-all cursor-pointer
                           ${selectedService?.id === service.id
-                            ? 'border-2 border-barber-red bg-barber-cream ring-2 ring-barber-red/20'
-                            : 'border-2 border-barber-grey-200 hover:border-barber-red/50'
+                            ? 'border-2 border-[#E8C7C3] bg-[#F5EDEB] ring-2 ring-[#E8C7C3]/20'
+                            : 'border-2 border-[#E8C7C3] hover:border-[#D8B0AC]'
                           }
                         `}
                       >
                         <CardBody className="p-4">
                           <div className="flex items-center gap-4">
-                            <div className="flex-shrink-0 p-3 bg-barber-red/10 rounded-xl">
-                              <Scissors className="text-barber-red" size={24} />
+                            <div className="flex-shrink-0 p-3 bg-[#E8C7C3]/10 rounded-xl">
+                              <Scissors className="text-[#E8C7C3]" size={24} />
                             </div>
                             <div className="flex-1">
-                              <h4 className="font-semibold text-barber-black">
+                              <h4 className="font-semibold text-[#1E1E1E]">
                                 {service.name}
                               </h4>
                               {service.description && (
-                                <p className="text-sm text-barber-grey-600 mt-1">
+                                <p className="text-sm text-[#8A8A8A] mt-1">
                                   {service.description}
                                 </p>
                               )}
                               <div className="flex items-center gap-4 mt-2">
-                                <span className="flex items-center gap-1 text-sm text-barber-grey-500">
+                                <span className="flex items-center gap-1 text-sm text-[#8A8A8A]">
                                   <Clock size={16} />
                                   {service.durationMinutes} Min
                                 </span>
-                                <span className="font-bold text-barber-red">
+                                <span className="font-bold text-[#E8C7C3]">
                                   {service.price.toFixed(2)} CHF
                                 </span>
                               </div>
                             </div>
                             {selectedService?.id === service.id && (
-                              <div className="w-6 h-6 bg-barber-red rounded-full flex items-center justify-center">
+                              <div className="w-6 h-6 bg-[#E8C7C3] rounded-full flex items-center justify-center">
                                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                                 </svg>

@@ -1,3 +1,4 @@
+// components/ShareButton.tsx
 "use client";
 
 import { useState } from "react";
@@ -29,10 +30,6 @@ export const ShareButton = ({ variant = "floating" }: ShareButtonProps) => {
   const shareTitle = siteConfig.name;
   const shareText = siteConfig.description;
 
-  /**
-   * Native Web Share API
-   * Funktioniert auf Mobile Devices (iOS, Android)
-   */
   const handleNativeShare = async () => {
     if (navigator.share) {
       try {
@@ -42,18 +39,13 @@ export const ShareButton = ({ variant = "floating" }: ShareButtonProps) => {
           url: shareUrl,
         });
       } catch (error) {
-        // User hat abgebrochen oder Fehler
         console.log("Share cancelled:", error);
       }
     } else {
-      // Fallback: Öffne Share-Menü
       setIsOpen(true);
     }
   };
 
-  /**
-   * Link in Zwischenablage kopieren
-   */
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -64,9 +56,6 @@ export const ShareButton = ({ variant = "floating" }: ShareButtonProps) => {
     }
   };
 
-  /**
-   * Social Media Share URLs
-   */
   const shareLinks = {
     whatsapp: `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`,
     telegram: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
@@ -82,7 +71,7 @@ export const ShareButton = ({ variant = "floating" }: ShareButtonProps) => {
         onClick={handleNativeShare}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="flex items-center gap-2 rounded-xl border-2 border-barber-grey-200 bg-barber-white px-4 py-2 text-sm font-semibold text-barber-black transition-colors hover:border-barber-red hover:bg-barber-cream"
+        className="flex items-center gap-2 rounded-xl border-2 border-[#E8C7C3] bg-white px-4 py-2 text-sm font-semibold text-[#1E1E1E] transition-colors hover:border-[#D8B0AC] hover:bg-[#F5EDEB]"
       >
         <Share2 size={18} />
         <span>Teilen</span>
@@ -92,7 +81,6 @@ export const ShareButton = ({ variant = "floating" }: ShareButtonProps) => {
 
   return (
     <>
-      {/* Floating Share Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         initial={{ scale: 0 }}
@@ -100,7 +88,7 @@ export const ShareButton = ({ variant = "floating" }: ShareButtonProps) => {
         transition={{ delay: 1, type: "spring", stiffness: 200 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-barber-red to-barber-darkRed text-barber-white shadow-lg transition-shadow hover:shadow-xl"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#E8C7C3] to-[#D8B0AC] text-white shadow-lg transition-shadow hover:shadow-xl"
         aria-label="Seite teilen"
       >
         <AnimatePresence mode="wait">
@@ -128,11 +116,9 @@ export const ShareButton = ({ variant = "floating" }: ShareButtonProps) => {
         </AnimatePresence>
       </motion.button>
 
-      {/* Share Menu */}
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -141,30 +127,28 @@ export const ShareButton = ({ variant = "floating" }: ShareButtonProps) => {
               className="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm"
             />
 
-            {/* Share Panel */}
             <motion.div
               initial={{ opacity: 0, y: 100, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 100, scale: 0.9 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="fixed bottom-24 right-6 z-40 w-80 rounded-2xl border-2 border-barber-grey-200 bg-barber-white p-6 shadow-2xl"
+              className="fixed bottom-24 right-6 z-40 w-80 rounded-2xl border-2 border-[#E8C7C3] bg-white p-6 shadow-2xl"
             >
-              <h3 className="mb-4 text-lg font-bold text-barber-black">
+              <h3 className="mb-4 text-lg font-bold text-[#1E1E1E]">
                 Seite teilen
               </h3>
 
-              {/* Copy Link */}
               <button
                 onClick={copyToClipboard}
-                className="mb-4 flex w-full items-center justify-between rounded-xl border-2 border-barber-grey-200 bg-barber-grey-50 px-4 py-3 text-sm transition-colors hover:border-barber-red"
+                className="mb-4 flex w-full items-center justify-between rounded-xl border-2 border-[#E8C7C3] bg-[#F5EDEB] px-4 py-3 text-sm transition-colors hover:border-[#D8B0AC]"
               >
-                <span className="truncate font-medium text-barber-grey-700">
+                <span className="truncate font-medium text-[#1E1E1E]">
                   {shareUrl.replace(/^https?:\/\//, "")}
                 </span>
                 {copied ? (
-                  <Check size={18} className="text-green-600" />
+                  <Check size={18} className="text-[#E8C7C3]" />
                 ) : (
-                  <Copy size={18} className="text-barber-grey-400" />
+                  <Copy size={18} className="text-[#8A8A8A]" />
                 )}
               </button>
 
@@ -173,49 +157,48 @@ export const ShareButton = ({ variant = "floating" }: ShareButtonProps) => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="mb-3 text-center text-sm text-green-600"
+                  className="mb-3 text-center text-sm text-[#E8C7C3]"
                 >
                   ✓ Link kopiert!
                 </motion.p>
               )}
 
-              {/* Social Share Buttons */}
               <div className="grid grid-cols-3 gap-3">
                 <ShareLink
                   href={shareLinks.whatsapp}
                   label="WhatsApp"
                   icon={MessageCircle}
-                  color="bg-green-500"
+                  color="bg-[#E8C7C3]"
                 />
                 <ShareLink
                   href={shareLinks.telegram}
                   label="Telegram"
                   icon={Send}
-                  color="bg-blue-500"
+                  color="bg-[#D8B0AC]"
                 />
                 <ShareLink
                   href={shareLinks.facebook}
                   label="Facebook"
                   icon={Facebook}
-                  color="bg-blue-600"
+                  color="bg-[#C09995]"
                 />
                 <ShareLink
                   href={shareLinks.twitter}
                   label="Twitter"
                   icon={Twitter}
-                  color="bg-sky-500"
+                  color="bg-[#A8827E]"
                 />
                 <ShareLink
                   href={shareLinks.linkedin}
                   label="LinkedIn"
                   icon={Linkedin}
-                  color="bg-blue-700"
+                  color="bg-[#8A8A8A]"
                 />
                 <ShareLink
                   href={shareLinks.email}
                   label="E-Mail"
                   icon={Mail}
-                  color="bg-barber-grey-600"
+                  color="bg-[#6B6B6B]"
                 />
               </div>
             </motion.div>

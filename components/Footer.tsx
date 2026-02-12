@@ -1,3 +1,4 @@
+// components/Footer.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -30,7 +31,6 @@ export const Footer = () => {
       transition={{ delay: 0.8 }}
       className="mt-12 pb-8 text-center"
     >
-      {/* Social icons */}
       <div className="mb-4 flex items-center justify-center gap-4">
         {socialLinks.map((social, index) => (
           <motion.a
@@ -44,34 +44,32 @@ export const Footer = () => {
             transition={{ delay: 0.9 + index * 0.1 }}
             whileHover={{ scale: 1.2, rotate: 5 }}
             whileTap={{ scale: 0.9 }}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-barber-grey-200 text-barber-grey-600 transition-colors hover:bg-barber-red hover:text-barber-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F0E6E4] text-[#8A8A8A] transition-colors hover:bg-[#E8C7C3] hover:text-white"
           >
             <social.icon size={18} />
           </motion.a>
         ))}
       </div>
 
-      {/* Legal links */}
-      <div className="mb-4 flex items-center justify-center gap-4 text-xs text-barber-grey-500">
+      <div className="mb-4 flex items-center justify-center gap-4 text-xs text-[#8A8A8A]">
         <a
           href="/impressum"
-          className="transition-colors hover:text-barber-red hover:underline"
+          className="transition-colors hover:text-[#E8C7C3] hover:underline"
         >
           Impressum
         </a>
-        <span className="text-barber-grey-300">•</span>
+        <span className="text-[#F0E6E4]">•</span>
         <a
           href="/datenschutz"
-          className="transition-colors hover:text-barber-red hover:underline"
+          className="transition-colors hover:text-[#E8C7C3] hover:underline"
         >
           Datenschutz
         </a>
-        <span className="text-barber-grey-300">•</span>
+        <span className="text-[#F0E6E4]">•</span>
         <KlaroCookieSettingsButton />
       </div>
 
-      {/* Copyright */}
-      <p className="text-xs text-barber-grey-400">
+      <p className="text-xs text-[#8A8A8A]">
         © {new Date().getFullYear()} Skinbloom Aesthetics. Alle Rechte vorbehalten.
       </p>
     </motion.footer>

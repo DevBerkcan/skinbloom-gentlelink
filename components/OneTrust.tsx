@@ -1,3 +1,4 @@
+// components/OneTrust.tsx
 "use client";
 
 import Script from "next/script";
@@ -7,26 +8,11 @@ interface OneTrustProps {
   domainId: string;
 }
 
-/**
- * OneTrust Cookie Consent Banner
- *
- * Setup-Anleitung:
- * 1. Gehe zu https://www.onetrust.com/
- * 2. Erstelle einen Account oder logge dich ein
- * 3. Kopiere deine Domain Script ID aus dem Dashboard
- * 4. Füge sie in lib/config.ts unter oneTrustDomainId ein
- *
- * Hinweis: Für Test-Zwecke ist ein Beispiel-ID hinterlegt.
- */
 export const OneTrust = ({ domainId }: OneTrustProps) => {
   useEffect(() => {
-    // OneTrust Callback-Funktion für Consent-Änderungen
     if (typeof window !== "undefined") {
-      // @ts-ignore
-      window.OptanonWrapper = function () {
+      (window as any).OptanonWrapper = function () {
         console.log("OneTrust: Consent updated");
-
-        // Event für Consent-Änderungen
         window.dispatchEvent(new Event("onetrust-consent-updated"));
       };
     }
@@ -39,7 +25,6 @@ export const OneTrust = ({ domainId }: OneTrustProps) => {
 
   return (
     <>
-      {/* OneTrust Cookies Consent Notice start */}
       <Script
         id="onetrust-banner-sdk"
         src="https://cdn.cookielaw.org/scripttemplates/otSDKStub.js"
@@ -48,15 +33,12 @@ export const OneTrust = ({ domainId }: OneTrustProps) => {
         data-domain-script={domainId}
         strategy="beforeInteractive"
       />
-
-      {/* OneTrust Cookie Settings Button (optional) */}
       <Script
         id="onetrust-init"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
           __html: `
             function OptanonWrapper() {
-              // Callback wird aufgerufen wenn Consent geändert wird
               console.log('OneTrust loaded');
             }
           `,
@@ -66,23 +48,17 @@ export const OneTrust = ({ domainId }: OneTrustProps) => {
   );
 };
 
-/**
- * OneTrust Cookie Settings Button
- * Zeigt einen Button an, mit dem User ihre Cookie-Einstellungen ändern können
- */
 export const OneTrustSettingsButton = () => {
   const openPreferences = () => {
-    // @ts-ignore - OneTrust global function
-    if (typeof window !== "undefined" && window.OneTrust) {
-      // @ts-ignore
-      window.OneTrust.ToggleInfoDisplay();
+    if (typeof window !== "undefined" && (window as any).OneTrust) {
+      (window as any).OneTrust.ToggleInfoDisplay();
     }
   };
 
   return (
     <button
       onClick={openPreferences}
-      className="text-sm text-barber-grey-500 hover:text-barber-red transition-colors underline"
+      className="text-sm text-[#8A8A8A] hover:text-[#E8C7C3] transition-colors underline"
       aria-label="Cookie-Einstellungen ändern"
     >
       Cookie-Einstellungen

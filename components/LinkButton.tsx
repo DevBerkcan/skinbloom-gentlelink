@@ -60,8 +60,8 @@ export const LinkButton = ({
         hover:shadow-xl focus-visible:shadow-xl
         ${
           isPrimary
-            ? "bg-gradient-to-r from-barber-red to-barber-darkRed text-barber-white hover:from-barber-darkRed hover:to-barber-red"
-            : "border-2 border-barber-grey-200 bg-barber-white text-barber-black hover:border-barber-red hover:bg-barber-cream"
+            ? "bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white hover:from-[#D8B0AC] hover:to-[#C09995]"
+            : "border-2 border-[#E8C7C3] bg-white text-[#1E1E1E] hover:border-[#D8B0AC] hover:bg-[#F5EDEB]"
         }
       `}
       aria-label={`${label} öffnen`}
@@ -69,7 +69,7 @@ export const LinkButton = ({
       {/* Background gradient effect on hover */}
       <motion.div
         className={`absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-10 ${
-          isPrimary ? "bg-barber-white" : "bg-barber-red"
+          isPrimary ? "bg-white" : "bg-[#E8C7C3]"
         }`}
         initial={false}
       />
@@ -82,7 +82,7 @@ export const LinkButton = ({
       >
         <Icon
           size={24}
-          className={isPrimary ? "text-barber-white" : "text-barber-red"}
+          className={isPrimary ? "text-white" : "text-[#E8C7C3]"}
         />
       </motion.div>
 
@@ -94,7 +94,7 @@ export const LinkButton = ({
       {/* Arrow indicator */}
       <motion.svg
         className={`relative z-10 h-5 w-5 ${
-          isPrimary ? "text-barber-white" : "text-barber-grey-400"
+          isPrimary ? "text-white" : "text-[#8A8A8A]"
         }`}
         fill="none"
         viewBox="0 0 24 24"
@@ -131,7 +131,7 @@ export const LinkButton = ({
         >
           <Scissors
             size={16}
-            className={isPrimary ? "text-barber-white" : "text-barber-red"}
+            className={isPrimary ? "text-white" : "text-[#E8C7C3]"}
           />
         </motion.div>
       )}

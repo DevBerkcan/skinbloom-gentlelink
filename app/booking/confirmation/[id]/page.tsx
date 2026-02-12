@@ -82,65 +82,65 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-barber-cream to-barber-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white">
       <div className="max-w-2xl mx-auto px-4 py-12">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-barber-red to-barber-darkRed text-white p-8 text-center">
+          <div className="bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white p-8 text-center">
             <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="text-barber-red" size={48} />
+              <CheckCircle className="text-[#E8C7C3]" size={48} />
             </div>
             <h1 className="text-3xl font-bold mb-2">Termin bestätigt!</h1>
-            <p className="text-barber-cream">Buchungsnummer: {booking.bookingNumber}</p>
+            <p className="text-white/90">Buchungsnummer: {booking.bookingNumber}</p>
           </div>
 
           <div className="p-8 space-y-6">
-            <div className="bg-barber-cream rounded-xl p-6 space-y-4">
+            <div className="bg-[#F5EDEB] rounded-xl p-6 space-y-4">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-barber-red/10 rounded-lg flex items-center justify-center">
-                  <Calendar className="text-barber-red" size={20} />
+                <div className="w-10 h-10 bg-[#E8C7C3]/10 rounded-lg flex items-center justify-center">
+                  <Calendar className="text-[#E8C7C3]" size={20} />
                 </div>
                 <div>
-                  <p className="text-sm text-barber-grey-600 mb-1">Datum & Uhrzeit</p>
-                  <p className="font-semibold text-barber-black">{formatDate(booking.booking.bookingDate)}</p>
-                  <p className="text-barber-grey-700">{booking.booking.startTime} - {booking.booking.endTime} Uhr</p>
+                  <p className="text-sm text-[#8A8A8A] mb-1">Datum & Uhrzeit</p>
+                  <p className="font-semibold text-[#1E1E1E]">{formatDate(booking.booking.bookingDate)}</p>
+                  <p className="text-[#6B6B6B]">{booking.booking.startTime} - {booking.booking.endTime} Uhr</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-barber-red/10 rounded-lg flex items-center justify-center">
-                  <Scissors className="text-barber-red" size={20} />
+                <div className="w-10 h-10 bg-[#E8C7C3]/10 rounded-lg flex items-center justify-center">
+                  <Scissors className="text-[#E8C7C3]" size={20} />
                 </div>
                 <div>
-                  <p className="text-sm text-barber-grey-600 mb-1">Leistung</p>
-                  <p className="font-semibold text-barber-black">{booking.booking.serviceName}</p>
-                  <p className="text-barber-grey-700">{booking.booking.price.toFixed(2)} CHF</p>
+                  <p className="text-sm text-[#8A8A8A] mb-1">Leistung</p>
+                  <p className="font-semibold text-[#1E1E1E]">{booking.booking.serviceName}</p>
+                  <p className="text-[#6B6B6B]">{booking.booking.price.toFixed(2)} CHF</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-barber-red/10 rounded-lg flex items-center justify-center">
-                  <User className="text-barber-red" size={20} />
+                <div className="w-10 h-10 bg-[#E8C7C3]/10 rounded-lg flex items-center justify-center">
+                  <User className="text-[#E8C7C3]" size={20} />
                 </div>
                 <div>
-                  <p className="text-sm text-barber-grey-600 mb-1">Kunde</p>
-                  <p className="font-semibold text-barber-black">{booking.customer.firstName} {booking.customer.lastName}</p>
-                  <div className="flex items-center gap-2 text-sm text-barber-grey-700">
+                  <p className="text-sm text-[#8A8A8A] mb-1">Kunde</p>
+                  <p className="font-semibold text-[#1E1E1E]">{booking.customer.firstName} {booking.customer.lastName}</p>
+                  <div className="flex items-center gap-2 text-sm text-[#6B6B6B]">
                     <Mail size={14} /> {booking.customer.email}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-              <p className="text-sm text-blue-900 flex items-start gap-2">
-                <Mail className="flex-shrink-0 mt-0.5" size={16} />
+            <div className="bg-[#F5EDEB] border-2 border-[#E8C7C3] rounded-xl p-4">
+              <p className="text-sm text-[#1E1E1E] flex items-start gap-2">
+                <Mail className="flex-shrink-0 mt-0.5 text-[#E8C7C3]" size={16} />
                 <span>Eine Bestätigung wurde an <strong>{booking.customer.email}</strong> gesendet.</span>
               </p>
             </div>
 
             <div className="pt-4">
               <Link href="/">
-                <Button className="w-full bg-barber-red text-white">Zur Startseite</Button>
+                <Button className="w-full bg-[#E8C7C3] text-white">Zur Startseite</Button>
               </Link>
             </div>
           </div>
