@@ -125,48 +125,40 @@ export async function getBlockedSlots(
   return response.json();
 }
 
-// lib/api/admin.ts - Fix the createBlockedSlot function
-
-// Create Blocked Time Slot
 export async function createBlockedSlot(
   data: CreateBlockedSlot
 ): Promise<BlockedTimeSlot> {
-  // Transform the data to match backend schema
-  const [year, month, day] = data.blockDate.split('-').map(Number);
-  const [startHour, startMinute] = data.startTime.split(':').map(Number);
-  const [endHour, endMinute] = data.endTime.split(':').map(Number);
-
-  const transformedData = {
-    blockDate: {
-      year,
-      month,
-      day,
-      dayOfWeek: new Date(data.blockDate + 'T00:00:00').getDay()
-    },
-    startTime: {
-      hour: startHour,
-      minute: startMinute
-    },
-    endTime: {
-      hour: endHour,
-      minute: endMinute
-    },
-    reason: data.reason || null
-  };
-
   const response = await fetch(`${API_BASE_URL}/BlockedTimeSlots`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(transformedData),
+    body: JSON.stringify(data),
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ 
-      message: "Fehler beim Erstellen des blockierten Zeitslots" 
-    }));
+    const error = await response.json();
     throw new Error(error.message || "Fehler beim Erstellen des blockierten Zeitslots");
+  }
+
+  return response.json();
+}
+
+// NEW: Create Blocked Time Slots for Date Range
+export async function createBlockedDateRange(
+  data: CreateBlockedDateRange
+): Promise<BlockedTimeSlot[]> {
+  const response = await fetch(`${API_BASE_URL}/BlockedTimeSlots/range`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Fehler beim Erstellen der blockierten Zeitslots");
   }
 
   return response.json();
@@ -301,6 +293,15 @@ export interface BlockedTimeSlot {
 
 export interface CreateBlockedSlot {
   blockDate: string;
+  startTime: string;
+  endTime: string;
+  reason?: string;
+}
+
+// NEW: Date range type
+export interface CreateBlockedDateRange {
+  fromDate: string;
+  toDate: string;
   startTime: string;
   endTime: string;
   reason?: string;

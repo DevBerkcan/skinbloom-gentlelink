@@ -5,15 +5,18 @@ import { Card, CardBody, CardHeader } from "@nextui-org/card";
 import { Button } from "@nextui-org/button";
 import { Input, Textarea } from "@nextui-org/input";
 import { Spinner } from "@nextui-org/spinner";
+import { Switch } from "@nextui-org/switch";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@nextui-org/modal";
-import { Trash2, Plus, Calendar, Clock, AlertCircle } from "lucide-react";
+import { Trash2, Plus, Calendar, Clock, AlertCircle, CalendarRange } from "lucide-react";
 
 import {
   getBlockedSlots,
   createBlockedSlot,
+  createBlockedDateRange,
   deleteBlockedSlot,
   type BlockedTimeSlot,
   type CreateBlockedSlot,
+  type CreateBlockedDateRange,
 } from "@/lib/api/admin";
 
 export default function BlockedSlotsPage() {
@@ -23,10 +26,22 @@ export default function BlockedSlotsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
+  
+  // Toggle between single day and date range
+  const [isDateRange, setIsDateRange] = useState(false);
 
-  // Form state
+  // Form state for single day
   const [formData, setFormData] = useState<CreateBlockedSlot>({
     blockDate: "",
+    startTime: "",
+    endTime: "",
+    reason: "",
+  });
+
+  // Form state for date range
+  const [rangeFormData, setRangeFormData] = useState<CreateBlockedDateRange>({
+    fromDate: "",
+    toDate: "",
     startTime: "",
     endTime: "",
     reason: "",
@@ -51,23 +66,49 @@ export default function BlockedSlotsPage() {
   }
 
   async function handleCreateSlot() {
-    if (!formData.blockDate || !formData.startTime || !formData.endTime) {
-      setError("Bitte alle Pflichtfelder ausfüllen");
-      return;
-    }
+    if (isDateRange) {
+      // Validate date range
+      if (!rangeFormData.fromDate || !rangeFormData.toDate || !rangeFormData.startTime || !rangeFormData.endTime) {
+        setError("Bitte alle Pflichtfelder ausfüllen");
+        return;
+      }
 
-    setSubmitting(true);
-    setError(null);
+      setSubmitting(true);
+      setError(null);
 
-    try {
-      await createBlockedSlot(formData);
-      await loadBlockedSlots();
-      onClose();
-      setFormData({ blockDate: "", startTime: "", endTime: "", reason: "" });
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
+      try {
+        await createBlockedDateRange(rangeFormData);
+        await loadBlockedSlots();
+        onClose();
+        // Reset forms
+        setRangeFormData({ fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" });
+        setFormData({ blockDate: "", startTime: "", endTime: "", reason: "" });
+        setIsDateRange(false);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setSubmitting(false);
+      }
+    } else {
+      // Validate single day
+      if (!formData.blockDate || !formData.startTime || !formData.endTime) {
+        setError("Bitte alle Pflichtfelder ausfüllen");
+        return;
+      }
+
+      setSubmitting(true);
+      setError(null);
+
+      try {
+        await createBlockedSlot(formData);
+        await loadBlockedSlots();
+        onClose();
+        setFormData({ blockDate: "", startTime: "", endTime: "", reason: "" });
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setSubmitting(false);
+      }
     }
   }
 
@@ -84,13 +125,22 @@ export default function BlockedSlotsPage() {
     }
   }
 
+  const handleModalClose = () => {
+    onClose();
+    // Reset forms
+    setFormData({ blockDate: "", startTime: "", endTime: "", reason: "" });
+    setRangeFormData({ fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" });
+    setIsDateRange(false);
+    setError(null);
+  };
+
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split("T")[0];
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white flex items-center justify-center">
-        <Spinner size="lg" color="danger" className="text-[#E8C7C3]" />
+        <Spinner size="lg" className="text-[#E8C7C3]" />
       </div>
     );
   }
@@ -110,7 +160,10 @@ export default function BlockedSlotsPage() {
               </p>
             </div>
             <Button
-              onPress={onOpen}
+              onPress={() => {
+                setIsDateRange(false);
+                onOpen();
+              }}
               className="bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white font-semibold"
               startContent={<Plus size={20} />}
             >
@@ -200,44 +253,43 @@ export default function BlockedSlotsPage() {
         {/* Create Modal */}
         <Modal 
           isOpen={isOpen} 
-          onClose={onClose} 
+          onClose={handleModalClose} 
           size="2xl"
           className="bg-white"
         >
           <ModalContent>
             <ModalHeader className="text-2xl font-bold text-[#1E1E1E] border-b border-[#E8C7C3]/20">
-              Zeitslot blockieren
+              <div className="flex items-center justify-between w-full">
+                <span>Zeitslot blockieren</span>
+                <div className="flex items-center gap-2">
+                  <Calendar size={18} className={!isDateRange ? "text-[#E8C7C3]" : "text-[#8A8A8A]"} />
+                  <Switch
+                    isSelected={isDateRange}
+                    onValueChange={setIsDateRange}
+                    size="sm"
+                    color="danger"
+                    classNames={{
+                      wrapper: "bg-[#E8C7C3]/30",
+                    }}
+                  />
+                  <CalendarRange size={18} className={isDateRange ? "text-[#E8C7C3]" : "text-[#8A8A8A]"} />
+                </div>
+              </div>
             </ModalHeader>
             <ModalBody className="py-6">
-              <div className="space-y-4">
-                <Input
-                  type="date"
-                  label="Datum"
-                  labelPlacement="outside"
-                  placeholder="TT.MM.JJJJ"
-                  value={formData.blockDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, blockDate: e.target.value })
-                  }
-                  min={today}
-                  required
-                  variant="bordered"
-                  classNames={{
-                    label: "text-[#1E1E1E] font-medium",
-                    input: "text-[#1E1E1E]",
-                    inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
-                  }}
-                />
-                <div className="grid grid-cols-2 gap-4">
+              {!isDateRange ? (
+                // Single Day Form
+                <div className="space-y-4">
                   <Input
-                    type="time"
-                    label="Startzeit"
+                    type="date"
+                    label="Datum"
                     labelPlacement="outside"
-                    placeholder="--:--"
-                    value={formData.startTime}
+                    placeholder="TT.MM.JJJJ"
+                    value={formData.blockDate}
                     onChange={(e) =>
-                      setFormData({ ...formData, startTime: e.target.value })
+                      setFormData({ ...formData, blockDate: e.target.value })
                     }
+                    min={today}
                     required
                     variant="bordered"
                     classNames={{
@@ -246,17 +298,52 @@ export default function BlockedSlotsPage() {
                       inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
                     }}
                   />
-                  <Input
-                    type="time"
-                    label="Endzeit"
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      type="time"
+                      label="Startzeit"
+                      labelPlacement="outside"
+                      placeholder="--:--"
+                      value={formData.startTime}
+                      onChange={(e) =>
+                        setFormData({ ...formData, startTime: e.target.value })
+                      }
+                      required
+                      variant="bordered"
+                      classNames={{
+                        label: "text-[#1E1E1E] font-medium",
+                        input: "text-[#1E1E1E]",
+                        inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                      }}
+                    />
+                    <Input
+                      type="time"
+                      label="Endzeit"
+                      labelPlacement="outside"
+                      placeholder="--:--"
+                      value={formData.endTime}
+                      onChange={(e) =>
+                        setFormData({ ...formData, endTime: e.target.value })
+                      }
+                      required
+                      variant="bordered"
+                      classNames={{
+                        label: "text-[#1E1E1E] font-medium",
+                        input: "text-[#1E1E1E]",
+                        inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                      }}
+                    />
+                  </div>
+                  <Textarea
+                    label="Grund (optional)"
                     labelPlacement="outside"
-                    placeholder="--:--"
-                    value={formData.endTime}
+                    placeholder="z.B. Urlaub, Termin außer Haus, Krankheit..."
+                    value={formData.reason}
                     onChange={(e) =>
-                      setFormData({ ...formData, endTime: e.target.value })
+                      setFormData({ ...formData, reason: e.target.value })
                     }
-                    required
                     variant="bordered"
+                    minRows={3}
                     classNames={{
                       label: "text-[#1E1E1E] font-medium",
                       input: "text-[#1E1E1E]",
@@ -264,29 +351,111 @@ export default function BlockedSlotsPage() {
                     }}
                   />
                 </div>
-                <Textarea
-                  label="Grund (optional)"
-                  labelPlacement="outside"
-                  placeholder="z.B. Urlaub, Termin außer Haus, Krankheit..."
-                  value={formData.reason}
-                  onChange={(e) =>
-                    setFormData({ ...formData, reason: e.target.value })
-                  }
-                  variant="bordered"
-                  minRows={3}
-                  classNames={{
-                    label: "text-[#1E1E1E] font-medium",
-                    input: "text-[#1E1E1E]",
-                    inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
-                  }}
-                />
-              </div>
+              ) : (
+                // Date Range Form
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      type="date"
+                      label="Von Datum"
+                      labelPlacement="outside"
+                      placeholder="TT.MM.JJJJ"
+                      value={rangeFormData.fromDate}
+                      onChange={(e) =>
+                        setRangeFormData({ ...rangeFormData, fromDate: e.target.value })
+                      }
+                      min={today}
+                      required
+                      variant="bordered"
+                      classNames={{
+                        label: "text-[#1E1E1E] font-medium",
+                        input: "text-[#1E1E1E]",
+                        inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                      }}
+                    />
+                    <Input
+                      type="date"
+                      label="Bis Datum"
+                      labelPlacement="outside"
+                      placeholder="TT.MM.JJJJ"
+                      value={rangeFormData.toDate}
+                      onChange={(e) =>
+                        setRangeFormData({ ...rangeFormData, toDate: e.target.value })
+                      }
+                      min={rangeFormData.fromDate || today}
+                      required
+                      variant="bordered"
+                      classNames={{
+                        label: "text-[#1E1E1E] font-medium",
+                        input: "text-[#1E1E1E]",
+                        inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                      }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      type="time"
+                      label="Startzeit"
+                      labelPlacement="outside"
+                      placeholder="--:--"
+                      value={rangeFormData.startTime}
+                      onChange={(e) =>
+                        setRangeFormData({ ...rangeFormData, startTime: e.target.value })
+                      }
+                      required
+                      variant="bordered"
+                      classNames={{
+                        label: "text-[#1E1E1E] font-medium",
+                        input: "text-[#1E1E1E]",
+                        inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                      }}
+                    />
+                    <Input
+                      type="time"
+                      label="Endzeit"
+                      labelPlacement="outside"
+                      placeholder="--:--"
+                      value={rangeFormData.endTime}
+                      onChange={(e) =>
+                        setRangeFormData({ ...rangeFormData, endTime: e.target.value })
+                      }
+                      required
+                      variant="bordered"
+                      classNames={{
+                        label: "text-[#1E1E1E] font-medium",
+                        input: "text-[#1E1E1E]",
+                        inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                      }}
+                    />
+                  </div>
+                  <Textarea
+                    label="Grund (optional)"
+                    labelPlacement="outside"
+                    placeholder="z.B. Urlaub, Termin außer Haus, Krankheit..."
+                    value={rangeFormData.reason}
+                    onChange={(e) =>
+                      setRangeFormData({ ...rangeFormData, reason: e.target.value })
+                    }
+                    variant="bordered"
+                    minRows={3}
+                    classNames={{
+                      label: "text-[#1E1E1E] font-medium",
+                      input: "text-[#1E1E1E]",
+                      inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                    }}
+                  />
+                  <p className="text-sm text-[#8A8A8A] mt-2">
+                    <CalendarRange size={16} className="inline mr-1" />
+                    Es werden für jeden Tag im ausgewählten Zeitraum blockierte Zeitslots erstellt.
+                  </p>
+                </div>
+              )}
             </ModalBody>
             <ModalFooter className="border-t border-[#E8C7C3]/20">
               <Button 
                 color="default" 
                 variant="flat" 
-                onPress={onClose}
+                onPress={handleModalClose}
                 className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold"
               >
                 Abbrechen
@@ -296,10 +465,12 @@ export default function BlockedSlotsPage() {
                 onPress={handleCreateSlot}
                 isLoading={submitting}
                 isDisabled={
-                  !formData.blockDate || !formData.startTime || !formData.endTime
+                  isDateRange
+                    ? !rangeFormData.fromDate || !rangeFormData.toDate || !rangeFormData.startTime || !rangeFormData.endTime
+                    : !formData.blockDate || !formData.startTime || !formData.endTime
                 }
               >
-                Zeitslot blockieren
+                {isDateRange ? "Zeitraum blockieren" : "Zeitslot blockieren"}
               </Button>
             </ModalFooter>
           </ModalContent>
