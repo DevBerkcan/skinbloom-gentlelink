@@ -59,6 +59,33 @@ export interface BookingResponse {
   };
 }
 
+// lib/api/booking.ts - Add this new function
+
+export interface ServiceCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  services: Service[];
+}
+
+export async function getServiceCategories(): Promise<ServiceCategory[]> {
+  const response = await fetch(`${API_BASE_URL}/services/categories`);
+  if (!response.ok) {
+    throw new Error("Fehler beim Laden der Kategorien");
+  }
+  return response.json();
+}
+
+export async function getServicesByCategory(categoryId: string): Promise<Service[]> {
+  const response = await fetch(`${API_BASE_URL}/services/services/${categoryId}`);
+  if (!response.ok) {
+    throw new Error("Fehler beim Laden der Services für diese Kategorie");
+  }
+  return response.json();
+}
+
 export async function getServices(): Promise<Service[]> {
   const response = await fetch(`${API_BASE_URL}/services`);
   if (!response.ok) {

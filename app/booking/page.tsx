@@ -53,25 +53,23 @@ export default function BookingPage() {
   });
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
 
-  // UI State
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load services on mount
-  useEffect(() => {
-    async function loadServices() {
-      try {
-        const data = await getServices();
-        setServices(data);
-      } catch (err) {
-        setError("Fehler beim Laden der Services");
-        console.error(err);
-      }
+useEffect(() => {
+  async function loadServices() {
+    try {
+      const data = await getServices();
+      setServices(data);
+    } catch (err) {
+      setError("Fehler beim Laden der Services");
+      console.error(err);
     }
-    loadServices();
-  }, []);
+  }
+  loadServices();
+}, []);
 
-  // Load availability when date is selected
   const handleLoadSlots = async (date: string) => {
     if (!selectedService) return;
 
