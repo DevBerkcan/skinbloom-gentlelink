@@ -221,7 +221,7 @@ export default function MyBookingsPage() {
                         <div>
                           <div className="text-sm text-barber-grey-600 mb-1">Preis</div>
                           <div className="font-semibold text-barber-black">
-                            ab {booking.booking.price.toFixed(2)} EUR
+                            ab {booking.booking.price.toFixed(2)} CHF
                           </div>
                         </div>
 

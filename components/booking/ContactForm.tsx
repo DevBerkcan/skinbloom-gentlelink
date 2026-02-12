@@ -108,7 +108,7 @@ export function ContactForm({
               {service.name}
             </div>
             <div className="text-barber-grey-600 text-sm">
-              {service.durationMinutes} Minuten • ab {service.price.toFixed(2)} EUR
+              {service.durationMinutes} Minuten • ab {service.price.toFixed(2)} CHF
             </div>
           </div>
         </div>

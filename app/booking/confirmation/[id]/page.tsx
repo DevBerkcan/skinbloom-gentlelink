@@ -113,7 +113,7 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
                 <div>
                   <p className="text-sm text-barber-grey-600 mb-1">Leistung</p>
                   <p className="font-semibold text-barber-black">{booking.booking.serviceName}</p>
-                  <p className="text-barber-grey-700">{booking.booking.price.toFixed(2)} EUR</p>
+                  <p className="text-barber-grey-700">{booking.booking.price.toFixed(2)} CHF</p>
                 </div>
               </div>
 

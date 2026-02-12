@@ -20,29 +20,29 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
   const [loading, setLoading] = useState(true);
   const [loadingServices, setLoadingServices] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    async function loadCategories() {
-      try {
-        const data = await getServiceCategories();
-        setCategories(data);
-        if (data.length > 0) setExpandedId(data[0].id);
-      } catch {
-        const defaultCategory: ServiceCategory = {
-          id: "default",
-          name: "Alle Services",
-          description: null,
-          displayOrder: 0,
-          isActive: true,
-          services: fallbackServices
-        };
-        setCategories([defaultCategory]);
-        setExpandedId(defaultCategory.id);
-      } finally {
-        setLoading(false);
-      }
+useEffect(() => {
+  async function loadCategories() {
+    try {
+      const data = await getServiceCategories();
+      setCategories(data);
+      // Don't set expandedId - start with all categories closed
+    } catch {
+      const defaultCategory: ServiceCategory = {
+        id: "default",
+        name: "Alle Services",
+        description: null,
+        displayOrder: 0,
+        isActive: true,
+        services: fallbackServices
+      };
+      setCategories([defaultCategory]);
+      // Don't set expandedId - start closed
+    } finally {
+      setLoading(false);
     }
-    loadCategories();
-  }, [fallbackServices]);
+  }
+  loadCategories();
+}, [fallbackServices]);
 
   const handleToggleCategory = async (categoryId: string) => {
     if (expandedId === categoryId) {
@@ -162,7 +162,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
                                   {service.durationMinutes} Min
                                 </span>
                                 <span className="font-bold text-barber-red">
-                                  {service.price.toFixed(2)} EUR
+                                  {service.price.toFixed(2)} CHF
                                 </span>
                               </div>
                             </div>

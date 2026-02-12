@@ -123,7 +123,7 @@ export const BookingEvents = {
       booking_number: bookingNumber,
       service_name: serviceName,
       price: price,
-      currency: "EUR",
+      currency: "CHF",
       // Tracking-Quelle
       utm_source: trackingData?.utmSource,
       utm_medium: trackingData?.utmMedium,
@@ -134,7 +134,7 @@ export const BookingEvents = {
     trackEvent("purchase", {
       transaction_id: bookingNumber,
       value: price,
-      currency: "EUR",
+      currency: "CHF",
       items: [
         {
           item_name: serviceName,
