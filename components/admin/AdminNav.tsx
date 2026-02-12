@@ -1,3 +1,4 @@
+// components/admin/AdminNav.tsx
 "use client";
 
 import Link from "next/link";
@@ -21,11 +22,11 @@ export function AdminNav() {
   };
 
   return (
-    <nav className="bg-barber-black text-white shadow-lg">
+    <nav className="bg-[#1E1E1E] text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
-            <Link href="/admin/dashboard" className="text-xl font-bold">
+            <Link href="/admin/dashboard" className="text-xl font-bold text-white">
               Skinbloom Aesthetics
             </Link>
 
@@ -40,8 +41,8 @@ export function AdminNav() {
                     href={item.href}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                       isActive
-                        ? "bg-barber-red text-white"
-                        : "text-barber-grey-300 hover:bg-barber-grey-800 hover:text-white"
+                        ? "bg-[#E8C7C3] text-white"
+                        : "text-[#8A8A8A] hover:bg-[#4C4C4C] hover:text-white"
                     }`}
                   >
                     <Icon size={18} />
@@ -54,7 +55,7 @@ export function AdminNav() {
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-barber-grey-300 hover:bg-barber-grey-800 hover:text-white rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-[#8A8A8A] hover:bg-[#4C4C4C] hover:text-white rounded-lg transition-colors"
           >
             <LogOut size={18} />
             <span>Abmelden</span>

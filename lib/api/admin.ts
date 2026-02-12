@@ -86,6 +86,104 @@ export interface UpdateBookingStatus {
   adminNotes?: string;
 }
 
+// Add these types and fix the API client
+
+export interface BlockedTimeSlot {
+  id: string;
+  blockDate: string;
+  startTime: string;
+  endTime: string;
+  reason?: string;
+  createdAt: string;
+}
+
+export interface CreateBlockedSlot {
+  blockDate: string;
+  startTime: string;
+  endTime: string;
+  reason?: string;
+}
+
+// Get Blocked Time Slots
+export async function getBlockedSlots(
+  fromDate?: string,
+  toDate?: string
+): Promise<BlockedTimeSlot[]> {
+  const params = new URLSearchParams();
+  if (fromDate) params.append("startDate", fromDate);
+  if (toDate) params.append("endDate", toDate);
+
+  const queryString = params.toString();
+  const url = `${API_BASE_URL}/BlockedTimeSlots${queryString ? `?${queryString}` : ""}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Fehler beim Laden der blockierten Zeitslots");
+  }
+
+  return response.json();
+}
+
+// lib/api/admin.ts - Fix the createBlockedSlot function
+
+// Create Blocked Time Slot
+export async function createBlockedSlot(
+  data: CreateBlockedSlot
+): Promise<BlockedTimeSlot> {
+  // Transform the data to match backend schema
+  const [year, month, day] = data.blockDate.split('-').map(Number);
+  const [startHour, startMinute] = data.startTime.split(':').map(Number);
+  const [endHour, endMinute] = data.endTime.split(':').map(Number);
+
+  const transformedData = {
+    blockDate: {
+      year,
+      month,
+      day,
+      dayOfWeek: new Date(data.blockDate + 'T00:00:00').getDay()
+    },
+    startTime: {
+      hour: startHour,
+      minute: startMinute
+    },
+    endTime: {
+      hour: endHour,
+      minute: endMinute
+    },
+    reason: data.reason || null
+  };
+
+  const response = await fetch(`${API_BASE_URL}/BlockedTimeSlots`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(transformedData),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ 
+      message: "Fehler beim Erstellen des blockierten Zeitslots" 
+    }));
+    throw new Error(error.message || "Fehler beim Erstellen des blockierten Zeitslots");
+  }
+
+  return response.json();
+}
+
+// Delete Blocked Time Slot
+export async function deleteBlockedSlot(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/BlockedTimeSlots/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Fehler beim Löschen des blockierten Zeitslots");
+  }
+}
+
 // API Functions
 export async function getDashboard(): Promise<DashboardOverview> {
   const response = await fetch(`${API_BASE_URL}/admin/dashboard`);
@@ -206,57 +304,4 @@ export interface CreateBlockedSlot {
   startTime: string;
   endTime: string;
   reason?: string;
-}
-
-// Get Blocked Time Slots
-export async function getBlockedSlots(
-  fromDate?: string,
-  toDate?: string
-): Promise<BlockedTimeSlot[]> {
-  const params = new URLSearchParams();
-  if (fromDate) params.append("fromDate", fromDate);
-  if (toDate) params.append("toDate", toDate);
-
-  const queryString = params.toString();
-  const url = `${API_BASE_URL}/BlockedTimeSlots${queryString ? `?${queryString}` : ""}`;
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error("Fehler beim Laden der blockierten Zeitslots");
-  }
-
-  return response.json();
-}
-
-// Create Blocked Time Slot
-export async function createBlockedSlot(
-  data: CreateBlockedSlot
-): Promise<BlockedTimeSlot> {
-  const response = await fetch(`${API_BASE_URL}/BlockedTimeSlots`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Fehler beim Erstellen des blockierten Zeitslots");
-  }
-
-  return response.json();
-}
-
-// Delete Blocked Time Slot
-export async function deleteBlockedSlot(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/BlockedTimeSlots/${id}`, {
-    method: "DELETE",
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Fehler beim Löschen des blockierten Zeitslots");
-  }
 }

@@ -1,3 +1,4 @@
+// app/admin/bookings/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -49,7 +50,7 @@ export default function AdminBookingsPage() {
     setFilter((prev) => ({
       ...prev,
       [key]: value || undefined,
-      page: 1, // Reset to first page on filter change
+      page: 1,
     }));
   }
 
@@ -74,7 +75,6 @@ export default function AdminBookingsPage() {
         adminNotes: adminNotes || undefined,
       });
 
-      // Reload bookings
       await loadBookings();
       onClose();
     } catch (err: any) {
@@ -116,26 +116,24 @@ export default function AdminBookingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-barber-cream via-barber-grey-50 to-barber-white py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-barber-black mb-2">Buchungsverwaltung</h1>
-          <p className="text-barber-grey-600">Alle Buchungen verwalten und Status aktualisieren</p>
+          <h1 className="text-4xl font-bold text-[#1E1E1E] mb-2">Buchungsverwaltung</h1>
+          <p className="text-[#8A8A8A]">Alle Buchungen verwalten und Status aktualisieren</p>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
+        <Card className="mb-6 border-2 border-[#E8C7C3]/20 shadow-xl">
           <CardBody className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Input
                 placeholder="Suchen..."
-                startContent={<Search size={18} />}
+                startContent={<Search size={18} className="text-[#8A8A8A]" />}
                 value={filter.searchTerm || ""}
                 onChange={(e) => handleFilterChange("searchTerm", e.target.value)}
                 classNames={{
-                  input: "text-barber-black",
-                  inputWrapper: "bg-white",
+                  input: "text-[#1E1E1E]",
+                  inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
                 }}
               />
 
@@ -144,7 +142,8 @@ export default function AdminBookingsPage() {
                 selectedKeys={filter.status ? [filter.status] : [""]}
                 onChange={(e) => handleFilterChange("status", e.target.value)}
                 classNames={{
-                  trigger: "bg-white",
+                  trigger: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                  label: "text-[#8A8A8A]",
                 }}
               >
                 {statusOptions.map((option) => (
@@ -160,8 +159,9 @@ export default function AdminBookingsPage() {
                 value={filter.fromDate || ""}
                 onChange={(e) => handleFilterChange("fromDate", e.target.value)}
                 classNames={{
-                  input: "text-barber-black",
-                  inputWrapper: "bg-white",
+                  input: "text-[#1E1E1E]",
+                  inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                  label: "text-[#8A8A8A]",
                 }}
               />
 
@@ -171,71 +171,71 @@ export default function AdminBookingsPage() {
                 value={filter.toDate || ""}
                 onChange={(e) => handleFilterChange("toDate", e.target.value)}
                 classNames={{
-                  input: "text-barber-black",
-                  inputWrapper: "bg-white",
+                  input: "text-[#1E1E1E]",
+                  inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                  label: "text-[#8A8A8A]",
                 }}
               />
             </div>
           </CardBody>
         </Card>
 
-        {/* Bookings Table */}
-        <Card>
+        <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
           <CardBody className="p-0">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-barber-red" />
+                <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#E8C7C3]" />
               </div>
             ) : bookings.length === 0 ? (
-              <div className="text-center py-12 text-barber-grey-600">
+              <div className="text-center py-12 text-[#8A8A8A]">
                 Keine Buchungen gefunden
               </div>
             ) : (
               <>
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-barber-cream border-b-2 border-barber-grey-200">
+                    <thead className="bg-[#F5EDEB] border-b-2 border-[#E8C7C3]/30">
                       <tr>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-barber-black">Buchungsnr.</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-barber-black">Datum & Zeit</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-barber-black">Kunde</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-barber-black">Service</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-barber-black">Status</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-barber-black">Preis</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-barber-black">Aktion</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-[#1E1E1E]">Buchungsnr.</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-[#1E1E1E]">Datum & Zeit</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-[#1E1E1E]">Kunde</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-[#1E1E1E]">Service</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-[#1E1E1E]">Status</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-[#1E1E1E]">Preis</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-[#1E1E1E]">Aktion</th>
                       </tr>
                     </thead>
                     <tbody>
                       {bookings.map((booking, index) => (
                         <tr
                           key={booking.id}
-                          className={`border-b border-barber-grey-100 hover:bg-barber-cream/50 transition-colors ${
-                            index % 2 === 0 ? "bg-white" : "bg-barber-grey-50/30"
+                          className={`border-b border-[#E8C7C3]/10 hover:bg-[#F5EDEB] transition-colors ${
+                            index % 2 === 0 ? "bg-white" : "bg-[#F5EDEB]/30"
                           }`}
                         >
                           <td className="px-6 py-4">
-                            <div className="font-mono text-sm text-barber-black">{booking.bookingNumber}</div>
-                            <div className="text-xs text-barber-grey-500">
+                            <div className="font-mono text-sm text-[#1E1E1E]">{booking.bookingNumber}</div>
+                            <div className="text-xs text-[#8A8A8A]">
                               {new Date(booking.createdAt).toLocaleDateString('de-DE')}
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="font-semibold text-barber-black">
+                            <div className="font-semibold text-[#1E1E1E]">
                               {new Date(booking.bookingDate).toLocaleDateString('de-DE')}
                             </div>
-                            <div className="text-sm text-barber-grey-600">
+                            <div className="text-sm text-[#8A8A8A]">
                               {booking.startTime} - {booking.endTime}
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="font-semibold text-barber-black">{booking.customerName}</div>
-                            <div className="text-sm text-barber-grey-600">{booking.customerEmail}</div>
-                            <div className="text-sm text-barber-grey-600">{booking.customerPhone}</div>
+                            <div className="font-semibold text-[#1E1E1E]">{booking.customerName}</div>
+                            <div className="text-sm text-[#8A8A8A]">{booking.customerEmail}</div>
+                            <div className="text-sm text-[#8A8A8A]">{booking.customerPhone}</div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-barber-black">{booking.serviceName}</div>
+                            <div className="text-[#1E1E1E]">{booking.serviceName}</div>
                             {booking.customerNotes && (
-                              <div className="text-xs text-barber-grey-500 mt-1 max-w-xs truncate">
+                              <div className="text-xs text-[#8A8A8A] mt-1 max-w-xs truncate">
                                 💬 {booking.customerNotes}
                               </div>
                             )}
@@ -246,12 +246,12 @@ export default function AdminBookingsPage() {
                             </Chip>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="font-semibold text-barber-black">{booking.price.toFixed(2)} €</div>
+                            <div className="font-semibold text-[#E8C7C3]">{booking.price.toFixed(2)} CHF</div>
                           </td>
                           <td className="px-6 py-4">
                             <Button
                               size="sm"
-                              color="primary"
+                              className="bg-[#E8C7C3]/20 text-[#1E1E1E] hover:bg-[#E8C7C3] hover:text-white transition-colors"
                               variant="flat"
                               startContent={<Edit size={16} />}
                               onPress={() => openStatusModal(booking)}
@@ -265,10 +265,9 @@ export default function AdminBookingsPage() {
                   </table>
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between px-6 py-4 border-t border-barber-grey-200">
-                    <div className="text-sm text-barber-grey-600">
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-[#E8C7C3]/20">
+                    <div className="text-sm text-[#8A8A8A]">
                       Seite {currentPage} von {totalPages}
                     </div>
                     <div className="flex gap-2">
@@ -278,6 +277,7 @@ export default function AdminBookingsPage() {
                         isDisabled={currentPage === 1}
                         onPress={() => handlePageChange(currentPage - 1)}
                         startContent={<ChevronLeft size={16} />}
+                        className="bg-[#F5EDEB] text-[#1E1E1E]"
                       >
                         Zurück
                       </Button>
@@ -287,6 +287,7 @@ export default function AdminBookingsPage() {
                         isDisabled={currentPage === totalPages}
                         onPress={() => handlePageChange(currentPage + 1)}
                         endContent={<ChevronRight size={16} />}
+                        className="bg-[#F5EDEB] text-[#1E1E1E]"
                       >
                         Weiter
                       </Button>
@@ -299,22 +300,21 @@ export default function AdminBookingsPage() {
         </Card>
       </div>
 
-      {/* Status Update Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="md">
+      <Modal isOpen={isOpen} onClose={onClose} size="md" className="bg-white">
         <ModalContent>
-          <ModalHeader className="flex flex-col gap-1">
+          <ModalHeader className="text-2xl font-bold text-[#1E1E1E] border-b border-[#E8C7C3]/20">
             Status aktualisieren
           </ModalHeader>
-          <ModalBody>
+          <ModalBody className="py-6">
             {selectedBooking && (
               <div className="space-y-4">
-                <div className="bg-barber-cream p-4 rounded-lg">
-                  <div className="text-sm text-barber-grey-600 mb-1">Buchung</div>
-                  <div className="font-semibold text-barber-black">{selectedBooking.bookingNumber}</div>
-                  <div className="text-sm text-barber-grey-700 mt-2">
+                <div className="bg-[#F5EDEB] p-4 rounded-lg border border-[#E8C7C3]/30">
+                  <div className="text-sm text-[#8A8A8A] mb-1">Buchung</div>
+                  <div className="font-semibold text-[#1E1E1E]">{selectedBooking.bookingNumber}</div>
+                  <div className="text-sm text-[#8A8A8A] mt-2">
                     {selectedBooking.customerName} • {selectedBooking.serviceName}
                   </div>
-                  <div className="text-sm text-barber-grey-700">
+                  <div className="text-sm text-[#8A8A8A]">
                     {new Date(selectedBooking.bookingDate).toLocaleDateString('de-DE')} • {selectedBooking.startTime}
                   </div>
                 </div>
@@ -324,6 +324,10 @@ export default function AdminBookingsPage() {
                   selectedKeys={[newStatus]}
                   onChange={(e) => setNewStatus(e.target.value)}
                   isRequired
+                  classNames={{
+                    trigger: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                    label: "text-[#8A8A8A]",
+                  }}
                 >
                   <SelectItem key="Pending" value="Pending">Ausstehend</SelectItem>
                   <SelectItem key="Confirmed" value="Confirmed">Bestätigt</SelectItem>
@@ -338,16 +342,26 @@ export default function AdminBookingsPage() {
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
                   minRows={3}
+                  classNames={{
+                    label: "text-[#8A8A8A]",
+                    input: "text-[#1E1E1E]",
+                    inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                  }}
                 />
               </div>
             )}
           </ModalBody>
-          <ModalFooter>
-            <Button color="danger" variant="light" onPress={onClose}>
+          <ModalFooter className="border-t border-[#E8C7C3]/20">
+            <Button 
+              color="danger" 
+              variant="light" 
+              onPress={onClose}
+              className="text-[#8A8A8A]"
+            >
               Abbrechen
             </Button>
             <Button
-              color="primary"
+              className="bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white font-semibold"
               onPress={handleStatusUpdate}
               isLoading={updating}
               isDisabled={!newStatus}

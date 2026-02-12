@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardBody, CardHeader } from "@nextui-org/card";
 import { Button } from "@nextui-org/button";
-import { Input } from "@nextui-org/input";
-import { Textarea } from "@nextui-org/input";
+import { Input, Textarea } from "@nextui-org/input";
 import { Spinner } from "@nextui-org/spinner";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@nextui-org/modal";
 import { Trash2, Plus, Calendar, Clock, AlertCircle } from "lucide-react";
@@ -90,31 +89,30 @@ export default function BlockedSlotsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-barber-cream via-barber-grey-50 to-barber-white flex items-center justify-center">
-        <Spinner size="lg" color="danger" />
+      <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white flex items-center justify-center">
+        <Spinner size="lg" color="danger" className="text-[#E8C7C3]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-barber-cream via-barber-grey-50 to-barber-white p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-barber-black mb-2">
+              <h1 className="text-4xl font-bold text-[#1E1E1E] mb-2">
                 Abwesenheiten
               </h1>
-              <p className="text-barber-grey-600">
+              <p className="text-[#8A8A8A]">
                 Blockiere Zeitslots, wenn du außer Haus bist
               </p>
             </div>
             <Button
               onPress={onOpen}
-              color="danger"
+              className="bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white font-semibold"
               startContent={<Plus size={20} />}
-              className="font-semibold"
             >
               Zeitslot blockieren
             </Button>
@@ -132,20 +130,22 @@ export default function BlockedSlotsPage() {
         )}
 
         {/* Blocked Slots List */}
-        <Card>
-          <CardHeader className="flex justify-between items-center px-6 py-4 border-b border-barber-grey-100">
-            <h2 className="text-xl font-bold text-barber-black">
+        <Card className="shadow-xl border-2 border-[#E8C7C3]/20">
+          <CardHeader className="flex justify-between items-center px-6 py-4 border-b border-[#E8C7C3]/20">
+            <h2 className="text-xl font-bold text-[#1E1E1E]">
               Blockierte Zeitslots ({blockedSlots.length})
             </h2>
           </CardHeader>
           <CardBody className="p-6">
             {blockedSlots.length === 0 ? (
               <div className="text-center py-12">
-                <Calendar className="mx-auto mb-4 text-barber-grey-300" size={48} />
-                <p className="text-barber-grey-500 text-lg">
+                <div className="w-16 h-16 bg-[#F5EDEB] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="text-[#E8C7C3]" size={32} />
+                </div>
+                <p className="text-[#1E1E1E] text-lg font-medium">
                   Keine blockierten Zeitslots vorhanden
                 </p>
-                <p className="text-barber-grey-400 text-sm mt-2">
+                <p className="text-[#8A8A8A] text-sm mt-2">
                   Erstelle einen neuen blockierten Zeitslot über den Button oben
                 </p>
               </div>
@@ -154,12 +154,12 @@ export default function BlockedSlotsPage() {
                 {blockedSlots.map((slot) => (
                   <div
                     key={slot.id}
-                    className="flex items-center justify-between p-4 bg-barber-grey-50 rounded-lg border border-barber-grey-200 hover:border-barber-red transition-colors"
+                    className="flex items-center justify-between p-4 bg-[#F5EDEB] rounded-lg border-2 border-[#E8C7C3] hover:border-[#D8B0AC] transition-colors"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-4 mb-2">
-                        <div className="flex items-center gap-2 text-barber-black font-semibold">
-                          <Calendar size={18} />
+                        <div className="flex items-center gap-2 text-[#1E1E1E] font-semibold">
+                          <Calendar size={18} className="text-[#E8C7C3]" />
                           <span>
                             {new Date(slot.blockDate + "T00:00:00").toLocaleDateString("de-DE", {
                               weekday: "short",
@@ -169,23 +169,22 @@ export default function BlockedSlotsPage() {
                             })}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-barber-grey-600">
+                        <div className="flex items-center gap-2 text-[#8A8A8A]">
                           <Clock size={18} />
                           <span>
-                            {slot.startTime} - {slot.endTime} Uhr
+                            {slot.startTime.slice(0, 5)} - {slot.endTime.slice(0, 5)} Uhr
                           </span>
                         </div>
                       </div>
                       {slot.reason && (
-                        <p className="text-sm text-barber-grey-500">
-                          Grund: {slot.reason}
+                        <p className="text-sm text-[#6B6B6B] ml-7">
+                          <span className="font-medium">Grund:</span> {slot.reason}
                         </p>
                       )}
                     </div>
                     <Button
                       isIconOnly
-                      color="danger"
-                      variant="flat"
+                      className="bg-gradient-to-r from-[#D8B0AC] to-[#C09995] text-white"
                       onPress={() => handleDeleteSlot(slot.id)}
                       aria-label="Löschen"
                     >
@@ -199,16 +198,23 @@ export default function BlockedSlotsPage() {
         </Card>
 
         {/* Create Modal */}
-        <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+        <Modal 
+          isOpen={isOpen} 
+          onClose={onClose} 
+          size="2xl"
+          className="bg-white"
+        >
           <ModalContent>
-            <ModalHeader className="text-2xl font-bold">
+            <ModalHeader className="text-2xl font-bold text-[#1E1E1E] border-b border-[#E8C7C3]/20">
               Zeitslot blockieren
             </ModalHeader>
-            <ModalBody>
+            <ModalBody className="py-6">
               <div className="space-y-4">
                 <Input
                   type="date"
                   label="Datum"
+                  labelPlacement="outside"
+                  placeholder="TT.MM.JJJJ"
                   value={formData.blockDate}
                   onChange={(e) =>
                     setFormData({ ...formData, blockDate: e.target.value })
@@ -216,31 +222,51 @@ export default function BlockedSlotsPage() {
                   min={today}
                   required
                   variant="bordered"
+                  classNames={{
+                    label: "text-[#1E1E1E] font-medium",
+                    input: "text-[#1E1E1E]",
+                    inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                  }}
                 />
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     type="time"
                     label="Startzeit"
+                    labelPlacement="outside"
+                    placeholder="--:--"
                     value={formData.startTime}
                     onChange={(e) =>
                       setFormData({ ...formData, startTime: e.target.value })
                     }
                     required
                     variant="bordered"
+                    classNames={{
+                      label: "text-[#1E1E1E] font-medium",
+                      input: "text-[#1E1E1E]",
+                      inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                    }}
                   />
                   <Input
                     type="time"
                     label="Endzeit"
+                    labelPlacement="outside"
+                    placeholder="--:--"
                     value={formData.endTime}
                     onChange={(e) =>
                       setFormData({ ...formData, endTime: e.target.value })
                     }
                     required
                     variant="bordered"
+                    classNames={{
+                      label: "text-[#1E1E1E] font-medium",
+                      input: "text-[#1E1E1E]",
+                      inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                    }}
                   />
                 </div>
                 <Textarea
                   label="Grund (optional)"
+                  labelPlacement="outside"
                   placeholder="z.B. Urlaub, Termin außer Haus, Krankheit..."
                   value={formData.reason}
                   onChange={(e) =>
@@ -248,15 +274,25 @@ export default function BlockedSlotsPage() {
                   }
                   variant="bordered"
                   minRows={3}
+                  classNames={{
+                    label: "text-[#1E1E1E] font-medium",
+                    input: "text-[#1E1E1E]",
+                    inputWrapper: "border-2 border-[#E8C7C3] hover:border-[#D8B0AC]"
+                  }}
                 />
               </div>
             </ModalBody>
-            <ModalFooter>
-              <Button color="default" variant="flat" onPress={onClose}>
+            <ModalFooter className="border-t border-[#E8C7C3]/20">
+              <Button 
+                color="default" 
+                variant="flat" 
+                onPress={onClose}
+                className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold"
+              >
                 Abbrechen
               </Button>
               <Button
-                color="danger"
+                className="bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white font-semibold"
                 onPress={handleCreateSlot}
                 isLoading={submitting}
                 isDisabled={
