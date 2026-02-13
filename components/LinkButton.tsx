@@ -3,7 +3,7 @@
 
 import { motion } from "framer-motion";
 import { LucideIcon, Sparkles } from "lucide-react";
-import { useLinkTracking } from "@/hooks/useLinkTracking";
+import { useAnalytics } from "@/hooks/useAnalytics";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -22,7 +22,7 @@ export const LinkButton = ({
   position,
   variant = "primary",
 }: LinkButtonProps) => {
-  const { trackClick } = useLinkTracking();
+  const { trackEvent } = useAnalytics();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -30,7 +30,7 @@ export const LinkButton = ({
     e.preventDefault();
     
     // Track the click
-    trackClick(label, href);
+    trackEvent("link_click", { label, href });
     
     // Check if it's an internal link (starts with /)
     if (href.startsWith("/")) {

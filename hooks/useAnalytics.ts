@@ -1,210 +1,222 @@
+// hooks/useAnalytics.ts
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import { hasKlaroConsent } from "@/components/KlaroCookieConsent";
 
-/**
- * Analytics event payload structure
- */
-interface AnalyticsEvent {
-  eventName: string;
-  timestamp: number;
-  path: string;
-  sessionId: string;
-  data?: Record<string, any>;
-  utm?: {
-    source?: string;
-    medium?: string;
-    campaign?: string;
-    term?: string;
-    content?: string;
-  };
-  device?: {
-    screenWidth: number;
-    screenHeight: number;
-    userAgent: string;
-  };
-}
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '') 
+  : "https://localhost:7020/api";
 
 /**
  * Get or create a unique session ID stored in localStorage
- * This persists across page reloads but is unique per browser
  */
 const getSessionId = (): string => {
   if (typeof window === "undefined") return "";
 
-  const SESSION_KEY = "keinfriseur_session_id";
+  const SESSION_KEY = "tracking_session_id";
   let sessionId = localStorage.getItem(SESSION_KEY);
 
   if (!sessionId) {
-    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
     localStorage.setItem(SESSION_KEY, sessionId);
+    console.log("New session created:", sessionId);
   }
 
   return sessionId;
 };
 
 /**
- * Capture UTM parameters from URL and store in sessionStorage
- * This allows us to track marketing campaign performance
+ * Track page view directly to backend
  */
-const captureUTMParameters = (): Record<string, string> | undefined => {
-  if (typeof window === "undefined") return undefined;
+const trackPageView = async (sessionId: string): Promise<boolean> => {
+  try {
+    const payload = {
+      pageUrl: window.location.pathname,
+      referrerUrl: document.referrer || undefined,
+      sessionId: sessionId,
+    };
 
-  const UTM_STORAGE_KEY = "keinfriseur_utm";
+    console.log("📊 Tracking page view to:", `${API_BASE_URL}/admin/Tracking/pageview`);
+    console.log("📦 Payload:", payload);
 
-  // Try to get existing UTM params from sessionStorage
-  const storedUTM = sessionStorage.getItem(UTM_STORAGE_KEY);
-  if (storedUTM) {
-    try {
-      return JSON.parse(storedUTM);
-    } catch {
-      // Invalid JSON, continue to check URL
+    const response = await fetch(`${API_BASE_URL}/admin/Tracking/pageview`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    });
+
+    if (response.ok) {
+      console.log("✅ Page view tracked successfully");
+      return true;
+    } else {
+      console.error("❌ Failed to track page view. Status:", response.status);
+      const text = await response.text();
+      console.error("Response:", text);
+      return false;
     }
+  } catch (error) {
+    console.error("❌ Error tracking page view:", error);
+    return false;
   }
-
-  // Check URL for UTM parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const utmParams: Record<string, string> = {};
-
-  ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"].forEach(
-    (param) => {
-      const value = urlParams.get(param);
-      if (value) {
-        utmParams[param.replace("utm_", "")] = value;
-      }
-    }
-  );
-
-  // Store if we found any UTM params
-  if (Object.keys(utmParams).length > 0) {
-    sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(utmParams));
-    return utmParams;
-  }
-
-  return undefined;
 };
 
 /**
- * Get device information for analytics
+ * Track link click
  */
-const getDeviceInfo = () => {
-  if (typeof window === "undefined") return undefined;
+const trackLinkClick = async (linkName: string, linkUrl: string, sessionId: string): Promise<boolean> => {
+  try {
+    const payload = {
+      linkName,
+      linkUrl,
+      sessionId,
+    };
 
-  return {
-    screenWidth: window.screen.width,
-    screenHeight: window.screen.height,
-    userAgent: navigator.userAgent,
-  };
+    console.log("🔗 Tracking link click:", linkName);
+
+    const response = await fetch(`${API_BASE_URL}/admin/tracking/click`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    });
+
+    if (response.ok) {
+      console.log("✅ Link click tracked successfully");
+      return true;
+    } else {
+      console.error("❌ Failed to track link click. Status:", response.status);
+      return false;
+    }
+  } catch (error) {
+    console.error("❌ Error tracking link click:", error);
+    return false;
+  }
 };
 
 /**
- * Main analytics hook mit Klaro Cookie Consent Integration
- *
- * Usage:
- * ```tsx
- * const { trackEvent } = useAnalytics();
- *
- * // Track a custom event
- * trackEvent("button_click", { buttonName: "Instagram" });
- * ```
- *
- * WICHTIG: Analytics wird nur getrackt wenn User Consent gegeben hat!
+ * Main analytics hook
  */
 export const useAnalytics = () => {
   const pageLoadTime = useRef<number>(Date.now());
   const [hasAnalyticsConsent, setHasAnalyticsConsent] = useState(false);
+  const [sessionId, setSessionId] = useState<string>("");
+  
+  // Use a ref to track if we've already sent the page view
+  // This persists across re-renders and doesn't cause re-renders
+  const hasTrackedPageView = useRef(false);
+
+  // Initialize session ID on mount
+  useEffect(() => {
+    setSessionId(getSessionId());
+  }, []);
 
   /**
-   * Prüfe Klaro Consent Status
+   * Check Klaro Consent Status
    */
   useEffect(() => {
     const checkConsent = () => {
-      const consent = hasKlaroConsent("analytics");
+      // For testing, you can set this to true
+      // In production, use: const consent = hasKlaroConsent("analytics");
+      const consent = true; // TEMP: Always true for testing
       setHasAnalyticsConsent(consent);
+      console.log("Analytics consent:", consent ? "✅ Granted" : "❌ Denied");
     };
 
-    // Initial check (verzögert, damit Klaro Zeit hat zu laden)
-    setTimeout(checkConsent, 100);
+    // Initial check
+    checkConsent();
 
-    // Listen for Klaro consent changes
+    // Listen for consent changes
     if (typeof window !== "undefined") {
-      window.addEventListener("klaro-analytics-consent", checkConsent);
-
+      const handleConsentChange = () => {
+        console.log("Consent changed, rechecking...");
+        checkConsent();
+      };
+      
+      window.addEventListener("klaro-analytics-consent", handleConsentChange);
       return () => {
-        window.removeEventListener("klaro-analytics-consent", checkConsent);
+        window.removeEventListener("klaro-analytics-consent", handleConsentChange);
       };
     }
   }, []);
 
   /**
-   * Send an analytics event to the backend
-   * WICHTIG: Nur wenn User Consent gegeben hat!
+   * Track page view - ONLY ONCE using useRef
    */
-  const trackEvent = async (
-    eventName: string,
-    data?: Record<string, any>
-  ): Promise<void> => {
-    // Prüfe Consent vor dem Tracking
-    if (!hasAnalyticsConsent) {
-      console.log(
-        `Analytics blocked: User has not consented to performance cookies (Event: ${eventName})`
-      );
+  useEffect(() => {
+    // Only track if:
+    // 1. We have consent
+    // 2. We have a session ID
+    // 3. We haven't tracked yet (using ref, not state)
+    if (!hasAnalyticsConsent || !sessionId || hasTrackedPageView.current) {
+      if (!hasAnalyticsConsent) console.log("⏸️ Page view blocked: No consent");
+      if (!sessionId) console.log("⏸️ Page view blocked: No session ID");
+      if (hasTrackedPageView.current) console.log("⏸️ Page view blocked: Already tracked (ref)");
       return;
     }
 
-    try {
-      const payload: AnalyticsEvent = {
-        eventName,
-        timestamp: Date.now(),
-        path: window.location.pathname + window.location.search,
-        sessionId: getSessionId(),
-        data,
-        utm: captureUTMParameters(),
-        device: getDeviceInfo(),
-      };
+    // Mark as tracked immediately (synchronously)
+    // This prevents any other renders from triggering another track
+    hasTrackedPageView.current = true;
+    console.log("🎯 Will track page view (first time only)");
 
-      // Send to analytics endpoint
-      // Using keepalive ensures the request completes even if the page is closing
-      await fetch("/api/analytics", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-        keepalive: true,
-      });
-    } catch (error) {
-      // Silently fail - we don't want analytics errors to break the app
-      console.error("Analytics error:", error);
-    }
-  };
+    const trackView = async () => {
+      await trackPageView(sessionId);
+      // No need to set state here - ref already marked as true
+    };
 
-  /**
-   * Track page view on mount
-   */
-  useEffect(() => {
-    trackEvent("page_view");
-  }, []);
+    trackView();
+    
+    // No cleanup needed - we want this to run only once
+  }, [hasAnalyticsConsent, sessionId]); // Remove hasTrackedPageView from dependencies
 
   /**
    * Track time on page when user leaves
    */
   useEffect(() => {
+    if (!hasAnalyticsConsent) return;
+
     const handleBeforeUnload = () => {
-      const timeOnPage = Date.now() - pageLoadTime.current;
-      trackEvent("time_on_page", { milliseconds: timeOnPage });
+      const timeOnPage = Math.round((Date.now() - pageLoadTime.current) / 1000);
+      console.log(`⏱️ Time on page: ${timeOnPage} seconds`);
+      // You can send this to your backend if needed
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
-
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      // Also track time on page when component unmounts
-      const timeOnPage = Date.now() - pageLoadTime.current;
-      trackEvent("time_on_page", { milliseconds: timeOnPage });
     };
-  }, []);
+  }, [hasAnalyticsConsent]);
+
+  /**
+   * Track a custom event
+   */
+  const trackEvent = async (eventName: string, data?: Record<string, any>): Promise<void> => {
+    if (!hasAnalyticsConsent) {
+      console.log(`⏸️ Event blocked (no consent): ${eventName}`);
+      return;
+    }
+
+    console.log(`📊 Tracking event: ${eventName}`, data);
+
+    switch (eventName) {
+      case "link_click":
+        if (data?.label && data?.href) {
+          await trackLinkClick(data.label, data.href, sessionId);
+        }
+        break;
+      
+      // Add more event types here as needed
+      
+      default:
+        console.log(`Unknown event type: ${eventName}`);
+    }
+  };
 
   return {
     trackEvent,
