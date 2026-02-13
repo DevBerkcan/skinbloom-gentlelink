@@ -236,43 +236,44 @@ export async function updateBookingStatus(
   return response.json();
 }
 
-// Tracking Statistics Types
-export interface TrackingStatistics {
+// lib/api/admin.ts - Update TrackingStatistics types
+
+// Remove old complex types and add simplified ones
+export interface SimplifiedTrackingStatistics {
   totalBookings: number;
-  bookingsWithTracking: number;
-  utmSources: SourceStatistic[];
-  utmMediums: SourceStatistic[];
-  utmCampaigns: SourceStatistic[];
-  topReferrers: ReferrerStatistic[];
+  totalPageViews: number;
+  totalLinkClicks: number;
   totalRevenue: number;
   averageBookingValue: number;
+  linkClicks: LinkClickStatistic[];
 }
 
-export interface SourceStatistic {
-  name: string;
-  bookingCount: number;
-  revenue: number;
+export interface LinkClickStatistic {
+  linkName: string;
+  clickCount: number;
   percentage: number;
 }
 
-export interface ReferrerStatistic {
-  referrer: string;
-  count: number;
+export interface RevenueStatistics {
+  todayRevenue: number;
+  weekRevenue: number;
+  monthRevenue: number;
+  todayBookings: number;
+  weekBookings: number;
+  monthBookings: number;
 }
 
+// Update the getTrackingStatistics function
 export async function getTrackingStatistics(
   fromDate?: string,
   toDate?: string
-): Promise<TrackingStatistics> {
+): Promise<SimplifiedTrackingStatistics> {
   const params = new URLSearchParams();
   if (fromDate) params.append("fromDate", fromDate);
   if (toDate) params.append("toDate", toDate);
 
   const queryString = params.toString();
-  // This should match your controller route
-  const url = `${API_BASE_URL}/tracking/admin${queryString ? `?${queryString}` : ""}`;
-
-  console.log("Fetching tracking stats from:", url); // Add logging
+  const url = `${API_BASE_URL}/admin/tracking${queryString ? `?${queryString}` : ""}`;
 
   const response = await fetch(url);
 
@@ -283,6 +284,36 @@ export async function getTrackingStatistics(
   }
 
   return response.json();
+}
+
+// Add function to get revenue statistics
+export async function getRevenueStatistics(): Promise<RevenueStatistics> {
+  const response = await fetch(`${API_BASE_URL}/admin/tracking/revenue`);
+
+  if (!response.ok) {
+    throw new Error("Fehler beim Laden der Umsatzstatistiken");
+  }
+
+  return response.json();
+}
+
+// lib/api/admin.ts - Add this function
+export async function trackLinkClick(data: { 
+  linkName: string; 
+  linkUrl: string; 
+  sessionId?: string 
+}): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/admin/tracking/click`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    console.error("Failed to track link click");
+  }
 }
 
 // Blocked Time Slots Types

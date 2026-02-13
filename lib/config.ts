@@ -1,58 +1,54 @@
-import {
-  Calendar,
-  Instagram,
-  Phone,
-  MapPin,
-  MessageCircle,
-  Video,
-  Mail,
-  type LucideIcon,
-} from "lucide-react";
+// lib/config.ts
+import { Calendar, Instagram, MapPin, MessageCircle } from "lucide-react";
 
-export interface LinkConfig {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  variant: "primary" | "secondary";
-}
-
-export const profileConfig = {
-  name: "Skinbloom Aesthetics",
-  title: "Skinbloom Aesthetics Basel",
-  description: "Premium Herrenfriseur & Barbershop",
-  address: "Elisabethenstrasse 41, 4051 Basel, Schweiz",
-  image: "/profile.jpg", // Platziere dein Bild im public Ordner
+export const siteConfig = {
+  title: "Skinbloom Aesthetics",
+  description: "Deine ästhetische Hautpflege in Basel",
+  url: "https://skinbloom-aesthetics.ch",
+  image: "/og-image.jpg",
 };
 
-export const socialLinks: LinkConfig[] = [
+export const socialLinks = [
   {
     label: "Online buchen",
-    href: "/booking",
+    href: "https://skinbloom-aesthetics.ch/booking",
     icon: Calendar,
-    variant: "primary",
+    variant: "primary" as const,
   },
   {
     label: "Instagram",
-    href: "https://www.instagram.com/skinbloom._aesthetics/",
+    href: "https://instagram.com/skinbloom_aesthetics",
     icon: Instagram,
-    variant: "secondary",
+    variant: "secondary" as const,
   },
   {
     label: "Route zu uns (Google Maps)",
-    href: "https://maps.app.goo.gl/25KhxpkJsFeeNsNQ8",
+    href: "https://maps.google.com/?q=Elisabethenstrasse+41+4051+Basel",
     icon: MapPin,
-    variant: "secondary",
+    variant: "maps" as const,
   },
   {
     label: "WhatsApp schreiben",
-    href: "https://wa.me/41782418704",
+    href: "https://wa.me/41791234567",
     icon: MessageCircle,
-    variant: "secondary",
+    variant: "whatsapp" as const,
   },
 ];
 
-export const siteConfig = {
-  name: "Skinbloom Aesthetics - Link in Bio",
-  description: "Premium Skinbloom in Basel - Online Termin buchen bei Skinbloom Aesthetics",
-  url: "https://skinbloom-aesthetics.vercel.app", // Wird nach Vercel Deployment aktualisiert
-};
+export const footerLinks = [
+  {
+    label: "Impressum",
+    href: "/impressum",
+    category: "footer"
+  },
+  {
+    label: "Datenschutz",
+    href: "/datenschutz",
+    category: "footer"
+  },
+  {
+    label: "Cookie-Einstellungen",
+    href: "#cookie",
+    category: "footer"
+  }
+];

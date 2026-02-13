@@ -27,7 +27,7 @@ export const ShareButton = ({ variant = "floating" }: ShareButtonProps) => {
   const [copied, setCopied] = useState(false);
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : siteConfig.url;
-  const shareTitle = siteConfig.name;
+  const shareTitle = siteConfig.title;
   const shareText = siteConfig.description;
 
   const handleNativeShare = async () => {
