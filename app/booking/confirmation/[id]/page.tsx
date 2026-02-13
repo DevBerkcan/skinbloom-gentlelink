@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Calendar, Clock, Scissors, Mail, Phone, User } from "lucide-react";
+import { CheckCircle, Calendar, Clock, Sparkles, Mail, Phone, User } from "lucide-react";
 import { Button } from "@nextui-org/button";
 import Link from "next/link";
 
@@ -108,7 +108,7 @@ export default function ConfirmationPage({ params }: { params: { id: string } })
 
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-[#E8C7C3]/10 rounded-lg flex items-center justify-center">
-                  <Scissors className="text-[#E8C7C3]" size={20} />
+                  <Sparkles className="text-[#E8C7C3]" size={20} />
                 </div>
                 <div>
                   <p className="text-sm text-[#8A8A8A] mb-1">Leistung</p>

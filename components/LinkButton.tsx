@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LucideIcon, Scissors } from "lucide-react";
+import { LucideIcon, Sparkles } from "lucide-react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useState } from "react";
 
@@ -120,7 +120,6 @@ export const LinkButton = ({
         }}
       />
 
-      {/* Scissors hover effect */}
       {isHovered && (
         <motion.div
           initial={{ x: -20, y: -10, opacity: 0, rotate: -45 }}
@@ -129,7 +128,7 @@ export const LinkButton = ({
           transition={{ duration: 0.3 }}
           className="absolute left-2 top-2 pointer-events-none"
         >
-          <Scissors
+          <Sparkles
             size={16}
             className={isPrimary ? "text-white" : "text-[#E8C7C3]"}
           />

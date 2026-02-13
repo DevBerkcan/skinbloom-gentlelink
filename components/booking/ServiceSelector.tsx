@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardBody } from "@nextui-org/card";
-import { Scissors, Clock, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Sparkles, Clock, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import type { Service, ServiceCategory } from "@/lib/api/booking";
 import { getServiceCategories, getServicesByCategory } from "@/lib/api/booking";
 
@@ -139,7 +139,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
                         <CardBody className="p-4">
                           <div className="flex items-center gap-4">
                             <div className="flex-shrink-0 p-3 bg-[#E8C7C3]/10 rounded-xl">
-                              <Scissors className="text-[#E8C7C3]" size={24} />
+                              <Sparkles className="text-[#E8C7C3]" size={24} />
                             </div>
                             <div className="flex-1">
                               <h4 className="font-semibold text-[#1E1E1E]">

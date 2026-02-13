@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Input } from "@nextui-org/input";
 import { Checkbox } from "@nextui-org/checkbox";
-import { MapPin, Scissors, Calendar } from "lucide-react";
+import { MapPin, Sparkles, Calendar } from "lucide-react";
 import type { Service, CustomerInfo } from "@/lib/api/booking";
 
 interface ContactFormProps {
@@ -102,7 +102,7 @@ export function ContactForm({
         </div>
 
         <div className="flex items-start gap-3">
-          <Scissors className="text-[#E8C7C3] flex-shrink-0 mt-1" size={20} />
+          <Sparkles className="text-[#E8C7C3] flex-shrink-0 mt-1" size={20} />
           <div>
             <div className="font-semibold text-[#1E1E1E]">
               {service.name}

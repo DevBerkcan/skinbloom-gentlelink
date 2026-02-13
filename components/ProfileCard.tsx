@@ -2,7 +2,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Scissors } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import Image from "next/image";
 
 export const ProfileCard = () => {
@@ -36,7 +36,7 @@ export const ProfileCard = () => {
             ease: "easeInOut",
           }}
         >
-          <Scissors size={36} strokeWidth={2} />
+          <Sparkles size={36} strokeWidth={2} />
         </motion.div>
       </motion.div>
 
@@ -62,7 +62,7 @@ export const ProfileCard = () => {
         className="absolute -top-4 left-6 text-[#C09995] opacity-30"
         aria-hidden="true"
       >
-        <Scissors size={28} strokeWidth={2} />
+        <Sparkles size={28} strokeWidth={2} />
       </motion.div>
 
       <motion.div

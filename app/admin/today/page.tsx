@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Card, CardBody } from "@nextui-org/card";
 import { Chip } from "@nextui-org/chip";
 import { Spinner } from "@nextui-org/spinner";
-import { Calendar, Clock, User, Phone, Mail, Scissors } from "lucide-react";
+import { Calendar, Clock, User, Phone, Mail, Sparkles } from "lucide-react";
 import { getDashboard, type BookingListItem } from "@/lib/api/admin";
 
 export default function TodayTimelinePage() {
@@ -271,7 +271,7 @@ export default function TodayTimelinePage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div>
                                     <div className="flex items-center gap-2 text-[#8A8A8A] mb-2">
-                                      <Scissors size={18} className="text-[#E8C7C3]" />
+                                      <Sparkles size={18} className="text-[#E8C7C3]" />
                                       <span className="font-semibold text-[#1E1E1E]">{booking.serviceName}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-[#8A8A8A] mb-2">

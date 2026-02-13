@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardBody } from "@nextui-org/card";
 import { Chip } from "@nextui-org/chip";
-import { Calendar, Clock, TrendingUp, TrendingDown, Users, Scissors, Euro } from "lucide-react";
+import { Calendar, Clock, TrendingUp, TrendingDown, Users, Sparkles, Euro } from "lucide-react";
 import { getDashboard, type DashboardOverview } from "@/lib/api/admin";
 
 export default function AdminDashboardPage() {
@@ -160,7 +160,7 @@ export default function AdminDashboardPage() {
             <CardBody className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-[#E8C7C3]/20 rounded-lg">
-                  <Scissors className="text-[#E8C7C3]" size={24} />
+                  <Sparkles className="text-[#E8C7C3]" size={24} />
                 </div>
               </div>
               <div className="text-3xl font-bold text-[#1E1E1E] mb-1">
