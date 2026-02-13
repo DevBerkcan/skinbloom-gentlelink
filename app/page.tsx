@@ -11,7 +11,11 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { socialLinks } from "@/lib/config";
 
 export default function Home() {
-  useAnalytics();
+  const { trackEvent } = useAnalytics(); // Get trackEvent once
+
+  const handleTrackClick = (label: string, href: string) => {
+    trackEvent("link_click", { label, href });
+  };
 
   return (
     <div className="relative min-h-screen bg-barber-stripes">
@@ -47,6 +51,7 @@ export default function Home() {
                   label={link.label}
                   icon={link.icon}
                   position={index}
+                  onTrackClick={handleTrackClick} // Pass the track function down
                 />
               ))}
             </div>

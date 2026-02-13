@@ -3,7 +3,6 @@
 
 import { motion } from "framer-motion";
 import { LucideIcon, Sparkles } from "lucide-react";
-import { useAnalytics } from "@/hooks/useAnalytics";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -13,6 +12,7 @@ interface LinkButtonProps {
   icon: LucideIcon;
   position: number;
   variant?: "primary" | "secondary";
+  onTrackClick?: (label: string, href: string) => void;
 }
 
 export const LinkButton = ({
@@ -21,23 +21,21 @@ export const LinkButton = ({
   icon: Icon,
   position,
   variant = "primary",
+  onTrackClick,
 }: LinkButtonProps) => {
-  const { trackEvent } = useAnalytics();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // Track the click
-    trackEvent("link_click", { label, href });
+    if (onTrackClick) {
+      onTrackClick(label, href);
+    }
     
-    // Check if it's an internal link (starts with /)
     if (href.startsWith("/")) {
-      // Use Next.js router for internal navigation
       router.push(href);
     } else {
-      // External link - open in new tab
       window.open(href, "_blank", "noopener,noreferrer");
     }
   };
