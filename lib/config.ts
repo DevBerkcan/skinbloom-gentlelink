@@ -11,7 +11,7 @@ export const siteConfig = {
 export const socialLinks = [
   {
     label: "Online buchen",
-    href: "https://skinbloom-aesthetics.ch/booking",
+    href: "/booking",
     icon: Calendar,
     variant: "primary" as const,
   },

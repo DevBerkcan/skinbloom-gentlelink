@@ -1,9 +1,11 @@
+// components/LinkButton.tsx
 "use client";
 
 import { motion } from "framer-motion";
 import { LucideIcon, Sparkles } from "lucide-react";
-import { useAnalytics } from "@/hooks/useAnalytics";
+import { useLinkTracking } from "@/hooks/useLinkTracking";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface LinkButtonProps {
   href: string;
@@ -20,24 +22,30 @@ export const LinkButton = ({
   position,
   variant = "primary",
 }: LinkButtonProps) => {
-  const { trackEvent } = useAnalytics();
+  const { trackClick } = useLinkTracking();
+  const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
 
-  const handleClick = () => {
-    trackEvent("link_click", {
-      label,
-      url: href,
-      position,
-    });
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Track the click
+    trackClick(label, href);
+    
+    // Check if it's an internal link (starts with /)
+    if (href.startsWith("/")) {
+      // Use Next.js router for internal navigation
+      router.push(href);
+    } else {
+      // External link - open in new tab
+      window.open(href, "_blank", "noopener,noreferrer");
+    }
   };
 
   const isPrimary = variant === "primary";
 
   return (
-    <motion.a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
+    <motion.button
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -57,7 +65,7 @@ export const LinkButton = ({
       className={`
         group relative flex w-full items-center justify-between gap-3 overflow-hidden
         rounded-2xl px-6 py-4 shadow-md transition-all duration-300
-        hover:shadow-xl focus-visible:shadow-xl
+        hover:shadow-xl focus-visible:shadow-xl cursor-pointer
         ${
           isPrimary
             ? "bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white hover:from-[#D8B0AC] hover:to-[#C09995]"
@@ -100,7 +108,7 @@ export const LinkButton = ({
         viewBox="0 0 24 24"
         stroke="currentColor"
         initial={{ x: 0 }}
-        whileHover={{ x: 5 }}
+        animate={{ x: isHovered ? 5 : 0 }}
         transition={{ duration: 0.3 }}
       >
         <path
@@ -114,10 +122,10 @@ export const LinkButton = ({
       {/* Shine effect on hover */}
       <motion.div
         className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white to-transparent opacity-20"
-        whileHover={{
-          translateX: ["100%", "200%"],
-          transition: { duration: 0.6 },
+        animate={{
+          translateX: isHovered ? ["100%", "200%"] : "-100%",
         }}
+        transition={{ duration: 0.6 }}
       />
 
       {isHovered && (
@@ -134,6 +142,6 @@ export const LinkButton = ({
           />
         </motion.div>
       )}
-    </motion.a>
+    </motion.button>
   );
 };
