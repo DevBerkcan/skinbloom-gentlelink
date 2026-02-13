@@ -116,74 +116,86 @@ export default function TodayTimelinePage() {
   const now = currentTime;
   const isWithinBusinessHours = now.getHours() >= TIMELINE_START && now.getHours() < TIMELINE_END;
 
+  // Sort bookings by time
+  const sortedBookings = [...bookings].sort((a, b) => {
+    return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+  });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-[#1E1E1E] mb-2">
+        {/* Header */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1E1E1E] mb-2">
             Heutige Termine
           </h1>
-          <div className="flex items-center gap-4 text-[#8A8A8A]">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-[#8A8A8A]">
             <div className="flex items-center gap-2">
-              <Calendar size={20} className="text-[#E8C7C3]" />
-              <span>{new Date().toLocaleDateString('de-DE', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}</span>
+              <Calendar size={18} className="text-[#E8C7C3]" />
+              <span className="text-sm sm:text-base">
+                {new Date().toLocaleDateString('de-DE', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <Clock size={20} className="text-[#E8C7C3]" />
-              <span>{now.toLocaleTimeString('de-DE', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })} Uhr</span>
+              <Clock size={18} className="text-[#E8C7C3]" />
+              <span className="text-sm sm:text-base">
+                {now.toLocaleTimeString('de-DE', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })} Uhr
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        {/* Stats Cards - Responsive Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
-            <CardBody className="p-4">
-              <div className="text-sm text-[#8A8A8A] mb-1">Gesamt heute</div>
-              <div className="text-3xl font-bold text-[#1E1E1E]">{bookings.length}</div>
+            <CardBody className="p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Gesamt heute</div>
+              <div className="text-2xl sm:text-3xl font-bold text-[#1E1E1E]">{bookings.length}</div>
             </CardBody>
           </Card>
           <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
-            <CardBody className="p-4">
-              <div className="text-sm text-[#8A8A8A] mb-1">Abgeschlossen</div>
-              <div className="text-3xl font-bold text-[#C09995]">
+            <CardBody className="p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Abgeschlossen</div>
+              <div className="text-2xl sm:text-3xl font-bold text-[#C09995]">
                 {bookings.filter(b => b.status === "Completed").length}
               </div>
             </CardBody>
           </Card>
           <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
-            <CardBody className="p-4">
-              <div className="text-sm text-[#8A8A8A] mb-1">Anstehend</div>
-              <div className="text-3xl font-bold text-[#D8B0AC]">
+            <CardBody className="p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Anstehend</div>
+              <div className="text-2xl sm:text-3xl font-bold text-[#D8B0AC]">
                 {bookings.filter(b => b.status === "Confirmed" || b.status === "Pending").length}
               </div>
             </CardBody>
           </Card>
           <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
-            <CardBody className="p-4">
-              <div className="text-sm text-[#8A8A8A] mb-1">Storniert</div>
-              <div className="text-3xl font-bold text-[#8A8A8A]">
+            <CardBody className="p-3 sm:p-4">
+              <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Storniert</div>
+              <div className="text-2xl sm:text-3xl font-bold text-[#8A8A8A]">
                 {bookings.filter(b => b.status === "Cancelled").length}
               </div>
             </CardBody>
           </Card>
         </div>
 
-        <Card className="mb-8 border-2 border-[#E8C7C3]/20 shadow-xl">
-          <CardBody className="p-6">
-            <h2 className="text-2xl font-bold text-[#1E1E1E] mb-6">
+        {/* Timeline - Hide on mobile, show on tablet/desktop */}
+        <Card className="hidden sm:block mb-8 border-2 border-[#E8C7C3]/20 shadow-xl">
+          <CardBody className="p-4 sm:p-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#1E1E1E] mb-4 sm:mb-6">
               Timeline (8:00 - 20:00 Uhr)
             </h2>
 
             <div className="relative">
-              <div className="flex justify-between mb-2 text-sm text-[#8A8A8A]">
+              <div className="flex justify-between mb-2 text-xs sm:text-sm text-[#8A8A8A]">
                 {Array.from({ length: TIMELINE_HOURS + 1 }, (_, i) => {
                   const hour = TIMELINE_START + i;
                   return (
@@ -213,13 +225,13 @@ export default function TodayTimelinePage() {
               </div>
 
               <div className="space-y-3">
-                {bookings.length === 0 ? (
+                {sortedBookings.length === 0 ? (
                   <div className="text-center py-12 text-[#8A8A8A]">
                     <Calendar className="mx-auto mb-4 text-[#E8C7C3]" size={48} />
                     <p className="text-lg">Keine Termine heute</p>
                   </div>
                 ) : (
-                  bookings.map((booking) => {
+                  sortedBookings.map((booking) => {
                     const position = getBookingPosition(booking.startTime);
                     const isNow = isBookingNow(booking.startTime, booking.endTime);
                     const isNext = isUpcoming(booking.startTime);
@@ -244,23 +256,23 @@ export default function TodayTimelinePage() {
                           }`}
                         >
                           <CardBody className="p-4">
-                            <div className="flex items-start justify-between">
+                            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                               <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-3">
+                                <div className="flex flex-wrap items-center gap-2 mb-3">
                                   <div className="flex items-center gap-2">
-                                    <Clock size={20} className={isNow ? "text-[#E8C7C3]" : "text-[#8A8A8A]"} />
-                                    <span className={`text-lg font-bold ${isNow ? 'text-[#E8C7C3]' : 'text-[#1E1E1E]'}`}>
+                                    <Clock size={18} className={isNow ? "text-[#E8C7C3]" : "text-[#8A8A8A]"} />
+                                    <span className={`text-base font-bold ${isNow ? 'text-[#E8C7C3]' : 'text-[#1E1E1E]'}`}>
                                       {booking.startTime} - {booking.endTime}
                                     </span>
                                   </div>
                                   {isNow && (
-                                    <Chip color="danger" size="sm" variant="flat" className="bg-[#E8C7C3] text-white">
+                                    <Chip color="danger" size="sm" className="bg-[#E8C7C3] text-white">
                                       LÄUFT GERADE
                                     </Chip>
                                   )}
                                   {isNext && !isNow && (
-                                    <Chip color="primary" size="sm" variant="flat" className="bg-[#D8B0AC] text-white">
-                                      NÄCHSTER TERMIN
+                                    <Chip color="primary" size="sm" className="bg-[#D8B0AC] text-white">
+                                      NÄCHSTER
                                     </Chip>
                                   )}
                                   <Chip color={getStatusColor(booking.status)} size="sm" variant="flat">
@@ -271,22 +283,30 @@ export default function TodayTimelinePage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div>
                                     <div className="flex items-center gap-2 text-[#8A8A8A] mb-2">
-                                      <Sparkles size={18} className="text-[#E8C7C3]" />
-                                      <span className="font-semibold text-[#1E1E1E]">{booking.serviceName}</span>
+                                      <Sparkles size={16} className="text-[#E8C7C3]" />
+                                      <span className="font-semibold text-[#1E1E1E] text-sm break-words">
+                                        {booking.serviceName}
+                                      </span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-[#8A8A8A] mb-2">
-                                      <User size={18} className="text-[#E8C7C3]" />
-                                      <span className="text-[#1E1E1E]">{booking.customerName}</span>
+                                    <div className="flex items-center gap-2 text-[#8A8A8A]">
+                                      <User size={16} className="text-[#E8C7C3]" />
+                                      <span className="text-[#1E1E1E] text-sm break-words">
+                                        {booking.customerName}
+                                      </span>
                                     </div>
                                   </div>
                                   <div>
                                     <div className="flex items-center gap-2 text-[#8A8A8A] mb-2">
-                                      <Phone size={18} className="text-[#E8C7C3]" />
-                                      <span className="text-[#1E1E1E]">{booking.customerPhone}</span>
+                                      <Phone size={16} className="text-[#E8C7C3]" />
+                                      <span className="text-[#1E1E1E] text-sm break-words">
+                                        {booking.customerPhone}
+                                      </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-[#8A8A8A]">
-                                      <Mail size={18} className="text-[#E8C7C3]" />
-                                      <span className="text-sm text-[#1E1E1E]">{booking.customerEmail}</span>
+                                      <Mail size={16} className="text-[#E8C7C3]" />
+                                      <span className="text-[#1E1E1E] text-sm break-all">
+                                        {booking.customerEmail}
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
@@ -294,16 +314,16 @@ export default function TodayTimelinePage() {
                                 {booking.customerNotes && (
                                   <div className="mt-3 p-3 bg-[#F5EDEB] border-l-4 border-[#E8C7C3] rounded">
                                     <div className="text-sm font-semibold text-[#1E1E1E] mb-1">Notizen:</div>
-                                    <div className="text-sm text-[#8A8A8A]">{booking.customerNotes}</div>
+                                    <div className="text-sm text-[#8A8A8A] break-words">{booking.customerNotes}</div>
                                   </div>
                                 )}
                               </div>
 
-                              <div className="text-right">
-                                <div className="text-2xl font-bold text-[#E8C7C3]">
+                              <div className="text-right lg:self-center">
+                                <div className="text-xl lg:text-2xl font-bold text-[#E8C7C3]">
                                   {booking.price.toFixed(2)} CHF
                                 </div>
-                                <div className="text-xs text-[#8A8A8A]">
+                                <div className="text-xs text-[#8A8A8A] font-mono">
                                   {booking.bookingNumber}
                                 </div>
                               </div>
@@ -319,9 +339,85 @@ export default function TodayTimelinePage() {
           </CardBody>
         </Card>
 
-        <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
+        {/* Mobile List View - Only on mobile */}
+        <div className="sm:hidden space-y-4">
+          <h2 className="text-xl font-bold text-[#1E1E1E]">Termine heute</h2>
+          {sortedBookings.length === 0 ? (
+            <div className="text-center py-12 text-[#8A8A8A] bg-white rounded-xl border-2 border-[#E8C7C3]/20 p-8">
+              <Calendar className="mx-auto mb-4 text-[#E8C7C3]" size={48} />
+              <p>Keine Termine heute</p>
+            </div>
+          ) : (
+            sortedBookings.map((booking) => {
+              const isNow = isBookingNow(booking.startTime, booking.endTime);
+              const isNext = isUpcoming(booking.startTime);
+              
+              return (
+                <Card
+                  key={booking.id}
+                  className={`border-2 ${
+                    isNow
+                      ? 'border-[#E8C7C3] bg-[#F5EDEB]'
+                      : isNext
+                      ? 'border-[#D8B0AC]'
+                      : 'border-[#E8C7C3]/20'
+                  }`}
+                >
+                  <CardBody className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Clock size={18} className={isNow ? "text-[#E8C7C3]" : "text-[#8A8A8A]"} />
+                        <span className={`font-bold ${isNow ? 'text-[#E8C7C3]' : 'text-[#1E1E1E]'}`}>
+                          {booking.startTime}
+                        </span>
+                      </div>
+                      <Chip color={getStatusColor(booking.status)} size="sm" variant="flat">
+                        {getStatusLabel(booking.status)}
+                      </Chip>
+                    </div>
+
+                    <div className="space-y-2 mb-3">
+                      <div className="font-semibold text-[#1E1E1E] break-words">
+                        {booking.serviceName}
+                      </div>
+                      <div className="text-[#1E1E1E] break-words">
+                        {booking.customerName}
+                      </div>
+                      <div className="text-sm text-[#8A8A8A] break-all">
+                        {booking.customerEmail}
+                      </div>
+                      <div className="text-sm text-[#8A8A8A]">
+                        {booking.customerPhone}
+                      </div>
+                    </div>
+
+                    {booking.customerNotes && (
+                      <div className="mb-3 p-2 bg-[#F5EDEB] border-l-4 border-[#E8C7C3] rounded text-sm break-words">
+                        {booking.customerNotes}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-2 border-t border-[#E8C7C3]/20">
+                      <div className="font-bold text-[#E8C7C3] text-lg">
+                        {booking.price.toFixed(2)} CHF
+                      </div>
+                      {isNow && (
+                        <Chip color="danger" size="sm" className="bg-[#E8C7C3] text-white">
+                          JETZT
+                        </Chip>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
+              );
+            })
+          )}
+        </div>
+
+        {/* Legend - Responsive */}
+        <Card className="mt-6 border-2 border-[#E8C7C3]/20 shadow-xl">
           <CardBody className="p-4">
-            <div className="flex items-center gap-6 text-sm">
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs sm:text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 bg-[#E8C7C3] rounded"></div>
                 <span className="text-[#1E1E1E]">Aktiver Termin</span>
