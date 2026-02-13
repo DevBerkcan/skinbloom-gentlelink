@@ -65,21 +65,21 @@ export const ProfileCard = () => {
         <Sparkles size={28} strokeWidth={2} />
       </motion.div>
 
-<motion.div
-  initial={{ scale: 0 }}
-  animate={{ scale: 1 }}
-  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-  className="mx-auto mb-6 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg ring-4 ring-white"
->
-  <Image
-    src="/logo.png"
-    alt="Skinbloom Aesthetics Logo"
-    width={128}
-    height={128}
-    className="h-full w-full object-contain" 
-    priority
-  />
-</motion.div>
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+        className="mx-auto mb-6 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-white shadow-lg ring-4 ring-white"
+      >
+        <Image
+          src="/logo.png"
+          alt="Skinbloom Aesthetics Logo"
+          width={128}
+          height={128}
+          className="h-full w-full object-contain"
+          priority
+        />
+      </motion.div>
 
       <motion.h1
         initial={{ opacity: 0 }}

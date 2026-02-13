@@ -260,7 +260,6 @@ export interface ReferrerStatistic {
   count: number;
 }
 
-// Get Tracking Statistics
 export async function getTrackingStatistics(
   fromDate?: string,
   toDate?: string
@@ -270,12 +269,17 @@ export async function getTrackingStatistics(
   if (toDate) params.append("toDate", toDate);
 
   const queryString = params.toString();
-  const url = `${API_BASE_URL}/admin/tracking${queryString ? `?${queryString}` : ""}`;
+  // This should match your controller route
+  const url = `${API_BASE_URL}/tracking/admin${queryString ? `?${queryString}` : ""}`;
+
+  console.log("Fetching tracking stats from:", url); // Add logging
 
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error("Fehler beim Laden der Tracking-Statistiken");
+    const errorText = await response.text();
+    console.error("Tracking API Error:", response.status, errorText);
+    throw new Error(`Fehler beim Laden der Tracking-Statistiken: ${response.status}`);
   }
 
   return response.json();
