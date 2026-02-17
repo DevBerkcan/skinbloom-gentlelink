@@ -6,7 +6,6 @@ import { LinkButton } from "@/components/LinkButton";
 import { Footer } from "@/components/Footer";
 import { FloatingSparkles } from "@/components/FloatingSparkles";
 import { ShareButton } from "@/components/ShareButton";
-import { AdminButton } from "@/components/AdminButton";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { socialLinks } from "@/lib/config";
 
@@ -24,11 +23,6 @@ export default function Home() {
 
       {/* Animierte schwebende Scheren */}
       <FloatingSparkles />
-
-      {/* Top Bar with Admin Button */}
-      <div className="fixed top-4 right-4 z-50">
-        <AdminButton />
-      </div>
 
       {/* Floating Share Button - Stays at bottom right */}
       <ShareButton variant="floating" />
