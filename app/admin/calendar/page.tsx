@@ -13,29 +13,40 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextu
 import { Spinner } from "@nextui-org/spinner";
 import { Select, SelectItem } from "@nextui-org/select";
 import { Input, Textarea } from "@nextui-org/input";
+import { Divider } from "@nextui-org/divider";
+import { Avatar } from "@nextui-org/avatar";
+import { Badge } from "@nextui-org/badge";
 import { 
   Calendar as CalendarIcon, 
   Clock, 
   User, 
   Phone, 
   Mail, 
-  Ban,
   Plus,
-  Trash2,
-  AlertCircle
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Ban,
+  Scissors,
+  MessageCircle,
+  Hash,
+  CreditCard,
+  CalendarDays,
+  ChevronRight
 } from "lucide-react";
 import { 
   getBookings, 
-  getBlockedSlots, 
-  createBlockedSlot, 
-  createBlockedDateRange,
-  deleteBlockedSlot,
+  getServices,
+  getBlockedSlots,
+  createManualBooking,
   updateBookingStatus,
   type BookingListItem,
-  type BlockedTimeSlot,
-  type CreateBlockedSlot,
-  type CreateBlockedDateRange
+  type Service,
+  type CreateManualBookingDto,
+  type ManualBookingResponse,
+  type BlockedTimeSlot
 } from "@/lib/api/admin";
+import { getAvailability, type TimeSlot } from "@/lib/api/booking";
 
 // Setup moment with German locale
 moment.locale('de');
@@ -64,11 +75,11 @@ interface BlockedEvent {
 type CalendarEvent = BookingEvent | BlockedEvent;
 
 const statusColors = {
-  Confirmed: "#27ae60",
-  Pending: "#f39c12",
-  Completed: "#3498db",
-  Cancelled: "#e74c3c",
-  NoShow: "#95a5a6"
+  Confirmed: "#10b981", // Green
+  Pending: "#f59e0b",   // Amber
+  Completed: "#3b82f6",  // Blue
+  Cancelled: "#ef4444",  // Red
+  NoShow: "#6b7280"      // Gray
 };
 
 const statusLabels = {
@@ -79,34 +90,60 @@ const statusLabels = {
   NoShow: "Nicht erschienen"
 };
 
+const statusIcons = {
+  Confirmed: CheckCircle,
+  Pending: Clock,
+  Completed: CheckCircle,
+  Cancelled: XCircle,
+  NoShow: XCircle
+};
+
 export default function AdminCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
-  const [isDateRangeModalOpen, setIsDateRangeModalOpen] = useState(false);
+  const [isManualBookingModalOpen, setIsManualBookingModalOpen] = useState(false);
   const [date, setDate] = useState(new Date());
   const [view, setView] = useState(Views.MONTH);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [updating, setUpdating] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [createdBooking, setCreatedBooking] = useState<ManualBookingResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
 
-  // Blocked slot form state
-  const [blockForm, setBlockForm] = useState<CreateBlockedSlot>({
-    blockDate: moment().format('YYYY-MM-DD'),
-    startTime: '09:00',
-    endTime: '17:00',
-    reason: ''
+  // Available time slots
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  // Manual booking form state
+  const [bookingForm, setBookingForm] = useState<CreateManualBookingDto>({
+    serviceId: '',
+    bookingDate: moment().format('YYYY-MM-DD'),
+    startTime: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    customerNotes: ''
   });
 
-  // Date range form state
-  const [rangeForm, setRangeForm] = useState<CreateBlockedDateRange>({
-    fromDate: moment().format('YYYY-MM-DD'),
-    toDate: moment().add(7, 'days').format('YYYY-MM-DD'),
-    startTime: '09:00',
-    endTime: '17:00',
-    reason: ''
-  });
+  // Load services on mount
+  useEffect(() => {
+    loadServices();
+  }, []);
+
+  // Load available slots when service or date changes
+  useEffect(() => {
+    if (bookingForm.serviceId && bookingForm.bookingDate) {
+      loadAvailableSlots();
+    } else {
+      setAvailableSlots([]);
+    }
+  }, [bookingForm.serviceId, bookingForm.bookingDate]);
 
   const loadEvents = useCallback(async () => {
     try {
@@ -140,7 +177,7 @@ export default function AdminCalendarPage() {
       // Convert blocked slots to calendar events
       const blockedEvents: BlockedEvent[] = blockedSlots.map((slot: BlockedTimeSlot) => ({
         id: `blocked-${slot.id}`,
-        title: `🚫 Blockiert: ${slot.reason || 'Kein Grund'}`,
+        title: `🚫 Blockiert${slot.reason ? `: ${slot.reason}` : ''}`,
         start: new Date(`${slot.blockDate}T${slot.startTime}`),
         end: new Date(`${slot.blockDate}T${slot.endTime}`),
         resource: slot,
@@ -158,6 +195,46 @@ export default function AdminCalendarPage() {
   useEffect(() => {
     loadEvents();
   }, [loadEvents]);
+
+  async function loadServices() {
+    try {
+      const data = await getServices();
+      setServices(data);
+    } catch (error) {
+      console.error("Error loading services:", error);
+      setError("Fehler beim Laden der Services");
+    }
+  }
+
+  async function loadAvailableSlots() {
+    if (!bookingForm.serviceId || !bookingForm.bookingDate) return;
+    
+    try {
+      setLoadingSlots(true);
+      const selectedService = services.find(s => s.id === bookingForm.serviceId);
+      
+      if (!selectedService) return;
+      
+      const data = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
+      
+      // Filter only available slots
+      const available = data.availableSlots?.filter(slot => slot.isAvailable) || [];
+      setAvailableSlots(available);
+      
+      // Clear selected time if it's no longer available
+      if (bookingForm.startTime) {
+        const isStillAvailable = available.some(slot => slot.startTime === bookingForm.startTime);
+        if (!isStillAvailable) {
+          setBookingForm(prev => ({ ...prev, startTime: '' }));
+        }
+      }
+    } catch (error) {
+      console.error("Error loading available slots:", error);
+      setAvailableSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  }
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!selectedEvent || selectedEvent.type !== 'booking') return;
@@ -181,84 +258,86 @@ export default function AdminCalendarPage() {
     }
   };
 
-  const handleCreateBlockedSlot = async () => {
-    try {
-      setUpdating(true);
-      await createBlockedSlot(blockForm);
-      await loadEvents();
-      setIsBlockModalOpen(false);
-      setBlockForm({
-        blockDate: moment().format('YYYY-MM-DD'),
-        startTime: '09:00',
-        endTime: '17:00',
-        reason: ''
-      });
-    } catch (error) {
-      console.error("Error creating blocked slot:", error);
-    } finally {
-      setUpdating(false);
-    }
-  };
+  const handleCreateManualBooking = async () => {
+    setError(null);
+    setSubmitting(true);
 
-  const handleCreateDateRange = async () => {
     try {
-      setUpdating(true);
-      await createBlockedDateRange(rangeForm);
-      await loadEvents();
-      setIsDateRangeModalOpen(false);
-      setRangeForm({
-        fromDate: moment().format('YYYY-MM-DD'),
-        toDate: moment().add(7, 'days').format('YYYY-MM-DD'),
-        startTime: '09:00',
-        endTime: '17:00',
-        reason: ''
-      });
-    } catch (error) {
-      console.error("Error creating date range:", error);
-    } finally {
-      setUpdating(false);
-    }
-  };
+      // Double-check availability before creating
+      const selectedService = services.find(s => s.id === bookingForm.serviceId);
+      if (!selectedService) {
+        throw new Error("Service nicht gefunden");
+      }
 
-  const handleDeleteBlockedSlot = async () => {
-    if (!selectedEvent || selectedEvent.type !== 'blocked') return;
-    
-    try {
-      setUpdating(true);
-      await deleteBlockedSlot(selectedEvent.resource.id);
+      const availabilityCheck = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
+      const isSlotAvailable = availabilityCheck.availableSlots?.some(
+        slot => slot.startTime === bookingForm.startTime && slot.isAvailable
+      );
+
+      if (!isSlotAvailable) {
+        throw new Error("Dieser Zeitslot ist nicht mehr verfügbar. Bitte wählen Sie einen anderen Termin.");
+      }
+
+      const booking = await createManualBooking(bookingForm);
+      setCreatedBooking(booking);
+      setSuccess(true);
+      
+      // Reload events to show new booking
       await loadEvents();
-      setIsBookingModalOpen(false);
-    } catch (error) {
-      console.error("Error deleting blocked slot:", error);
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setSuccess(false);
+        setCreatedBooking(null);
+        setIsManualBookingModalOpen(false);
+        setSelectedSlot(null);
+        setBookingForm({
+          serviceId: '',
+          bookingDate: moment().format('YYYY-MM-DD'),
+          startTime: '',
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          customerNotes: ''
+        });
+        setAvailableSlots([]);
+      }, 3000);
+    } catch (error: any) {
+      console.error("Error creating booking:", error);
+      setError(error.message || "Fehler beim Erstellen der Buchung");
     } finally {
-      setUpdating(false);
+      setSubmitting(false);
     }
   };
 
   const eventStyleGetter = (event: CalendarEvent) => {
-    if (event.type === 'booking') {
+    if (event.type === 'blocked') {
+      return {
+        style: {
+          backgroundColor: '#6b7280',
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px)',
+          borderRadius: "4px",
+          opacity: 0.8,
+          color: "white",
+          border: "2px dashed #9ca3af",
+          display: "block"
+        }
+      };
+    } else {
       const status = event.status as keyof typeof statusColors;
-      const backgroundColor = statusColors[status] || "#3498db";
+      const backgroundColor = statusColors[status] || "#3b82f6";
       
       return {
         style: {
           backgroundColor,
           borderRadius: "4px",
-          opacity: 0.8,
+          opacity: 0.9,
           color: "white",
           border: "none",
-          display: "block"
-        }
-      };
-    } else {
-      return {
-        style: {
-          backgroundColor: "#7f8c8d",
-          borderRadius: "4px",
-          opacity: 0.6,
-          color: "white",
-          border: "2px dashed #95a5a6",
-          display: "block"
+          display: "block",
+          fontWeight: 500,
+          fontSize: '0.85rem'
         }
       };
     }
@@ -272,27 +351,48 @@ export default function AdminCalendarPage() {
 
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEvent(event);
-    if (event.type === 'booking') {
-      setIsBookingModalOpen(true);
-    } else {
-      setIsBookingModalOpen(true); // Reuse same modal for blocked slots
-    }
+    setIsBookingModalOpen(true);
   };
 
   const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
-    setBlockForm({
-      blockDate: moment(slotInfo.start).format('YYYY-MM-DD'),
-      startTime: moment(slotInfo.start).format('HH:mm'),
-      endTime: moment(slotInfo.end).format('HH:mm'),
-      reason: ''
+    setSelectedSlot(slotInfo);
+    
+    // Pre-fill the manual booking form with selected date
+    setBookingForm({
+      ...bookingForm,
+      bookingDate: moment(slotInfo.start).format('YYYY-MM-DD'),
+      startTime: '',
+      serviceId: '' // Reset service selection
     });
-    setIsBlockModalOpen(true);
+    
+    // Reset available slots for new date
+    setAvailableSlots([]);
+    
+    // Open the manual booking modal
+    setIsManualBookingModalOpen(true);
   };
+
+  const handleOpenManualBooking = () => {
+    setSelectedSlot(null);
+    setBookingForm({
+      ...bookingForm,
+      bookingDate: moment().format('YYYY-MM-DD'),
+      startTime: '',
+      serviceId: ''
+    });
+    setAvailableSlots([]);
+    setIsManualBookingModalOpen(true);
+  };
+
+  const selectedService = services.find(s => s.id === bookingForm.serviceId);
 
   if (loading && events.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white flex items-center justify-center">
-        <Spinner size="lg" className="text-[#E8C7C3]" />
+        <div className="text-center">
+          <Spinner size="lg" className="text-[#E8C7C3]" />
+          <p className="mt-4 text-[#8A8A8A]">Kalender wird geladen...</p>
+        </div>
       </div>
     );
   }
@@ -306,27 +406,20 @@ export default function AdminCalendarPage() {
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-2">
               Kalender
             </h1>
-            <p className="text-[#8A8A8A]">
-              Verwalten Sie Ihre Termine und blockierte Zeiten
+            <p className="text-[#8A8A8A] flex items-center gap-2">
+              <CalendarDays size={18} />
+              Verwalten Sie Termine und blockierte Zeiten
             </p>
           </div>
           
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2">
             <Button
               color="primary"
               className="bg-[#E8C7C3] text-white"
-              startContent={<Ban size={18} />}
-              onPress={() => setIsBlockModalOpen(true)}
+              startContent={<Plus size={18} />}
+              onPress={handleOpenManualBooking}
             >
-              Zeit blockieren
-            </Button>
-            <Button
-              color="primary"
-              className="bg-[#D8B0AC] text-white"
-              startContent={<CalendarIcon size={18} />}
-              onPress={() => setIsDateRangeModalOpen(true)}
-            >
-              Zeitraum blockieren
+              Buchung tätigen
             </Button>
           </div>
         </div>
@@ -355,8 +448,8 @@ export default function AdminCalendarPage() {
         </Card>
 
         {/* Calendar Card */}
-        <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
-          <CardBody className="p-4">
+        <Card className="border-2 border-[#E8C7C3]/20 shadow-xl overflow-hidden">
+          <CardBody className="p-0">
             <div className="h-[600px] lg:h-[700px]">
               <Calendar
                 localizer={localizer}
@@ -398,6 +491,12 @@ export default function AdminCalendarPage() {
                     `${moment(start).format('DD.MM.YYYY')} - ${moment(end).format('DD.MM.YYYY')}`
                 }}
                 culture="de"
+                tooltipAccessor={(event) => {
+                  if (event.type === 'blocked') {
+                    return `Blockiert: ${event.resource.reason || 'Kein Grund'}`;
+                  }
+                  return `${event.resource.customerName} - ${event.resource.serviceName}`;
+                }}
               />
             </div>
           </CardBody>
@@ -406,30 +505,45 @@ export default function AdminCalendarPage() {
         {/* Legend */}
         <Card className="mt-4 border-2 border-[#E8C7C3]/20 shadow-xl">
           <CardBody className="p-4">
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              {Object.entries(statusLabels).map(([status, label]) => (
-                <div key={status} className="flex items-center gap-2">
-                  <div 
-                    className="w-4 h-4 rounded" 
-                    style={{ backgroundColor: statusColors[status as keyof typeof statusColors] }}
-                  />
-                  <span className="text-[#1E1E1E]">{label}</span>
-                </div>
-              ))}
+            <div className="flex flex-wrap items-center gap-6 text-sm">
+              {Object.entries(statusLabels).map(([status, label]) => {
+                const Icon = statusIcons[status as keyof typeof statusIcons];
+                return (
+                  <div key={status} className="flex items-center gap-2">
+                    <div 
+                      className="w-4 h-4 rounded" 
+                      style={{ backgroundColor: statusColors[status as keyof typeof statusColors] }}
+                    />
+                    <span className="text-[#1E1E1E] flex items-center gap-1">
+                      {Icon && <Icon size={14} className="text-[#8A8A8A]" />}
+                      {label}
+                    </span>
+                  </div>
+                );
+              })}
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-[#7f8c8d] border-2 border-dashed border-[#95a5a6]" />
-                <span className="text-[#1E1E1E]">Blockierte Zeit</span>
+                <div className="w-4 h-4 rounded bg-[#6b7280]" 
+                     style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px)' }} />
+                <span className="text-[#1E1E1E] flex items-center gap-1">
+                  <Ban size={14} className="text-[#8A8A8A]" />
+                  Blockierte Zeit
+                </span>
               </div>
             </div>
           </CardBody>
         </Card>
 
-        {/* Booking Details Modal */}
+        {/* Booking Details Modal - Improved Design */}
         <Modal 
           isOpen={isBookingModalOpen} 
           onClose={() => setIsBookingModalOpen(false)}
           size="2xl"
           scrollBehavior="inside"
+          classNames={{
+            base: "bg-gradient-to-br from-white to-[#F5EDEB]",
+            header: "border-b border-[#E8C7C3]/20",
+            footer: "border-t border-[#E8C7C3]/20"
+          }}
         >
           <ModalContent>
             {(onClose) => (
@@ -438,66 +552,112 @@ export default function AdminCalendarPage() {
                   {selectedEvent?.type === 'booking' ? (
                     <>
                       <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold">Termindetails</h2>
-                        <Chip
+                        <div className="flex items-center gap-3">
+                          <Avatar 
+                            icon={<User size={20} />}
+                            className="bg-[#E8C7C3] text-white"
+                          />
+                          <div>
+                            <h2 className="text-xl font-bold text-[#1E1E1E]">
+                              Termindetails
+                            </h2>
+                            <p className="text-sm text-[#8A8A8A] flex items-center gap-1">
+                              <Hash size={14} />
+                              {selectedEvent?.resource.bookingNumber}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge 
+                          content=""
                           style={{
-                            backgroundColor: statusColors[selectedEvent?.status as keyof typeof statusColors],
-                            color: "white"
+                            backgroundColor: statusColors[selectedEvent?.status as keyof typeof statusColors]
                           }}
+                          className="text-white px-3 py-1 rounded-full text-sm"
                         >
                           {statusLabels[selectedEvent?.status as keyof typeof statusLabels]}
-                        </Chip>
+                        </Badge>
                       </div>
-                      <p className="text-sm text-[#8A8A8A]">
-                        Buchungsnummer: {selectedEvent?.resource.bookingNumber}
-                      </p>
                     </>
                   ) : (
-                    <h2 className="text-xl font-bold">Blockierte Zeit</h2>
+                    <div className="flex items-center gap-3">
+                      <Avatar 
+                        icon={<Ban size={20} />}
+                        className="bg-[#6b7280] text-white"
+                      />
+                      <div>
+                        <h2 className="text-xl font-bold text-[#1E1E1E]">
+                          Blockierte Zeit
+                        </h2>
+                      </div>
+                    </div>
                   )}
                 </ModalHeader>
                 <ModalBody>
                   {selectedEvent?.type === 'booking' ? (
-                    <div className="space-y-6">
-                      {/* Booking details */}
-                      <div className="bg-[#F5EDEB] p-4 rounded-lg">
-                        <h3 className="font-semibold mb-3 text-lg">Service</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Clock size={16} className="text-[#E8C7C3]" />
-                            <span>
-                              {moment(selectedEvent.start).format('DD.MM.YYYY')} • {' '}
-                              {moment(selectedEvent.start).format('HH:mm')} - {' '}
-                              {moment(selectedEvent.end).format('HH:mm')} Uhr
-                            </span>
+                    <div className="space-y-6 py-4">
+                      {/* Service Card */}
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E8C7C3]/20">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="p-2 bg-[#F5EDEB] rounded-lg">
+                            <Scissors size={18} className="text-[#E8C7C3]" />
                           </div>
-                          <div className="font-medium text-lg">
-                            {selectedEvent.resource.serviceName}
-                          </div>
-                          <div className="text-xl font-bold text-[#E8C7C3]">
-                            {selectedEvent.resource.price.toFixed(2)} CHF
+                          <h3 className="font-semibold text-[#1E1E1E]">Service</h3>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium text-[#1E1E1E]">{selectedEvent.resource.serviceName}</p>
+                              <p className="text-sm text-[#8A8A8A] flex items-center gap-1 mt-1">
+                                <Clock size={14} />
+                                {moment(selectedEvent.start).format('DD.MM.YYYY')} •{' '}
+                                {moment(selectedEvent.start).format('HH:mm')} - {moment(selectedEvent.end).format('HH:mm')} Uhr
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-2xl font-bold text-[#E8C7C3]">
+                                {selectedEvent.resource.price.toFixed(2)} CHF
+                              </p>
+                              <p className="text-xs text-[#8A8A8A] flex items-center gap-1 justify-end mt-1">
+                                <CreditCard size={12} />
+                                inkl. MwSt
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Customer Info */}
-                      <div className="bg-[#F5EDEB] p-4 rounded-lg">
-                        <h3 className="font-semibold mb-3 text-lg">Kunde</h3>
+                      {/* Customer Card */}
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E8C7C3]/20">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="p-2 bg-[#F5EDEB] rounded-lg">
+                            <User size={18} className="text-[#E8C7C3]" />
+                          </div>
+                          <h3 className="font-semibold text-[#1E1E1E]">Kunde</h3>
+                        </div>
+                        
                         <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <User size={16} className="text-[#E8C7C3]" />
-                            <span>{selectedEvent.resource.customerName}</span>
+                          <div className="flex items-center gap-3 p-3 bg-[#F5EDEB] rounded-lg">
+                            <Avatar 
+                              name={selectedEvent.resource.customerName}
+                              className="bg-[#E8C7C3] text-white"
+                              size="sm"
+                            />
+                            <div>
+                              <p className="font-medium text-[#1E1E1E]">{selectedEvent.resource.customerName}</p>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Mail size={16} className="text-[#E8C7C3]" />
-                            <a href={`mailto:${selectedEvent.resource.customerEmail}`} className="text-blue-600 hover:underline">
-                              {selectedEvent.resource.customerEmail}
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <a href={`mailto:${selectedEvent.resource.customerEmail}`} 
+                               className="flex items-center gap-2 p-3 bg-[#F5EDEB] rounded-lg hover:bg-[#E8C7C3]/10 transition-colors">
+                              <Mail size={16} className="text-[#E8C7C3]" />
+                              <span className="text-sm text-[#1E1E1E] truncate">{selectedEvent.resource.customerEmail}</span>
                             </a>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Phone size={16} className="text-[#E8C7C3]" />
-                            <a href={`tel:${selectedEvent.resource.customerPhone}`} className="text-blue-600 hover:underline">
-                              {selectedEvent.resource.customerPhone}
+                            <a href={`tel:${selectedEvent.resource.customerPhone}`} 
+                               className="flex items-center gap-2 p-3 bg-[#F5EDEB] rounded-lg hover:bg-[#E8C7C3]/10 transition-colors">
+                              <Phone size={16} className="text-[#E8C7C3]" />
+                              <span className="text-sm text-[#1E1E1E]">{selectedEvent.resource.customerPhone}</span>
                             </a>
                           </div>
                         </div>
@@ -505,15 +665,22 @@ export default function AdminCalendarPage() {
 
                       {/* Notes */}
                       {selectedEvent.resource.customerNotes && (
-                        <div className="bg-[#F5EDEB] p-4 rounded-lg">
-                          <h3 className="font-semibold mb-2">Notizen</h3>
-                          <p className="text-[#8A8A8A]">{selectedEvent.resource.customerNotes}</p>
+                        <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E8C7C3]/20">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="p-2 bg-[#F5EDEB] rounded-lg">
+                              <MessageCircle size={18} className="text-[#E8C7C3]" />
+                            </div>
+                            <h3 className="font-semibold text-[#1E1E1E]">Notizen</h3>
+                          </div>
+                          <div className="bg-[#F5EDEB] p-4 rounded-lg italic text-[#1E1E1E]">
+                            "{selectedEvent.resource.customerNotes}"
+                          </div>
                         </div>
                       )}
 
                       {/* Status Update */}
-                      <div className="border-t pt-4">
-                        <h3 className="font-semibold mb-3">Status aktualisieren</h3>
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E8C7C3]/20">
+                        <h3 className="font-semibold text-[#1E1E1E] mb-4">Status aktualisieren</h3>
                         <div className="flex flex-wrap gap-2">
                           <Button
                             size="sm"
@@ -522,6 +689,7 @@ export default function AdminCalendarPage() {
                             onPress={() => handleStatusUpdate("Confirmed")}
                             isLoading={updating}
                             isDisabled={selectedEvent.resource.status === "Confirmed"}
+                            startContent={<CheckCircle size={16} />}
                           >
                             Bestätigt
                           </Button>
@@ -532,6 +700,7 @@ export default function AdminCalendarPage() {
                             onPress={() => handleStatusUpdate("Completed")}
                             isLoading={updating}
                             isDisabled={selectedEvent.resource.status === "Completed"}
+                            startContent={<CheckCircle size={16} />}
                           >
                             Abgeschlossen
                           </Button>
@@ -542,6 +711,7 @@ export default function AdminCalendarPage() {
                             onPress={() => handleStatusUpdate("Cancelled")}
                             isLoading={updating}
                             isDisabled={selectedEvent.resource.status === "Cancelled"}
+                            startContent={<XCircle size={16} />}
                           >
                             Stornieren
                           </Button>
@@ -552,6 +722,7 @@ export default function AdminCalendarPage() {
                             onPress={() => handleStatusUpdate("NoShow")}
                             isLoading={updating}
                             isDisabled={selectedEvent.resource.status === "NoShow"}
+                            startContent={<XCircle size={16} />}
                           >
                             Nicht erschienen
                           </Button>
@@ -559,40 +730,41 @@ export default function AdminCalendarPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-6">
-                      <div className="bg-[#F5EDEB] p-4 rounded-lg">
+                    <div className="space-y-6 py-4">
+                      <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E8C7C3]/20">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="p-2 bg-[#6b7280]/10 rounded-lg">
+                            <Ban size={18} className="text-[#6b7280]" />
+                          </div>
+                          <h3 className="font-semibold text-[#1E1E1E]">Blockierter Zeitraum</h3>
+                        </div>
+                        
                         <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <Clock size={16} className="text-[#E8C7C3]" />
+                          <div className="flex items-center gap-2 p-3 bg-[#F5EDEB] rounded-lg">
+                            <Clock size={16} className="text-[#6b7280]" />
                             <span>
-                              {moment(selectedEvent?.start).format('DD.MM.YYYY')} • {' '}
-                              {moment(selectedEvent?.start).format('HH:mm')} - {' '}
-                              {moment(selectedEvent?.end).format('HH:mm')} Uhr
+                              {moment(selectedEvent?.start).format('DD.MM.YYYY')} •{' '}
+                              {moment(selectedEvent?.start).format('HH:mm')} - {moment(selectedEvent?.end).format('HH:mm')} Uhr
                             </span>
                           </div>
+                          
                           {selectedEvent?.resource.reason && (
-                            <div className="flex items-start gap-2">
-                              <AlertCircle size={16} className="text-[#E8C7C3] mt-1" />
-                              <span>{selectedEvent.resource.reason}</span>
+                            <div className="p-3 bg-[#F5EDEB] rounded-lg">
+                              <p className="text-sm font-medium text-[#1E1E1E] mb-1">Grund:</p>
+                              <p className="text-[#8A8A8A]">{selectedEvent.resource.reason}</p>
                             </div>
                           )}
                         </div>
                       </div>
-
-                      <Button
-                        color="danger"
-                        startContent={<Trash2 size={18} />}
-                        onPress={handleDeleteBlockedSlot}
-                        isLoading={updating}
-                        className="w-full"
-                      >
-                        Blockierte Zeit entfernen
-                      </Button>
                     </div>
                   )}
                 </ModalBody>
                 <ModalFooter>
-                  <Button color="danger" variant="light" onPress={onClose}>
+                  <Button 
+                    color="danger" 
+                    variant="light" 
+                    onPress={onClose}
+                  >
                     Schließen
                   </Button>
                 </ModalFooter>
@@ -601,120 +773,252 @@ export default function AdminCalendarPage() {
           </ModalContent>
         </Modal>
 
-        {/* Block Single Slot Modal */}
-        <Modal isOpen={isBlockModalOpen} onClose={() => setIsBlockModalOpen(false)}>
+        {/* Manual Booking Modal - Keep existing but improve styling */}
+        <Modal 
+          isOpen={isManualBookingModalOpen} 
+          onClose={() => {
+            setIsManualBookingModalOpen(false);
+            setError(null);
+            setSuccess(false);
+            setCreatedBooking(null);
+            setSelectedSlot(null);
+          }}
+          size="2xl"
+          scrollBehavior="inside"
+          classNames={{
+            base: "bg-gradient-to-br from-white to-[#F5EDEB]",
+            header: "border-b border-[#E8C7C3]/20",
+            footer: "border-t border-[#E8C7C3]/20"
+          }}
+        >
           <ModalContent>
             {(onClose) => (
               <>
                 <ModalHeader>
-                  <h2 className="text-xl font-bold">Zeit blockieren</h2>
+                  <div className="flex items-center gap-3">
+                    <Avatar 
+                      icon={<Plus size={20} />}
+                      className="bg-[#E8C7C3] text-white"
+                    />
+                    <div>
+                      <h2 className="text-xl font-bold text-[#1E1E1E]">
+                        Manuelle Buchung erstellen
+                      </h2>
+                      {selectedSlot && (
+                        <p className="text-sm text-[#8A8A8A] flex items-center gap-1">
+                          <CalendarIcon size={14} />
+                          {moment(selectedSlot.start).format('DD.MM.YYYY')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </ModalHeader>
                 <ModalBody>
-                  <div className="space-y-4">
-                    <Input
-                      type="date"
-                      label="Datum"
-                      value={blockForm.blockDate}
-                      onChange={(e) => setBlockForm({ ...blockForm, blockDate: e.target.value })}
-                    />
-                    <div className="flex gap-2">
-                      <Input
-                        type="time"
-                        label="Startzeit"
-                        value={blockForm.startTime}
-                        onChange={(e) => setBlockForm({ ...blockForm, startTime: e.target.value })}
-                      />
-                      <Input
-                        type="time"
-                        label="Endzeit"
-                        value={blockForm.endTime}
-                        onChange={(e) => setBlockForm({ ...blockForm, endTime: e.target.value })}
-                      />
-                    </div>
-                    <Textarea
-                      label="Grund (optional)"
-                      placeholder="Warum wird diese Zeit blockiert?"
-                      value={blockForm.reason}
-                      onChange={(e) => setBlockForm({ ...blockForm, reason: e.target.value })}
-                    />
-                  </div>
-                </ModalBody>
-                <ModalFooter>
-                  <Button color="danger" variant="light" onPress={onClose}>
-                    Abbrechen
-                  </Button>
-                  <Button 
-                    color="primary" 
-                    className="bg-[#E8C7C3] text-white"
-                    onPress={handleCreateBlockedSlot}
-                    isLoading={updating}
-                  >
-                    Blockieren
-                  </Button>
-                </ModalFooter>
-              </>
-            )}
-          </ModalContent>
-        </Modal>
+                  {success && createdBooking ? (
+                    <Card className="border-2 border-green-500/20 bg-green-50">
+                      <CardBody className="p-4">
+                        <div className="flex items-start gap-3">
+                          <CheckCircle className="text-green-500 shrink-0" size={24} />
+                          <div>
+                            <h3 className="font-semibold text-green-700 mb-1">
+                              Buchung erfolgreich erstellt!
+                            </h3>
+                            <p className="text-green-600 text-sm mb-2">
+                              Buchungsnummer: {createdBooking.bookingNumber}
+                            </p>
+                            <div className="bg-white p-3 rounded-lg text-sm">
+                              <p><strong>Service:</strong> {createdBooking.booking.serviceName}</p>
+                              <p><strong>Datum:</strong> {createdBooking.booking.bookingDate}</p>
+                              <p><strong>Uhrzeit:</strong> {createdBooking.booking.startTime} - {createdBooking.booking.endTime}</p>
+                              <p><strong>Kunde:</strong> {createdBooking.customer.firstName} {createdBooking.customer.lastName}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </CardBody>
+                    </Card>
+                  ) : (
+                    <div className="space-y-6 py-4">
+                      {error && (
+                        <Card className="border-2 border-red-500/20 bg-red-50">
+                          <CardBody className="p-4">
+                            <p className="text-red-600">{error}</p>
+                          </CardBody>
+                        </Card>
+                      )}
 
-        {/* Block Date Range Modal */}
-        <Modal isOpen={isDateRangeModalOpen} onClose={() => setIsDateRangeModalOpen(false)} size="lg">
-          <ModalContent>
-            {(onClose) => (
-              <>
-                <ModalHeader>
-                  <h2 className="text-xl font-bold">Zeitraum blockieren</h2>
-                </ModalHeader>
-                <ModalBody>
-                  <div className="space-y-4">
-                    <div className="flex gap-2">
-                      <Input
-                        type="date"
-                        label="Von"
-                        value={rangeForm.fromDate}
-                        onChange={(e) => setRangeForm({ ...rangeForm, fromDate: e.target.value })}
-                      />
-                      <Input
-                        type="date"
-                        label="Bis"
-                        value={rangeForm.toDate}
-                        onChange={(e) => setRangeForm({ ...rangeForm, toDate: e.target.value })}
-                      />
+                      <div className="space-y-4">
+                        {/* Service Selection */}
+                        <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E8C7C3]/20">
+                          <h3 className="font-semibold text-[#1E1E1E] mb-4">1. Service auswählen</h3>
+                          <Select
+                            placeholder="Service auswählen"
+                            selectedKeys={bookingForm.serviceId ? [bookingForm.serviceId] : []}
+                            onChange={(e) => setBookingForm({ ...bookingForm, serviceId: e.target.value })}
+                            isRequired
+                            isDisabled={submitting}
+                            className="max-w-full"
+                          >
+                            {services.map((service) => (
+                              <SelectItem key={service.id} value={service.id}>
+                                {service.name} - {service.price.toFixed(2)} CHF ({service.durationMinutes} Min)
+                              </SelectItem>
+                            ))}
+                          </Select>
+                        </div>
+
+                        {/* Date Selection */}
+                        <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E8C7C3]/20">
+                          <h3 className="font-semibold text-[#1E1E1E] mb-4">2. Datum wählen</h3>
+                          <Input
+                            type="date"
+                            value={bookingForm.bookingDate}
+                            min={moment().format('YYYY-MM-DD')}
+                            max={moment().add(60, 'days').format('YYYY-MM-DD')}
+                            onChange={(e) => setBookingForm({ ...bookingForm, bookingDate: e.target.value })}
+                            isRequired
+                            isDisabled={submitting}
+                            startContent={<CalendarIcon size={18} className="text-[#E8C7C3]" />}
+                          />
+                        </div>
+
+                        {/* Time Selection */}
+                        <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E8C7C3]/20">
+                          <h3 className="font-semibold text-[#1E1E1E] mb-4">3. Uhrzeit wählen</h3>
+                          {loadingSlots ? (
+                            <div className="flex items-center gap-2 p-4 bg-[#F5EDEB] rounded-lg">
+                              <Spinner size="sm" className="text-[#E8C7C3]" />
+                              <span className="text-sm text-[#8A8A8A]">Verfügbare Zeiten werden geladen...</span>
+                            </div>
+                          ) : availableSlots.length > 0 ? (
+                            <div className="grid grid-cols-4 gap-2">
+                              {availableSlots.map((slot) => (
+                                <Button
+                                  key={slot.startTime}
+                                  size="sm"
+                                  className={`
+                                    ${bookingForm.startTime === slot.startTime
+                                      ? 'bg-[#E8C7C3] text-white'
+                                      : 'bg-white border-2 border-[#E8C7C3] text-[#1E1E1E] hover:bg-[#F5EDEB]'
+                                    }
+                                  `}
+                                  onPress={() => setBookingForm({ ...bookingForm, startTime: slot.startTime })}
+                                  isDisabled={submitting}
+                                >
+                                  {slot.startTime}
+                                </Button>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="p-4 bg-[#F5EDEB] rounded-lg text-center">
+                              <p className="text-[#8A8A8A] text-sm">
+                                {bookingForm.serviceId 
+                                  ? "Keine verfügbaren Zeiten an diesem Tag" 
+                                  : "Bitte zuerst Service und Datum auswählen"}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Customer Information */}
+                        <div className="bg-white rounded-xl p-5 shadow-sm border border-[#E8C7C3]/20">
+                          <h3 className="font-semibold text-[#1E1E1E] mb-4">4. Kundendaten</h3>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input
+                              label="Vorname"
+                              placeholder="Max"
+                              value={bookingForm.firstName}
+                              onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })}
+                              isRequired
+                              isDisabled={submitting}
+                              startContent={<User size={18} className="text-[#E8C7C3]" />}
+                            />
+
+                            <Input
+                              label="Nachname"
+                              placeholder="Mustermann"
+                              value={bookingForm.lastName}
+                              onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })}
+                              isRequired
+                              isDisabled={submitting}
+                              startContent={<User size={18} className="text-[#E8C7C3]" />}
+                            />
+
+                            <Input
+                              label="E-Mail (optional)"
+                              type="email"
+                              placeholder="max@example.com"
+                              value={bookingForm.email}
+                              onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })}
+                              isDisabled={submitting}
+                              startContent={<Mail size={18} className="text-[#E8C7C3]" />}
+                            />
+
+                            <Input
+                              label="Telefon (optional)"
+                              type="tel"
+                              placeholder="+41 123 456 789"
+                              value={bookingForm.phone}
+                              onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
+                              isDisabled={submitting}
+                              startContent={<Phone size={18} className="text-[#E8C7C3]" />}
+                            />
+                          </div>
+
+                          {/* Notes */}
+                          <div className="mt-4">
+                            <Textarea
+                              label="Notizen (optional)"
+                              placeholder="Besondere Wünsche oder Anmerkungen des Kunden..."
+                              value={bookingForm.customerNotes}
+                              onChange={(e) => setBookingForm({ ...bookingForm, customerNotes: e.target.value })}
+                              isDisabled={submitting}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Service Summary */}
+                        {selectedService && (
+                          <div className="bg-[#F5EDEB] p-4 rounded-lg flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-white rounded-lg">
+                                <Scissors size={18} className="text-[#E8C7C3]" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-[#1E1E1E]">{selectedService.name}</p>
+                                <p className="text-xs text-[#8A8A8A]">{selectedService.durationMinutes} Minuten</p>
+                              </div>
+                            </div>
+                            <div className="text-2xl font-bold text-[#E8C7C3]">
+                              {selectedService.price.toFixed(2)} CHF
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Input
-                        type="time"
-                        label="Startzeit"
-                        value={rangeForm.startTime}
-                        onChange={(e) => setRangeForm({ ...rangeForm, startTime: e.target.value })}
-                      />
-                      <Input
-                        type="time"
-                        label="Endzeit"
-                        value={rangeForm.endTime}
-                        onChange={(e) => setRangeForm({ ...rangeForm, endTime: e.target.value })}
-                      />
-                    </div>
-                    <Textarea
-                      label="Grund (optional)"
-                      placeholder="Warum wird dieser Zeitraum blockiert?"
-                      value={rangeForm.reason}
-                      onChange={(e) => setRangeForm({ ...rangeForm, reason: e.target.value })}
-                    />
-                  </div>
+                  )}
                 </ModalBody>
                 <ModalFooter>
-                  <Button color="danger" variant="light" onPress={onClose}>
-                    Abbrechen
-                  </Button>
                   <Button 
-                    color="primary" 
-                    className="bg-[#E8C7C3] text-white"
-                    onPress={handleCreateDateRange}
-                    isLoading={updating}
+                    color="danger" 
+                    variant="light" 
+                    onPress={onClose}
+                    isDisabled={submitting}
                   >
-                    Zeitraum blockieren
+                    {success ? "Schließen" : "Abbrechen"}
                   </Button>
+                  {!success && !createdBooking && (
+                    <Button 
+                      color="primary" 
+                      className="bg-[#E8C7C3] text-white"
+                      onPress={handleCreateManualBooking}
+                      isLoading={submitting}
+                      isDisabled={!bookingForm.serviceId || !bookingForm.bookingDate || !bookingForm.startTime || !bookingForm.firstName || !bookingForm.lastName}
+                      endContent={<ChevronRight size={18} />}
+                    >
+                      Buchung erstellen
+                    </Button>
+                  )}
                 </ModalFooter>
               </>
             )}

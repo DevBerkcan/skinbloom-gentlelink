@@ -342,3 +342,105 @@ export interface CreateBlockedDateRange {
   reason?: string;
 }
 
+// lib/api/admin.ts - Add these new types and functions
+
+export interface Service {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  durationMinutes: number;
+  isActive: boolean;
+}
+
+export interface CreateManualBookingDto {
+  serviceId: string;
+  bookingDate: string;
+  startTime: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  customerNotes?: string;
+}
+
+export interface ManualBookingResponse {
+  id: string;
+  bookingNumber: string;
+  status: string;
+  confirmationSent: boolean;
+  booking: {
+    serviceId: string;
+    serviceName: string;
+    bookingDate: string;
+    startTime: string;
+    endTime: string;
+    price: number;
+  };
+  customer: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
+// Get all services
+export async function getServices(): Promise<Service[]> {
+  const response = await fetch(`${API_BASE_URL}/services`);
+  
+  if (!response.ok) {
+    throw new Error("Fehler beim Laden der Services");
+  }
+  
+  return response.json();
+}
+
+// lib/api/admin.ts - Fix the createManualBooking function
+
+// Create manual booking (for phone calls)
+export async function createManualBooking(data: CreateManualBookingDto): Promise<ManualBookingResponse> {
+  // Fix the URL - it should match your controller route
+  const response = await fetch(`${API_BASE_URL}/admin/manual/booking`, {  // Changed from /admin/manual/booking
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Fehler beim Erstellen der Buchung");
+  }
+
+  return response.json();
+}
+
+export interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
+}
+
+export interface AvailabilityResponse {
+  date: string;
+  serviceId: string;
+  serviceDuration: number;
+  availableSlots: TimeSlot[];
+}
+
+// Get available time slots for a service on a specific date
+export async function getAvailability(
+  serviceId: string,
+  date: string
+): Promise<AvailabilityResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/availability/${serviceId}?date=${date}`
+  );
+  
+  if (!response.ok) {
+    throw new Error("Fehler beim Laden der Verfügbarkeit");
+  }
+  
+  return response.json();
+}
