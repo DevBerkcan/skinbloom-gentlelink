@@ -453,13 +453,14 @@ export default function AdminBookingsPage() {
                 )}
               </ModalBody>
               <ModalFooter>
-                <Button variant="flat" className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold" onPress={onModalClose}>
+                <Button variant="flat" className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold" startContent={<X size={14} />} onPress={onModalClose}>
                   Abbrechen
                 </Button>
                 <Button
                   className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
                   onPress={handleStatusUpdate}
                   isLoading={updating}
+                  startContent={<CheckCircle size={14} />}
                   isDisabled={!newStatus}
                 >
                   Aktualisieren

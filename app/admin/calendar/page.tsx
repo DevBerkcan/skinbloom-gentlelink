@@ -11,13 +11,13 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextu
 import { Spinner } from "@nextui-org/spinner";
 import { Select, SelectItem } from "@nextui-org/select";
 import { Input, Textarea } from "@nextui-org/input";
-import { 
+import {
   Calendar as CalendarIcon, Clock, User, Phone, Mail, Plus, AlertCircle,
   CheckCircle, XCircle, Ban, Scissors, MessageCircle, Hash, CreditCard,
   CalendarDays, ChevronRight,
   Search
 } from "lucide-react";
-import { 
+import {
   getBookings, getServices, getBlockedSlots, createManualBooking, updateBookingStatus,
   createBlockedSlot,
   type BookingListItem, type Service, type CreateManualBookingDto,
@@ -91,19 +91,19 @@ export default function AdminCalendarPage() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
   const [isRange, setIsRange] = useState(false);
-const [singleForm, setSingleForm] = useState<CreateBlockedSlot>({ 
-  blockDate: "", 
-  startTime: "", 
-  endTime: "", 
-  reason: "" 
-});
-const [rangeForm, setRangeForm] = useState<CreateBlockedDateRange>({ 
-  fromDate: "", 
-  toDate: "", 
-  startTime: "", 
-  endTime: "", 
-  reason: "" 
-});
+  const [singleForm, setSingleForm] = useState<CreateBlockedSlot>({
+    blockDate: "",
+    startTime: "",
+    endTime: "",
+    reason: ""
+  });
+  const [rangeForm, setRangeForm] = useState<CreateBlockedDateRange>({
+    fromDate: "",
+    toDate: "",
+    startTime: "",
+    endTime: "",
+    reason: ""
+  });
 
   const [bookingForm, setBookingForm] = useState<{
     serviceId: string;
@@ -115,20 +115,20 @@ const [rangeForm, setRangeForm] = useState<CreateBlockedDateRange>({
     phone: string;
     customerNotes: string;
   }>({
-    serviceId: '', 
+    serviceId: '',
     bookingDate: moment().format('YYYY-MM-DD'),
-    startTime: '', 
-    firstName: '', 
-    lastName: '', 
-    email: '', 
-    phone: '', 
+    startTime: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
     customerNotes: ''
   });
 
   const [blockedSlotForm, setBlockedSlotForm] = useState({
     blockDate: moment().format('YYYY-MM-DD'),
-    startTime: '09:00', 
-    endTime: '17:00', 
+    startTime: '09:00',
+    endTime: '17:00',
     reason: ''
   });
 
@@ -145,8 +145,8 @@ const [rangeForm, setRangeForm] = useState<CreateBlockedDateRange>({
 
   useEffect(() => { loadServices(); }, []);
 
-const [isServicePopoverOpen, setIsServicePopoverOpen] = useState(false);
-const [searchTerm, setSearchTerm] = useState("");
+  const [isServicePopoverOpen, setIsServicePopoverOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (bookingForm.serviceId && bookingForm.bookingDate) {
@@ -225,15 +225,15 @@ const [searchTerm, setSearchTerm] = useState("");
     setSelectedSlot(null);
     setError(null);
     if (employees.length > 0) setSelectedEmployeeId(employees[0].id);
-    setBookingForm({ 
-      serviceId: '', 
-      bookingDate: moment().format('YYYY-MM-DD'), 
-      startTime: '', 
-      firstName: '', 
-      lastName: '', 
-      email: '', 
-      phone: '', 
-      customerNotes: '' 
+    setBookingForm({
+      serviceId: '',
+      bookingDate: moment().format('YYYY-MM-DD'),
+      startTime: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      customerNotes: ''
     });
     setAvailableSlots([]);
   };
@@ -244,13 +244,13 @@ const [searchTerm, setSearchTerm] = useState("");
     try {
       const selectedService = services.find(s => s.id === bookingForm.serviceId);
       if (!selectedService) throw new Error("Service nicht gefunden");
-      
+
       const availabilityCheck = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
       const isSlotAvailable = availabilityCheck.availableSlots?.some(
         slot => slot.startTime === bookingForm.startTime && slot.isAvailable
       );
       if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
-      
+
       const bookingData: CreateManualBookingDto = {
         serviceId: bookingForm.serviceId,
         bookingDate: bookingForm.bookingDate,
@@ -262,12 +262,12 @@ const [searchTerm, setSearchTerm] = useState("");
         customerNotes: bookingForm.customerNotes?.trim() || null,
         employeeId: selectedEmployeeId || null,
       };
-      
+
       const booking = await createManualBooking(bookingData);
       setCreatedBooking(booking);
       setSuccess(true);
       await loadEvents();
-      
+
       setTimeout(() => {
         setIsManualBookingModalOpen(false);
         resetManualBookingForm();
@@ -280,36 +280,36 @@ const [searchTerm, setSearchTerm] = useState("");
     }
   };
 
-const handleCreateBlockedSlot = async () => {
-  setError(null);
-  setSubmittingBlocked(true);
-  try {
-    if (isRange) {
-      if (!rangeForm.fromDate || !rangeForm.toDate || !rangeForm.startTime || !rangeForm.endTime) {
-        throw new Error("Bitte alle Pflichtfelder ausfüllen");
+  const handleCreateBlockedSlot = async () => {
+    setError(null);
+    setSubmittingBlocked(true);
+    try {
+      if (isRange) {
+        if (!rangeForm.fromDate || !rangeForm.toDate || !rangeForm.startTime || !rangeForm.endTime) {
+          throw new Error("Bitte alle Pflichtfelder ausfüllen");
+        }
+        await createBlockedDateRange(rangeForm);
+      } else {
+        if (!singleForm.blockDate || !singleForm.startTime || !singleForm.endTime) {
+          throw new Error("Bitte alle Pflichtfelder ausfüllen");
+        }
+        await createBlockedSlot(singleForm);
       }
-      await createBlockedDateRange(rangeForm);
-    } else {
-      if (!singleForm.blockDate || !singleForm.startTime || !singleForm.endTime) {
-        throw new Error("Bitte alle Pflichtfelder ausfüllen");
-      }
-      await createBlockedSlot(singleForm);
+
+      await loadEvents();
+      setIsBlockedSlotModalOpen(false);
+
+      // Reset forms
+      setIsRange(false);
+      setSingleForm({ blockDate: "", startTime: "", endTime: "", reason: "" });
+      setRangeForm({ fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" });
+
+    } catch (error: any) {
+      setError(error.message || "Fehler beim Erstellen des blockierten Slots");
+    } finally {
+      setSubmittingBlocked(false);
     }
-    
-    await loadEvents();
-    setIsBlockedSlotModalOpen(false);
-    
-    // Reset forms
-    setIsRange(false);
-    setSingleForm({ blockDate: "", startTime: "", endTime: "", reason: "" });
-    setRangeForm({ fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" });
-    
-  } catch (error: any) { 
-    setError(error.message || "Fehler beim Erstellen des blockierten Slots"); 
-  } finally { 
-    setSubmittingBlocked(false); 
-  }
-};
+  };
 
   const eventStyleGetter = (event: CalendarEvent) => {
     if (event.type === 'blocked') {
@@ -321,7 +321,7 @@ const handleCreateBlockedSlot = async () => {
 
   const filteredEvents = filterStatus === "all" ? events
     : filterStatus === "blocked" ? events.filter(e => e.type === 'blocked')
-    : events.filter(e => e.type === 'booking' && e.status === filterStatus);
+      : events.filter(e => e.type === 'booking' && e.status === filterStatus);
 
   const handleSelectEvent = (event: CalendarEvent) => { setSelectedEvent(event); setIsBookingModalOpen(true); };
 
@@ -360,7 +360,7 @@ const handleCreateBlockedSlot = async () => {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">Kalender</h1>
             <p className="text-[#8A8A8A] flex items-center gap-2 text-sm">
-             Verwalten Sie Termine und blockierte Zeiten
+              Verwalten Sie Termine und blockierte Zeiten
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -592,153 +592,153 @@ const handleCreateBlockedSlot = async () => {
         </Modal>
 
         {/* Blocked Slot Modal */}
-       {/* Blocked Slot Modal - Enhanced with Range Toggle */}
-<Modal 
-  isOpen={isBlockedSlotModalOpen} 
-  onClose={() => { 
-    setIsBlockedSlotModalOpen(false); 
-    setError(null);
-    setIsRange(false);
-    setSingleForm({ blockDate: "", startTime: "", endTime: "", reason: "" });
-    setRangeForm({ fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" });
-  }} 
-  size="lg" 
-  placement="center"
-  classNames={modalClassNames}
->
-  <ModalContent>
-    {(onClose) => (
-      <>
-        <ModalHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-[#017172] flex items-center justify-center">
-              <Ban size={16} className="text-white" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-[#1E1E1E]">Zeitslot blockieren</h2>
-              <p className="text-xs text-[#8A8A8A]">Zeiten als nicht verfügbar markieren</p>
-            </div>
-          </div>
-        </ModalHeader>
-        <ModalBody>
-          <div className="space-y-4">
-            {error && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl border border-red-200 text-red-600 text-sm">
-                <AlertCircle size={14} />{error}
-              </div>
+        {/* Blocked Slot Modal - Enhanced with Range Toggle */}
+        <Modal
+          isOpen={isBlockedSlotModalOpen}
+          onClose={() => {
+            setIsBlockedSlotModalOpen(false);
+            setError(null);
+            setIsRange(false);
+            setSingleForm({ blockDate: "", startTime: "", endTime: "", reason: "" });
+            setRangeForm({ fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" });
+          }}
+          size="lg"
+          placement="center"
+          classNames={modalClassNames}
+        >
+          <ModalContent>
+            {(onClose) => (
+              <>
+                <ModalHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-[#017172] flex items-center justify-center">
+                      <Ban size={16} className="text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold text-[#1E1E1E]">Zeitslot blockieren</h2>
+                      <p className="text-xs text-[#8A8A8A]">Zeiten als nicht verfügbar markieren</p>
+                    </div>
+                  </div>
+                </ModalHeader>
+                <ModalBody>
+                  <div className="space-y-4">
+                    {error && (
+                      <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl border border-red-200 text-red-600 text-sm">
+                        <AlertCircle size={14} />{error}
+                      </div>
+                    )}
+
+                    {/* Range toggle */}
+                    <div className="flex items-center gap-3 p-3 bg-[#F5EDEB] rounded-xl border border-[#E8C7C3]/30">
+                      <Switch
+                        isSelected={isRange}
+                        onValueChange={setIsRange}
+                        color="primary"
+                        size="sm"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-[#1E1E1E]">Datumsbereich</p>
+                        <p className="text-xs text-[#8A8A8A]">Mehrere Tage auf einmal blockieren</p>
+                      </div>
+                      <CalendarRange size={18} className="text-[#8A8A8A]" />
+                    </div>
+
+                    {/* Date(s) */}
+                    {!isRange ? (
+                      <Input
+                        type="date"
+                        label="Datum"
+                        isRequired
+                        value={singleForm.blockDate}
+                        onChange={(e) => setSingleForm(f => ({ ...f, blockDate: e.target.value }))}
+                        min={moment().format('YYYY-MM-DD')}
+                        classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }}
+                      />
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          type="date"
+                          label="Von Datum"
+                          isRequired
+                          value={rangeForm.fromDate}
+                          onChange={(e) => setRangeForm(f => ({ ...f, fromDate: e.target.value }))}
+                          min={moment().format('YYYY-MM-DD')}
+                          classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }}
+                        />
+                        <Input
+                          type="date"
+                          label="Bis Datum"
+                          isRequired
+                          value={rangeForm.toDate}
+                          onChange={(e) => setRangeForm(f => ({ ...f, toDate: e.target.value }))}
+                          min={moment().format('YYYY-MM-DD')}
+                          classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Times */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        type="time"
+                        label="Von Uhrzeit"
+                        isRequired
+                        value={isRange ? rangeForm.startTime : singleForm.startTime}
+                        onChange={(e) => isRange
+                          ? setRangeForm(f => ({ ...f, startTime: e.target.value }))
+                          : setSingleForm(f => ({ ...f, startTime: e.target.value }))
+                        }
+                        classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }}
+                      />
+                      <Input
+                        type="time"
+                        label="Bis Uhrzeit"
+                        isRequired
+                        value={isRange ? rangeForm.endTime : singleForm.endTime}
+                        onChange={(e) => isRange
+                          ? setRangeForm(f => ({ ...f, endTime: e.target.value }))
+                          : setSingleForm(f => ({ ...f, endTime: e.target.value }))
+                        }
+                        classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }}
+                      />
+                    </div>
+
+                    {/* Reason */}
+                    <Input
+                      label="Grund (optional)"
+                      placeholder="z.B. Urlaub, Fortbildung…"
+                      value={isRange ? rangeForm.reason : singleForm.reason}
+                      onChange={(e) => isRange
+                        ? setRangeForm(f => ({ ...f, reason: e.target.value }))
+                        : setSingleForm(f => ({ ...f, reason: e.target.value }))
+                      }
+                      classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }}
+                    />
+                  </div>
+                </ModalBody>
+                <ModalFooter className="gap-2">
+                  <Button
+                    variant="flat"
+                    className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                    onPress={onClose}
+                    isDisabled={submittingBlocked}
+                    startContent={<X size={14} />}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
+                    onPress={handleCreateBlockedSlot}
+                    isLoading={submittingBlocked}
+                    startContent={!submittingBlocked && <Ban size={15} />}
+                  >
+                    Blockieren
+                  </Button>
+                </ModalFooter>
+              </>
             )}
-
-            {/* Range toggle */}
-            <div className="flex items-center gap-3 p-3 bg-[#F5EDEB] rounded-xl border border-[#E8C7C3]/30">
-              <Switch 
-                isSelected={isRange} 
-                onValueChange={setIsRange} 
-                color="primary" 
-                size="sm" 
-              />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[#1E1E1E]">Datumsbereich</p>
-                <p className="text-xs text-[#8A8A8A]">Mehrere Tage auf einmal blockieren</p>
-              </div>
-              <CalendarRange size={18} className="text-[#8A8A8A]" />
-            </div>
-
-            {/* Date(s) */}
-            {!isRange ? (
-              <Input 
-                type="date" 
-                label="Datum" 
-                isRequired 
-                value={singleForm.blockDate}
-                onChange={(e) => setSingleForm(f => ({ ...f, blockDate: e.target.value }))} 
-                min={moment().format('YYYY-MM-DD')}
-                classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
-              />
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <Input 
-                  type="date" 
-                  label="Von Datum" 
-                  isRequired 
-                  value={rangeForm.fromDate}
-                  onChange={(e) => setRangeForm(f => ({ ...f, fromDate: e.target.value }))} 
-                  min={moment().format('YYYY-MM-DD')}
-                  classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
-                />
-                <Input 
-                  type="date" 
-                  label="Bis Datum" 
-                  isRequired 
-                  value={rangeForm.toDate}
-                  onChange={(e) => setRangeForm(f => ({ ...f, toDate: e.target.value }))} 
-                  min={moment().format('YYYY-MM-DD')}
-                  classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
-                />
-              </div>
-            )}
-
-            {/* Times */}
-            <div className="grid grid-cols-2 gap-3">
-              <Input 
-                type="time" 
-                label="Von Uhrzeit" 
-                isRequired
-                value={isRange ? rangeForm.startTime : singleForm.startTime}
-                onChange={(e) => isRange 
-                  ? setRangeForm(f => ({ ...f, startTime: e.target.value })) 
-                  : setSingleForm(f => ({ ...f, startTime: e.target.value }))
-                }
-                classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
-              />
-              <Input 
-                type="time" 
-                label="Bis Uhrzeit" 
-                isRequired
-                value={isRange ? rangeForm.endTime : singleForm.endTime}
-                onChange={(e) => isRange 
-                  ? setRangeForm(f => ({ ...f, endTime: e.target.value })) 
-                  : setSingleForm(f => ({ ...f, endTime: e.target.value }))
-                }
-                classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
-              />
-            </div>
-
-            {/* Reason */}
-            <Input 
-              label="Grund (optional)" 
-              placeholder="z.B. Urlaub, Fortbildung…"
-              value={isRange ? rangeForm.reason : singleForm.reason}
-              onChange={(e) => isRange 
-                ? setRangeForm(f => ({ ...f, reason: e.target.value })) 
-                : setSingleForm(f => ({ ...f, reason: e.target.value }))
-              }
-              classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
-            />
-          </div>
-        </ModalBody>
-        <ModalFooter className="gap-2">
-          <Button 
-            variant="flat" 
-            className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
-            onPress={onClose} 
-            isDisabled={submittingBlocked} 
-            startContent={<X size={14} />}
-          >
-            Abbrechen
-          </Button>
-          <Button 
-            className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
-            onPress={handleCreateBlockedSlot} 
-            isLoading={submittingBlocked} 
-            startContent={!submittingBlocked && <Ban size={15} />}
-          >
-            Blockieren
-          </Button>
-        </ModalFooter>
-      </>
-    )}
-  </ModalContent>
-</Modal>
+          </ModalContent>
+        </Modal>
 
         {/* Manual Booking Modal */}
         <Modal
@@ -800,18 +800,16 @@ const handleCreateBlockedSlot = async () => {
                               <button
                                 key={emp.id}
                                 onClick={() => setSelectedEmployeeId(emp.id)}
-                                className={`text-left p-3 rounded-xl border-2 transition-all ${
-                                  selectedEmployeeId === emp.id
+                                className={`text-left p-3 rounded-xl border-2 transition-all ${selectedEmployeeId === emp.id
                                     ? 'border-[#017172] bg-[#017172]/5'
                                     : 'border-[#E8C7C3]/30 bg-white hover:border-[#017172]/30'
-                                }`}
+                                  }`}
                               >
                                 <div className="flex items-center gap-2">
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                                    selectedEmployeeId === emp.id
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${selectedEmployeeId === emp.id
                                       ? 'bg-[#017172] text-white'
                                       : 'bg-[#E8C7C3]/20 text-[#017172]'
-                                  }`}>
+                                    }`}>
                                     {emp.name.charAt(0)}
                                   </div>
                                   <div>
@@ -825,79 +823,79 @@ const handleCreateBlockedSlot = async () => {
                         )}
                       </div>
 
-{/* Step 2: Service with integrated search */}
-<div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
-  <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">2. Service auswählen</p>
-  
-  <Popover placement="bottom" isOpen={isServicePopoverOpen} onOpenChange={setIsServicePopoverOpen}>
-    <PopoverTrigger>
-      <Button
-        variant="flat"
-        className="w-full justify-start bg-white border border-[#E8C7C3]/30 text-[#1E1E1E] h-12"
-        endContent={<Search size={18} className="text-[#8A8A8A]" />}
-      >
-        {selectedService ? selectedService.name : "Service suchen oder auswählen..."}
-      </Button>
-    </PopoverTrigger>
-    <PopoverContent className="w-[400px] p-0">
-      <div className="w-full">
-        <Input
-          placeholder="Service suchen..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="border-b border-[#E8C7C3]/20"
-          startContent={<Search size={18} className="text-[#8A8A8A]" />}
-          classNames={{ 
-            inputWrapper: "bg-transparent shadow-none",
-            base: "p-3"
-          }}
-          autoFocus
-        />
-        <div className="max-h-[300px] overflow-y-auto">
-          {filteredServices.length > 0 ? (
-            filteredServices.map(service => (
-              <button
-                key={service.id}
-                className="w-full text-left p-3 hover:bg-[#F5EDEB] transition-colors border-b border-[#E8C7C3]/10 last:border-0"
-                onClick={() => {
-                  setBookingForm({ ...bookingForm, serviceId: service.id });
-                  setSearchTerm('');
-                  setIsServicePopoverOpen(false);
-                }}
-              >
-                <div className="font-medium text-[#1E1E1E]">{service.name}</div>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-[#017172] font-semibold">
-                    {service.price.toFixed(2)} CHF
-                  </span>
-                  <span className="text-xs text-[#8A8A8A]">
-                    {service.durationMinutes} Min
-                  </span>
-                </div>
-                {service.description && (
-                  <div className="text-xs text-[#8A8A8A] mt-1 line-clamp-2">
-                    {service.description}
-                  </div>
-                )}
-              </button>
-            ))
-          ) : (
-            <div className="p-4 text-center text-[#8A8A8A]">
-              Keine Services gefunden
-            </div>
-          )}
-        </div>
-      </div>
-    </PopoverContent>
-  </Popover>
-</div>
+                      {/* Step 2: Service with integrated search */}
+                      <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                        <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">2. Service auswählen</p>
+
+                        <Popover placement="bottom" isOpen={isServicePopoverOpen} onOpenChange={setIsServicePopoverOpen}>
+                          <PopoverTrigger>
+                            <Button
+                              variant="flat"
+                              className="w-full justify-start bg-white border border-[#E8C7C3]/30 text-[#1E1E1E] h-12"
+                              endContent={<Search size={18} className="text-[#8A8A8A]" />}
+                            >
+                              {selectedService ? selectedService.name : "Service suchen oder auswählen..."}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[400px] p-0">
+                            <div className="w-full">
+                              <Input
+                                placeholder="Service suchen..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="border-b border-[#E8C7C3]/20"
+                                startContent={<Search size={18} className="text-[#8A8A8A]" />}
+                                classNames={{
+                                  inputWrapper: "bg-transparent shadow-none",
+                                  base: "p-3"
+                                }}
+                                autoFocus
+                              />
+                              <div className="max-h-[300px] overflow-y-auto">
+                                {filteredServices.length > 0 ? (
+                                  filteredServices.map(service => (
+                                    <button
+                                      key={service.id}
+                                      className="w-full text-left p-3 hover:bg-[#F5EDEB] transition-colors border-b border-[#E8C7C3]/10 last:border-0"
+                                      onClick={() => {
+                                        setBookingForm({ ...bookingForm, serviceId: service.id });
+                                        setSearchTerm('');
+                                        setIsServicePopoverOpen(false);
+                                      }}
+                                    >
+                                      <div className="font-medium text-[#1E1E1E]">{service.name}</div>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-xs text-[#017172] font-semibold">
+                                          {service.price.toFixed(2)} CHF
+                                        </span>
+                                        <span className="text-xs text-[#8A8A8A]">
+                                          {service.durationMinutes} Min
+                                        </span>
+                                      </div>
+                                      {service.description && (
+                                        <div className="text-xs text-[#8A8A8A] mt-1 line-clamp-2">
+                                          {service.description}
+                                        </div>
+                                      )}
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="p-4 text-center text-[#8A8A8A]">
+                                    Keine Services gefunden
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                       {/* Step 3: Date */}
                       <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
                         <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">3. Datum wählen</p>
-                        <Input 
-                          type="date" 
+                        <Input
+                          type="date"
                           value={bookingForm.bookingDate}
-                          min={moment().format('YYYY-MM-DD')} 
+                          min={moment().format('YYYY-MM-DD')}
                           max={moment().add(60, 'days').format('YYYY-MM-DD')}
                           onChange={(e) => setBookingForm({ ...bookingForm, bookingDate: e.target.value })}
                           isDisabled={submitting}
@@ -932,48 +930,48 @@ const handleCreateBlockedSlot = async () => {
                       <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
                         <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">5. Kundendaten</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <Input 
-                            label="Vorname" 
-                            placeholder="Max" 
+                          <Input
+                            label="Vorname"
+                            placeholder="Max"
                             value={bookingForm.firstName}
                             onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })}
-                            isRequired 
-                            isDisabled={submitting} 
-                            classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }} 
+                            isRequired
+                            isDisabled={submitting}
+                            classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
                           />
-                          <Input 
-                            label="Nachname" 
-                            placeholder="Mustermann" 
+                          <Input
+                            label="Nachname"
+                            placeholder="Mustermann"
                             value={bookingForm.lastName}
                             onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })}
-                            isRequired 
-                            isDisabled={submitting} 
-                            classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }} 
+                            isRequired
+                            isDisabled={submitting}
+                            classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
                           />
-                          <Input 
-                            label="E-Mail (optional)" 
-                            type="email" 
+                          <Input
+                            label="E-Mail (optional)"
+                            type="email"
                             value={bookingForm.email}
                             onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })}
-                            isDisabled={submitting} 
-                            classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }} 
+                            isDisabled={submitting}
+                            classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
                           />
-                          <Input 
-                            label="Telefon (optional)" 
-                            type="tel" 
+                          <Input
+                            label="Telefon (optional)"
+                            type="tel"
                             value={bookingForm.phone}
                             onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
-                            isDisabled={submitting} 
-                            classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }} 
+                            isDisabled={submitting}
+                            classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
                           />
                         </div>
                         <div className="mt-3">
-                          <Textarea 
-                            label="Notizen (optional)" 
+                          <Textarea
+                            label="Notizen (optional)"
                             value={bookingForm.customerNotes}
                             onChange={(e) => setBookingForm({ ...bookingForm, customerNotes: e.target.value })}
-                            isDisabled={submitting} 
-                            classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }} 
+                            isDisabled={submitting}
+                            classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
                           />
                         </div>
                       </div>
@@ -997,8 +995,14 @@ const handleCreateBlockedSlot = async () => {
                   )}
                 </ModalBody>
                 <ModalFooter>
-                  <Button variant="flat" className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold" onPress={onClose} isDisabled={submitting}>
+                  <Button
+                    variant="flat"
+                    className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                    onPress={onClose}
+                    startContent={<X size={14} />}
+                    isDisabled={submitting}>
                     {success ? "Schließen" : "Abbrechen"}
+
                   </Button>
                   {!success && !createdBooking && (
                     <Button
