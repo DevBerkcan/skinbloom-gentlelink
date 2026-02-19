@@ -22,15 +22,10 @@ import {
   type BookingListItem, type Service, type CreateManualBookingDto,
   type ManualBookingResponse, type BlockedTimeSlot
 } from "@/lib/api/admin";
-import { getAvailability, type TimeSlot } from "@/lib/api/booking";
+import { getAvailability, getEmployees, type TimeSlot, type Employee } from "@/lib/api/booking";
 
 moment.locale('de');
 const localizer = momentLocalizer(moment);
-
-const EMPLOYEES = [
-  { id: "basel", name: "Basel", role: "Ästhetik-Expertin" },
-  { id: "frank", name: "Frank", role: "Behandlungsspezialist" },
-];
 
 interface BookingEvent {
   id: string; title: string; start: Date; end: Date;
@@ -55,7 +50,6 @@ const statusIcons = {
   Cancelled: XCircle, NoShow: XCircle
 };
 
-// Shared modal style
 const modalClassNames = {
   base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
   header: "border-b border-[#E8C7C3]/20 bg-gradient-to-r from-[#F5EDEB] to-white",
@@ -63,29 +57,11 @@ const modalClassNames = {
   body: "py-4"
 };
 
-function SearchableServiceSelect({
-  services,
-  value,
-  onChange,
-  disabled,
-}: {
-  services: Service[];
-  value: string;
-  onChange: (id: string) => void;
-  disabled?: boolean;
-}) {
-  const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-
-  const filtered = services.filter((s) =>
-    s.name.toLowerCase().includes(search.toLowerCase())
-  );
-  const selected = services.find((s) => s.id === value);
-}
-
 export default function AdminCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -103,17 +79,16 @@ export default function AdminCalendarPage() {
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("basel");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
 
-  // Update the form state to use string only (not null)
   const [bookingForm, setBookingForm] = useState<{
     serviceId: string;
     bookingDate: string;
     startTime: string;
     firstName: string;
     lastName: string;
-    email: string;  // Keep as string for form inputs
-    phone: string;  // Keep as string for form inputs
+    email: string;
+    phone: string;
     customerNotes: string;
   }>({
     serviceId: '', 
@@ -132,6 +107,17 @@ export default function AdminCalendarPage() {
     endTime: '17:00', 
     reason: ''
   });
+
+  // Load employees from API on mount
+  useEffect(() => {
+    getEmployees()
+      .then((data) => {
+        setEmployees(data);
+        if (data.length > 0) setSelectedEmployeeId(data[0].id);
+      })
+      .catch(console.error)
+      .finally(() => setLoadingEmployees(false));
+  }, []);
 
   useEffect(() => { loadServices(); }, []);
 
@@ -206,6 +192,25 @@ export default function AdminCalendarPage() {
     finally { setUpdating(false); }
   };
 
+  const resetManualBookingForm = () => {
+    setSuccess(false);
+    setCreatedBooking(null);
+    setSelectedSlot(null);
+    setError(null);
+    if (employees.length > 0) setSelectedEmployeeId(employees[0].id);
+    setBookingForm({ 
+      serviceId: '', 
+      bookingDate: moment().format('YYYY-MM-DD'), 
+      startTime: '', 
+      firstName: '', 
+      lastName: '', 
+      email: '', 
+      phone: '', 
+      customerNotes: '' 
+    });
+    setAvailableSlots([]);
+  };
+
   const handleCreateManualBooking = async () => {
     setError(null);
     setSubmitting(true);
@@ -219,17 +224,16 @@ export default function AdminCalendarPage() {
       );
       if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
       
-      // Transform form data to match API expectations
       const bookingData: CreateManualBookingDto = {
         serviceId: bookingForm.serviceId,
         bookingDate: bookingForm.bookingDate,
         startTime: bookingForm.startTime,
         firstName: bookingForm.firstName.trim(),
         lastName: bookingForm.lastName.trim(),
-        // Convert empty strings to null for the API
         email: bookingForm.email?.trim() || null,
         phone: bookingForm.phone?.trim() || null,
         customerNotes: bookingForm.customerNotes?.trim() || null,
+        employeeId: selectedEmployeeId || null,
       };
       
       const booking = await createManualBooking(bookingData);
@@ -238,22 +242,8 @@ export default function AdminCalendarPage() {
       await loadEvents();
       
       setTimeout(() => {
-        setSuccess(false); 
-        setCreatedBooking(null); 
         setIsManualBookingModalOpen(false);
-        setSelectedSlot(null); 
-        setSelectedEmployeeId("basel");
-        setBookingForm({ 
-          serviceId: '', 
-          bookingDate: moment().format('YYYY-MM-DD'), 
-          startTime: '', 
-          firstName: '', 
-          lastName: '', 
-          email: '', 
-          phone: '', 
-          customerNotes: '' 
-        });
-        setAvailableSlots([]);
+        resetManualBookingForm();
       }, 3000);
     } catch (error: any) {
       console.error("Error creating manual booking:", error);
@@ -302,9 +292,7 @@ export default function AdminCalendarPage() {
   };
 
   const handleOpenManualBooking = () => {
-    setSelectedSlot(null);
-    setBookingForm({ ...bookingForm, bookingDate: moment().format('YYYY-MM-DD'), startTime: '', serviceId: '' });
-    setAvailableSlots([]);
+    resetManualBookingForm();
     setIsManualBookingModalOpen(true);
   };
 
@@ -462,7 +450,6 @@ export default function AdminCalendarPage() {
                 <ModalBody>
                   {selectedEvent?.type === 'booking' ? (
                     <div className="space-y-4">
-                      {/* Service Info */}
                       <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
                         <div className="flex items-center gap-2 mb-3">
                           <Scissors size={16} className="text-[#017172]" />
@@ -480,7 +467,6 @@ export default function AdminCalendarPage() {
                         </div>
                       </div>
 
-                      {/* Customer Info */}
                       <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
                         <div className="flex items-center gap-2 mb-3">
                           <User size={16} className="text-[#017172]" />
@@ -516,7 +502,6 @@ export default function AdminCalendarPage() {
                         </div>
                       )}
 
-                      {/* Status Update */}
                       <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
                         <p className="font-semibold text-[#1E1E1E] mb-3">Status aktualisieren</p>
                         <div className="flex flex-wrap gap-2">
@@ -617,7 +602,13 @@ export default function AdminCalendarPage() {
         </Modal>
 
         {/* Manual Booking Modal */}
-        <Modal isOpen={isManualBookingModalOpen} onClose={() => { setIsManualBookingModalOpen(false); setError(null); setSuccess(false); setCreatedBooking(null); setSelectedSlot(null); }} size="2xl" scrollBehavior="inside" classNames={modalClassNames}>
+        <Modal
+          isOpen={isManualBookingModalOpen}
+          onClose={() => { setIsManualBookingModalOpen(false); resetManualBookingForm(); }}
+          size="2xl"
+          scrollBehavior="inside"
+          classNames={modalClassNames}
+        >
           <ModalContent>
             {(onClose) => (
               <>
@@ -645,6 +636,9 @@ export default function AdminCalendarPage() {
                             <p><strong>Datum:</strong> {createdBooking.booking.bookingDate}</p>
                             <p><strong>Uhrzeit:</strong> {createdBooking.booking.startTime} – {createdBooking.booking.endTime}</p>
                             <p><strong>Kunde:</strong> {createdBooking.customer.firstName} {createdBooking.customer.lastName}</p>
+                            {createdBooking.employee && (
+                              <p><strong>Fachkraft:</strong> {createdBooking.employee.name}</p>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -656,22 +650,40 @@ export default function AdminCalendarPage() {
                       {/* Step 1: Employee */}
                       <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
                         <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">1. Fachkraft wählen</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {EMPLOYEES.map(emp => (
-                            <button key={emp.id} onClick={() => setSelectedEmployeeId(emp.id)}
-                              className={`text-left p-3 rounded-xl border-2 transition-all ${selectedEmployeeId === emp.id ? 'border-[#017172] bg-[#017172]/5' : 'border-[#E8C7C3]/30 bg-white hover:border-[#017172]/30'}`}>
-                              <div className="flex items-center gap-2">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${selectedEmployeeId === emp.id ? 'bg-[#017172] text-white' : 'bg-[#E8C7C3]/20 text-[#017172]'}`}>
-                                  {emp.name.charAt(0)}
+                        {loadingEmployees ? (
+                          <div className="flex items-center gap-2 p-3 bg-white rounded-lg">
+                            <Spinner size="sm" />
+                            <span className="text-sm text-[#8A8A8A]">Lade Mitarbeiter...</span>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2">
+                            {employees.map(emp => (
+                              <button
+                                key={emp.id}
+                                onClick={() => setSelectedEmployeeId(emp.id)}
+                                className={`text-left p-3 rounded-xl border-2 transition-all ${
+                                  selectedEmployeeId === emp.id
+                                    ? 'border-[#017172] bg-[#017172]/5'
+                                    : 'border-[#E8C7C3]/30 bg-white hover:border-[#017172]/30'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                                    selectedEmployeeId === emp.id
+                                      ? 'bg-[#017172] text-white'
+                                      : 'bg-[#E8C7C3]/20 text-[#017172]'
+                                  }`}>
+                                    {emp.name.charAt(0)}
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-[#1E1E1E] text-sm">{emp.name}</p>
+                                    <p className="text-[10px] text-[#8A8A8A]">{emp.role}</p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="font-semibold text-[#1E1E1E] text-sm">{emp.name}</p>
-                                  <p className="text-[10px] text-[#8A8A8A]">{emp.role}</p>
-                                </div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* Step 2: Service */}
@@ -784,7 +796,12 @@ export default function AdminCalendarPage() {
                         <div className="bg-[#017172]/5 border border-[#017172]/20 p-3 rounded-xl flex items-center justify-between">
                           <div>
                             <p className="font-semibold text-[#1E1E1E] text-sm">{selectedService.name}</p>
-                            <p className="text-xs text-[#8A8A8A]">{selectedService.durationMinutes} Min · {EMPLOYEES.find(e => e.id === selectedEmployeeId)?.name}</p>
+                            <p className="text-xs text-[#8A8A8A]">
+                              {selectedService.durationMinutes} Min
+                              {employees.find(e => e.id === selectedEmployeeId)?.name
+                                ? ` · ${employees.find(e => e.id === selectedEmployeeId)!.name}`
+                                : ''}
+                            </p>
                           </div>
                           <p className="text-lg font-bold text-[#017172]">{selectedService.price.toFixed(2)} CHF</p>
                         </div>

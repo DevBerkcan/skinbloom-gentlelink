@@ -361,11 +361,13 @@ export interface CreateManualBookingDto {
   firstName: string;
   lastName: string;
   email: string | null; 
-  phone: string | null; 
+  phone: string | null;
+  employeeId?: string | null;
   customerNotes: string | null; 
 }
 
 export interface ManualBookingResponse {
+  employee: any;
   id: string;
   bookingNumber: string;
   status: string;
