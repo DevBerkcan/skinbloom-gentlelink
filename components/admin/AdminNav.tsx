@@ -4,7 +4,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, Clock, BarChart3, Ban, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Calendar, Clock, BarChart3, Ban, LogOut, Menu, X, Users } from "lucide-react";
 import { useState } from "react";
 
 export function AdminNav() {
@@ -16,6 +16,7 @@ export function AdminNav() {
     { href: "/admin/calendar", label: "Kalender", icon: Calendar },
     { href: "/admin/bookings", label: "Buchungen", icon: Calendar },
     { href: "/admin/blocked-slots", label: "Abwesenheiten", icon: Ban },
+        { href: "/admin/employees", label: "Mitarbeiter", icon: Users },
     { href: "/admin/tracking", label: "Tracking", icon: BarChart3 },
   ];
 
@@ -41,11 +42,7 @@ export function AdminNav() {
                 priority
               />
             </div>
-            <div className="flex flex-col">
-              <span className="hidden sm:block text-base md:text-lg font-semibold text-[#ffff] leading-tight">
-                Skinbloom Aesthetics
-              </span>
-            </div>
+
           </Link>
 
           {/* Desktop Navigation */}
