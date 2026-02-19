@@ -7,17 +7,43 @@ import { Button } from "@nextui-org/button";
 import { Input } from "@nextui-org/input";
 import { Switch } from "@nextui-org/switch";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@nextui-org/modal";
-import { Trash2, Plus, Ban, Clock, ChevronLeft, ChevronRight, AlertCircle, CalendarRange, X } from "lucide-react";
+import {
+  Trash2, Plus, Ban, Clock, ChevronLeft, ChevronRight,
+  AlertCircle, CalendarRange, X, Edit, Save,
+} from "lucide-react";
 import {
   getBlockedSlots, createBlockedSlot, createBlockedDateRange, deleteBlockedSlot,
   type BlockedTimeSlot, type CreateBlockedSlot, type CreateBlockedDateRange,
 } from "@/lib/api/admin";
 import { useConfirm } from "@/components/ConfirmDialog";
 
+// ── Add this function to lib/api/admin.ts as well (shown at bottom of file) ──
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:7020/api";
+
+interface UpdateBlockedSlot {
+  blockDate: string;
+  startTime: string;
+  endTime: string;
+  reason?: string;
+}
+
+async function updateBlockedSlot(id: string, data: UpdateBlockedSlot): Promise<BlockedTimeSlot> {
+  const response = await fetch(`${API_BASE_URL}/BlockedTimeSlots/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || "Fehler beim Aktualisieren");
+  }
+  return response.json();
+}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+const PAGE_SIZE = 8;
 
 function getMiniCalDays(year: number, month: number): (number | null)[] {
   const startDow = (new Date(year, month, 1).getDay() + 6) % 7;
@@ -27,14 +53,21 @@ function getMiniCalDays(year: number, month: number): (number | null)[] {
   return days;
 }
 
-// ── Shared modal styles (same everywhere) ─────────────────────────────────────
+// ── Shared modal styles ───────────────────────────────────────────────────────
 const MODAL_CLS = {
   base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
   header: "border-b border-[#E8C7C3]/20 bg-gradient-to-r from-[#F5EDEB] to-white",
   footer: "border-t border-[#E8C7C3]/20 bg-[#F5EDEB]/30",
   body: "py-4",
 };
-const INPUT_CLS = { inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" };
+const INPUT_CLS = {
+  inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]",
+};
+
+type ModalMode = "create" | "edit";
+
+const EMPTY_SINGLE: CreateBlockedSlot = { blockDate: "", startTime: "", endTime: "", reason: "" };
+const EMPTY_RANGE: CreateBlockedDateRange = { fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" };
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function BlockedSlotsPage() {
@@ -43,11 +76,17 @@ export default function BlockedSlotsPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Modal
+  // Pagination
+  const [page, setPage] = useState(1);
+
+  // Modal state
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [modalMode, setModalMode] = useState<ModalMode>("create");
+  const [editingSlot, setEditingSlot] = useState<BlockedTimeSlot | null>(null);
   const [isRange, setIsRange] = useState(false);
-  const [singleForm, setSingleForm] = useState<CreateBlockedSlot>({ blockDate: "", startTime: "", endTime: "", reason: "" });
-  const [rangeForm, setRangeForm] = useState<CreateBlockedDateRange>({ fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" });
+  const [singleForm, setSingleForm] = useState<CreateBlockedSlot>(EMPTY_SINGLE);
+  const [rangeForm, setRangeForm] = useState<CreateBlockedDateRange>(EMPTY_RANGE);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Mini-calendar
   const today = new Date();
@@ -60,6 +99,9 @@ export default function BlockedSlotsPage() {
 
   useEffect(() => { load(); }, []);
 
+  // Reset to page 1 when filter changes
+  useEffect(() => { setPage(1); }, [selDate]);
+
   async function load() {
     setLoading(true); setError(null);
     try { setSlots(await getBlockedSlots()); }
@@ -67,46 +109,134 @@ export default function BlockedSlotsPage() {
     finally { setLoading(false); }
   }
 
-  async function handleCreate() {
+  // ── Open modals ───────────────────────────────────────────────────────────
+  function openCreate(prefillDate?: string) {
+    setModalMode("create");
+    setEditingSlot(null);
+    setIsRange(false);
+    setSingleForm({ ...EMPTY_SINGLE, blockDate: prefillDate ?? "" });
+    setRangeForm(EMPTY_RANGE);
+    setModalError(null);
+    onOpen();
+  }
+
+  function openEdit(slot: BlockedTimeSlot) {
+    setModalMode("edit");
+    setEditingSlot(slot);
+    setIsRange(false); // edit is always single-day
+    setSingleForm({
+      blockDate: slot.blockDate,
+      startTime: slot.startTime.slice(0, 5), // trim seconds if present
+      endTime: slot.endTime.slice(0, 5),
+      reason: slot.reason ?? "",
+    });
+    setModalError(null);
+    onOpen();
+  }
+
+  function handleClose() {
+    onClose();
+    setModalError(null);
+    setEditingSlot(null);
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+  async function handleSubmit() {
+    setModalError(null);
+
+    if (modalMode === "edit" && editingSlot) {
+      if (!singleForm.blockDate || !singleForm.startTime || !singleForm.endTime) {
+        setModalError("Bitte alle Pflichtfelder ausfüllen"); return;
+      }
+      setSubmitting(true);
+      try {
+        const updated = await updateBlockedSlot(editingSlot.id, {
+          blockDate: singleForm.blockDate,
+          startTime: singleForm.startTime,
+          endTime: singleForm.endTime,
+          reason: singleForm.reason || undefined,
+        });
+        setSlots(prev => prev.map(s => s.id === editingSlot.id ? updated : s));
+        handleClose();
+      } catch (e: any) { setModalError(e.message); }
+      finally { setSubmitting(false); }
+      return;
+    }
+
+    // Create
     if (isRange) {
       if (!rangeForm.fromDate || !rangeForm.toDate || !rangeForm.startTime || !rangeForm.endTime) {
-        setError("Bitte alle Pflichtfelder ausfüllen"); return;
+        setModalError("Bitte alle Pflichtfelder ausfüllen"); return;
       }
-      setSubmitting(true); setError(null);
-      try { await createBlockedDateRange(rangeForm); await load(); onClose(); setRangeForm({ fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" }); }
-      catch (e: any) { setError(e.message); }
+      setSubmitting(true);
+      try {
+        await createBlockedDateRange(rangeForm);
+        await load();
+        handleClose();
+      } catch (e: any) { setModalError(e.message); }
       finally { setSubmitting(false); }
     } else {
       if (!singleForm.blockDate || !singleForm.startTime || !singleForm.endTime) {
-        setError("Bitte alle Pflichtfelder ausfüllen"); return;
+        setModalError("Bitte alle Pflichtfelder ausfüllen"); return;
       }
-      setSubmitting(true); setError(null);
-      try { await createBlockedSlot(singleForm); await load(); onClose(); setSingleForm({ blockDate: "", startTime: "", endTime: "", reason: "" }); }
-      catch (e: any) { setError(e.message); }
+      setSubmitting(true);
+      try {
+        await createBlockedSlot(singleForm);
+        await load();
+        handleClose();
+      } catch (e: any) { setModalError(e.message); }
       finally { setSubmitting(false); }
     }
   }
 
+  // ── Delete ────────────────────────────────────────────────────────────────
   async function handleDelete(slot: BlockedTimeSlot) {
     const ok = await confirm({
       title: "Zeitslot löschen",
-      message: `${new Date(slot.blockDate + "T00:00").toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "long" })} · ${slot.startTime}–${slot.endTime} Uhr wirklich löschen?`,
-      confirmLabel: "Löschen", variant: "danger",
+      message: `${new Date(slot.blockDate + "T00:00").toLocaleDateString("de-DE", {
+        weekday: "long", day: "2-digit", month: "long",
+      })} · ${slot.startTime.slice(0, 5)}–${slot.endTime.slice(0, 5)} Uhr wirklich löschen?`,
+      confirmLabel: "Löschen",
+      variant: "danger",
     });
     if (!ok) return;
-    try { await deleteBlockedSlot(slot.id); setSlots(prev => prev.filter(s => s.id !== slot.id)); }
-    catch (e: any) { setError(e.message); }
+    try {
+      await deleteBlockedSlot(slot.id);
+      setSlots(prev => prev.filter(s => s.id !== slot.id));
+    } catch (e: any) { setError(e.message); }
   }
 
-  // Calendar helpers
-  const blockedDates = useMemo(() => { const s = new Set<string>(); slots.forEach(sl => s.add(sl.blockDate)); return s; }, [slots]);
+  // ── Calendar helpers ──────────────────────────────────────────────────────
+  const blockedDates = useMemo(() => {
+    const s = new Set<string>();
+    slots.forEach(sl => s.add(sl.blockDate));
+    return s;
+  }, [slots]);
+
   const calDays = getMiniCalDays(calYear, calMonth);
-  const dateStr = (d: number) => `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  const prevMonth = () => calMonth === 0 ? (setCalYear(y => y - 1), setCalMonth(11)) : setCalMonth(m => m - 1);
-  const nextMonth = () => calMonth === 11 ? (setCalYear(y => y + 1), setCalMonth(0)) : setCalMonth(m => m + 1);
+  const mkDateStr = (d: number) =>
+    `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 
+  const prevMonth = () => calMonth === 0
+    ? (setCalYear(y => y - 1), setCalMonth(11))
+    : setCalMonth(m => m - 1);
+  const nextMonth = () => calMonth === 11
+    ? (setCalYear(y => y + 1), setCalMonth(0))
+    : setCalMonth(m => m + 1);
+
+  // ── Pagination ────────────────────────────────────────────────────────────
   const filteredSlots = selDate ? slots.filter(s => s.blockDate === selDate) : slots;
+  // Sort ascending by date then startTime
+  const sortedSlots = [...filteredSlots].sort((a, b) =>
+    a.blockDate !== b.blockDate
+      ? a.blockDate.localeCompare(b.blockDate)
+      : a.startTime.localeCompare(b.startTime)
+  );
+  const totalPages = Math.max(1, Math.ceil(sortedSlots.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedSlots = sortedSlots.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
@@ -119,8 +249,8 @@ export default function BlockedSlotsPage() {
           </div>
           <Button
             className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
-            startContent={<Plus size={18} />}
-            onPress={() => { setError(null); setIsRange(false); onOpen(); }}
+            startContent={<Ban size={18} />}
+            onPress={() => openCreate()}
           >
             Zeitslot blockieren
           </Button>
@@ -128,7 +258,6 @@ export default function BlockedSlotsPage() {
 
         {/* ── Mini-Calendar ─────────────────────────────────────────────── */}
         <Card className="mb-6 border border-[#E8C7C3]/20 shadow-xl">
-          {/* FIX: use a plain div instead of CardHeader to avoid NextUI's default justify-center */}
           <div className="flex items-center justify-between w-full px-4 py-3 bg-gradient-to-r from-[#F5EDEB] to-white border-b border-[#E8C7C3]/20 rounded-t-xl">
             <Button isIconOnly variant="flat" className="bg-white/60 min-w-8 h-8" onPress={prevMonth}>
               <ChevronLeft size={16} />
@@ -139,46 +268,51 @@ export default function BlockedSlotsPage() {
             </Button>
           </div>
           <CardBody className="p-4">
-            {/* Weekday headers */}
             <div className="grid grid-cols-7 mb-2">
               {WEEKDAYS.map(d => (
                 <div key={d} className="text-center text-xs font-semibold text-[#8A8A8A] py-1">{d}</div>
               ))}
             </div>
-            {/* Day cells */}
             <div className="grid grid-cols-7 gap-1">
               {calDays.map((day, i) => {
                 if (day === null) return <div key={`e-${i}`} />;
-                const ds = dateStr(day);
+                const ds = mkDateStr(day);
                 const isBlocked = blockedDates.has(ds);
                 const isToday = ds === todayStr;
                 const isSel = ds === selDate;
                 return (
-                  <button key={ds}
+                  <button
+                    key={ds}
                     onClick={() => setSelDate(prev => prev === ds ? null : ds)}
-                    onDoubleClick={() => { setSingleForm(f => ({ ...f, blockDate: ds })); setIsRange(false); onOpen(); }}
+                    onDoubleClick={() => openCreate(ds)}
                     title={isBlocked ? "Blockiert – Doppelklick zum Erstellen" : "Doppelklick zum Erstellen"}
                     className={`relative flex flex-col items-center justify-center rounded-xl h-10 text-sm font-medium transition-all cursor-pointer
-                      ${isSel ? "bg-[#017172] text-white shadow-md"
-                        : isToday ? "ring-2 ring-[#017172] text-[#017172]"
-                          : isBlocked ? "bg-[#017172]/10 text-[#017172] hover:bg-[#017172]/20"
-                            : "text-[#1E1E1E] hover:bg-[#F5EDEB]"}`}
+                      ${isSel     ? "bg-[#017172] text-white shadow-md"
+                      : isToday   ? "ring-2 ring-[#017172] text-[#017172]"
+                      : isBlocked ? "bg-[#017172]/10 text-[#017172] hover:bg-[#017172]/20"
+                      :             "text-[#1E1E1E] hover:bg-[#F5EDEB]"}`}
                   >
                     {day}
-                    {isBlocked && !isSel && <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-[#017172]" />}
+                    {isBlocked && !isSel && (
+                      <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-[#017172]" />
+                    )}
                   </button>
                 );
               })}
             </div>
-            {/* Filter indicator */}
+
             {selDate && (
               <div className="mt-3 pt-3 border-t border-[#E8C7C3]/20 flex items-center justify-between">
                 <p className="text-sm text-[#8A8A8A]">
-                  Filter: <span className="font-semibold text-[#017172]">
-                    {new Date(selDate + "T00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" })}
+                  Filter:{" "}
+                  <span className="font-semibold text-[#017172]">
+                    {new Date(selDate + "T00:00").toLocaleDateString("de-DE", {
+                      day: "2-digit", month: "long", year: "numeric",
+                    })}
                   </span>
                 </p>
-                <Button size="sm" variant="flat" className="bg-[#F5EDEB] text-[#8A8A8A] text-xs" onPress={() => setSelDate(null)}>
+                <Button size="sm" variant="flat" className="bg-[#F5EDEB] text-[#8A8A8A] text-xs"
+                  onPress={() => setSelDate(null)}>
                   Aufheben
                 </Button>
               </div>
@@ -186,21 +320,28 @@ export default function BlockedSlotsPage() {
           </CardBody>
         </Card>
 
-        {/* ── List ─────────────────────────────────────────────────────────── */}
+        {/* ── List header ───────────────────────────────────────────────── */}
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-semibold text-[#1E1E1E]">
             {selDate
-              ? `Blockierungen am ${new Date(selDate + "T00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "long" })}`
+              ? `Blockierungen am ${new Date(selDate + "T00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "long" })} (${filteredSlots.length})`
               : `Alle Blockierungen (${slots.length})`}
           </h3>
+          {totalPages > 1 && (
+            <span className="text-xs text-[#8A8A8A]">
+              Seite {safePage} von {totalPages}
+            </span>
+          )}
         </div>
 
+        {/* ── Global error ─────────────────────────────────────────────── */}
         {error && (
           <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 rounded-xl border border-red-200 text-red-600 text-sm">
             <AlertCircle size={15} />{error}
           </div>
         )}
 
+        {/* ── Slot list ────────────────────────────────────────────────── */}
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-[#017172]" />
@@ -216,117 +357,245 @@ export default function BlockedSlotsPage() {
             <p className="text-[#8A8A8A] text-sm mt-1">Doppelklick auf einen Kalendertag oder Button oben</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {filteredSlots.map((slot) => (
-              <Card key={slot.id} className="border border-[#E8C7C3]/20 shadow-sm hover:shadow-md transition-shadow">
-                <CardBody className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#6b7280]/10 flex items-center justify-center shrink-0">
-                        <Ban size={18} className="text-[#6b7280]" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-[#1E1E1E]">
-                          {new Date(slot.blockDate + "T00:00").toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-1 text-sm text-[#8A8A8A]">
-                          <Clock size={13} />
-                          <span>{slot.startTime} – {slot.endTime} Uhr</span>
+          <>
+            <div className="space-y-3">
+              {pagedSlots.map((slot) => (
+                <Card key={slot.id} className="border border-[#E8C7C3]/20 shadow-sm hover:shadow-md transition-shadow">
+                  <CardBody className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#6b7280]/10 flex items-center justify-center shrink-0">
+                          <Ban size={18} className="text-[#6b7280]" />
                         </div>
-                        {slot.reason && <p className="text-sm text-[#8A8A8A] mt-1 italic">„{slot.reason}"</p>}
+                        <div>
+                          <p className="font-semibold text-[#1E1E1E]">
+                            {new Date(slot.blockDate + "T00:00").toLocaleDateString("de-DE", {
+                              weekday: "long", day: "2-digit", month: "long", year: "numeric",
+                            })}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1 text-sm text-[#8A8A8A]">
+                            <Clock size={13} />
+                            <span>{slot.startTime.slice(0, 5)} – {slot.endTime.slice(0, 5)} Uhr</span>
+                          </div>
+                          {slot.reason && (
+                            <p className="text-sm text-[#8A8A8A] mt-1 italic">„{slot.reason}"</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          isIconOnly size="sm" variant="flat"
+                          className="bg-[#F5EDEB] text-[#017172] hover:bg-[#017172]/10"
+                          onPress={() => openEdit(slot)}
+                          title="Bearbeiten"
+                        >
+                          <Edit size={14} />
+                        </Button>
+                        <Button
+                          isIconOnly size="sm" variant="flat"
+                          className="bg-red-50 text-red-500 hover:bg-red-100"
+                          onPress={() => handleDelete(slot)}
+                          title="Löschen"
+                        >
+                          <Trash2 size={15} />
+                        </Button>
                       </div>
                     </div>
-                    <Button isIconOnly size="sm" variant="flat"
-                      className="bg-red-50 text-red-500 hover:bg-red-100 shrink-0"
-                      onPress={() => handleDelete(slot)}>
-                      <Trash2 size={15} />
+                  </CardBody>
+                </Card>
+              ))}
+            </div>
+
+            {/* ── Pagination ───────────────────────────────────────────── */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <Button
+                  isIconOnly size="sm" variant="flat"
+                  className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E]"
+                  isDisabled={safePage <= 1}
+                  onPress={() => setPage(p => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft size={16} />
+                </Button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => {
+                  // Show first, last, current ±1, and ellipsis
+                  const show = p === 1 || p === totalPages || Math.abs(p - safePage) <= 1;
+                  const ellipsisBefore = p === 2 && safePage > 4;
+                  const ellipsisAfter = p === totalPages - 1 && safePage < totalPages - 3;
+                  if (!show) return null;
+                  return (
+                    <Button
+                      key={p} size="sm" variant="flat"
+                      className={`min-w-9 h-9 font-semibold ${
+                        p === safePage
+                          ? "bg-[#017172] text-white"
+                          : "bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] hover:bg-[#F5EDEB]"
+                      }`}
+                      onPress={() => setPage(p)}
+                    >
+                      {p}
                     </Button>
-                  </div>
-                </CardBody>
-              </Card>
-            ))}
-          </div>
+                  );
+                })}
+
+                <Button
+                  isIconOnly size="sm" variant="flat"
+                  className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E]"
+                  isDisabled={safePage >= totalPages}
+                  onPress={() => setPage(p => Math.min(totalPages, p + 1))}
+                >
+                  <ChevronRight size={16} />
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* ── Create Modal ─────────────────────────────────────────────────────── */}
-      <Modal isOpen={isOpen} onClose={() => { onClose(); setError(null); }} size="lg" placement="center" classNames={MODAL_CLS}>
+      {/* ══════════════════════════════════════════════════════════════════════
+          CREATE / EDIT MODAL
+      ══════════════════════════════════════════════════════════════════════ */}
+      <Modal
+        isOpen={isOpen}
+        onClose={handleClose}
+        size="lg"
+        placement="center"
+        classNames={MODAL_CLS}
+      >
         <ModalContent>
           {(close) => (
             <>
               <ModalHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#017172] flex items-center justify-center">
-                    <Ban size={16} className="text-white" />
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
+                    modalMode === "edit" ? "bg-[#017172]" : "bg-[#017172]"
+                  }`}>
+                    {modalMode === "edit"
+                      ? <Edit size={15} className="text-white" />
+                      : <Ban size={15} className="text-white" />
+                    }
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-[#1E1E1E]">Zeitslot blockieren</h2>
-                    <p className="text-xs text-[#8A8A8A]">Zeiten als nicht verfügbar markieren</p>
+                    <h2 className="text-base font-bold text-[#1E1E1E]">
+                      {modalMode === "edit" ? "Zeitslot bearbeiten" : "Zeitslot blockieren"}
+                    </h2>
+                    <p className="text-xs text-[#8A8A8A]">
+                      {modalMode === "edit"
+                        ? "Datum, Zeit oder Grund anpassen"
+                        : "Zeiten als nicht verfügbar markieren"}
+                    </p>
                   </div>
                 </div>
               </ModalHeader>
+
               <ModalBody>
                 <div className="space-y-4">
-                  {error && (
+                  {modalError && (
                     <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl border border-red-200 text-red-600 text-sm">
-                      <AlertCircle size={14} />{error}
+                      <AlertCircle size={14} />{modalError}
                     </div>
                   )}
 
-                  {/* Range toggle */}
-                  <div className="flex items-center gap-3 p-3 bg-[#F5EDEB] rounded-xl border border-[#E8C7C3]/30">
-                    <Switch isSelected={isRange} onValueChange={setIsRange} color="primary" size="sm" />
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-[#1E1E1E]">Datumsbereich</p>
-                      <p className="text-xs text-[#8A8A8A]">Mehrere Tage auf einmal blockieren</p>
+                  {/* Date range toggle — only in create mode */}
+                  {modalMode === "create" && (
+                    <div className="flex items-center gap-3 p-3 bg-[#F5EDEB] rounded-xl border border-[#E8C7C3]/30">
+                      <Switch isSelected={isRange} onValueChange={setIsRange} color="primary" size="sm" />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-[#1E1E1E]">Datumsbereich</p>
+                        <p className="text-xs text-[#8A8A8A]">Mehrere Tage auf einmal blockieren</p>
+                      </div>
+                      <CalendarRange size={18} className="text-[#8A8A8A]" />
                     </div>
-                    <CalendarRange size={18} className="text-[#8A8A8A]" />
-                  </div>
+                  )}
 
-                  {/* Date(s) */}
-                  {!isRange ? (
-                    <Input type="date" label="Datum" isRequired value={singleForm.blockDate}
-                      onChange={(e) => setSingleForm(f => ({ ...f, blockDate: e.target.value }))} classNames={INPUT_CLS} />
+                  {/* Date field(s) */}
+                  {modalMode === "edit" || !isRange ? (
+                    <Input
+                      type="date"
+                      label="Datum"
+                      isRequired
+                      isDisabled={submitting}
+                      value={singleForm.blockDate}
+                      onChange={(e) => setSingleForm(f => ({ ...f, blockDate: e.target.value }))}
+                      classNames={INPUT_CLS}
+                    />
                   ) : (
                     <div className="grid grid-cols-2 gap-3">
-                      <Input type="date" label="Von Datum" isRequired value={rangeForm.fromDate}
-                        onChange={(e) => setRangeForm(f => ({ ...f, fromDate: e.target.value }))} classNames={INPUT_CLS} />
-                      <Input type="date" label="Bis Datum" isRequired value={rangeForm.toDate}
-                        onChange={(e) => setRangeForm(f => ({ ...f, toDate: e.target.value }))} classNames={INPUT_CLS} />
+                      <Input
+                        type="date" label="Von Datum" isRequired isDisabled={submitting}
+                        value={rangeForm.fromDate}
+                        onChange={(e) => setRangeForm(f => ({ ...f, fromDate: e.target.value }))}
+                        classNames={INPUT_CLS}
+                      />
+                      <Input
+                        type="date" label="Bis Datum" isRequired isDisabled={submitting}
+                        value={rangeForm.toDate}
+                        onChange={(e) => setRangeForm(f => ({ ...f, toDate: e.target.value }))}
+                        classNames={INPUT_CLS}
+                      />
                     </div>
                   )}
 
-                  {/* Times */}
+                  {/* Time fields */}
                   <div className="grid grid-cols-2 gap-3">
-                    <Input type="time" label="Von Uhrzeit" isRequired
-                      value={isRange ? rangeForm.startTime : singleForm.startTime}
-                      onChange={(e) => isRange ? setRangeForm(f => ({ ...f, startTime: e.target.value })) : setSingleForm(f => ({ ...f, startTime: e.target.value }))}
-                      classNames={INPUT_CLS} />
-                    <Input type="time" label="Bis Uhrzeit" isRequired
-                      value={isRange ? rangeForm.endTime : singleForm.endTime}
-                      onChange={(e) => isRange ? setRangeForm(f => ({ ...f, endTime: e.target.value })) : setSingleForm(f => ({ ...f, endTime: e.target.value }))}
-                      classNames={INPUT_CLS} />
+                    <Input
+                      type="time" label="Von Uhrzeit" isRequired isDisabled={submitting}
+                      value={isRange && modalMode === "create" ? rangeForm.startTime : singleForm.startTime}
+                      onChange={(e) =>
+                        isRange && modalMode === "create"
+                          ? setRangeForm(f => ({ ...f, startTime: e.target.value }))
+                          : setSingleForm(f => ({ ...f, startTime: e.target.value }))
+                      }
+                      classNames={INPUT_CLS}
+                    />
+                    <Input
+                      type="time" label="Bis Uhrzeit" isRequired isDisabled={submitting}
+                      value={isRange && modalMode === "create" ? rangeForm.endTime : singleForm.endTime}
+                      onChange={(e) =>
+                        isRange && modalMode === "create"
+                          ? setRangeForm(f => ({ ...f, endTime: e.target.value }))
+                          : setSingleForm(f => ({ ...f, endTime: e.target.value }))
+                      }
+                      classNames={INPUT_CLS}
+                    />
                   </div>
 
                   {/* Reason */}
-                  <Input label="Grund (optional)" placeholder="z.B. Urlaub, Fortbildung…"
-                    value={isRange ? rangeForm.reason : singleForm.reason}
-                    onChange={(e) => isRange ? setRangeForm(f => ({ ...f, reason: e.target.value })) : setSingleForm(f => ({ ...f, reason: e.target.value }))}
-                    classNames={INPUT_CLS} />
+                  <Input
+                    label="Grund (optional)"
+                    placeholder="z.B. Urlaub, Fortbildung…"
+                    isDisabled={submitting}
+                    value={isRange && modalMode === "create" ? rangeForm.reason ?? "" : singleForm.reason ?? ""}
+                    onChange={(e) =>
+                      isRange && modalMode === "create"
+                        ? setRangeForm(f => ({ ...f, reason: e.target.value }))
+                        : setSingleForm(f => ({ ...f, reason: e.target.value }))
+                    }
+                    classNames={INPUT_CLS}
+                  />
                 </div>
               </ModalBody>
+
               <ModalFooter className="gap-2">
-                <Button variant="flat"
+                <Button
+                  variant="flat"
                   className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
-                  onPress={close} 
-                  isDisabled={submitting} 
+                  onPress={handleClose}
+                  isDisabled={submitting}
                   startContent={<X size={14} />}
-                  >
+                >
                   Abbrechen
                 </Button>
-                <Button className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
-                  onPress={handleCreate} isLoading={submitting} startContent={!submitting && <Ban size={15} />}>
-                  Blockieren
+                <Button
+                  className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
+                  onPress={handleSubmit}
+                  isLoading={submitting}
+                  startContent={!submitting && (modalMode === "edit" ? <Save size={14} /> : <Ban size={14} />)}
+                >
+                  {modalMode === "edit" ? "Speichern" : "Blockieren"}
                 </Button>
               </ModalFooter>
             </>

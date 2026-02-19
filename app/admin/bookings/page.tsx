@@ -9,8 +9,15 @@ import { Select, SelectItem } from "@nextui-org/select";
 import { Chip } from "@nextui-org/chip";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@nextui-org/modal";
 import { Textarea } from "@nextui-org/input";
-import { Search, ChevronLeft, ChevronRight, Edit, Filter, X, Calendar, CheckCircle } from "lucide-react";
-import { getBookings, updateBookingStatus, type BookingListItem, type BookingFilter } from "@/lib/api/admin";
+import { 
+  Search, ChevronLeft, ChevronRight, Edit, Filter, X, Calendar, CheckCircle, 
+  Trash2, AlertTriangle 
+} from "lucide-react";
+import { 
+  getBookings, updateBookingStatus, deleteBooking,
+  type BookingListItem, type BookingFilter 
+} from "@/lib/api/admin";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 const modalClassNames = {
   base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
@@ -25,16 +32,22 @@ export default function AdminBookingsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   const [searchInput, setSearchInput] = useState("");
   const [filter, setFilter] = useState<BookingFilter>({ page: 1, pageSize: 20 });
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isStatusModalOpen, onOpen: onStatusModalOpen, onClose: onStatusModalClose } = useDisclosure();
+  const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
+  
   const [selectedBooking, setSelectedBooking] = useState<BookingListItem | null>(null);
   const [newStatus, setNewStatus] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [updating, setUpdating] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
+
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   useEffect(() => { loadBookings(); }, [filter]);
 
@@ -79,7 +92,13 @@ export default function AdminBookingsPage() {
     setSelectedBooking(booking);
     setNewStatus(booking.status);
     setAdminNotes("");
-    onOpen();
+    onStatusModalOpen();
+  }
+
+  function openDeleteModal(booking: BookingListItem) {
+    setSelectedBooking(booking);
+    setDeleteReason("");
+    onDeleteModalOpen();
   }
 
   async function handleStatusUpdate() {
@@ -91,11 +110,35 @@ export default function AdminBookingsPage() {
         adminNotes: adminNotes || undefined,
       });
       await loadBookings();
-      onClose();
+      onStatusModalClose();
     } catch (err: any) {
       alert("Fehler beim Aktualisieren: " + err.message);
     } finally {
       setUpdating(false);
+    }
+  }
+
+  async function handleDeleteBooking() {
+    if (!selectedBooking) return;
+    
+    const confirmed = await confirm({
+      title: "Buchung löschen",
+      message: `Möchten Sie die Buchung ${selectedBooking.bookingNumber} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+      confirmLabel: "Löschen",
+      variant: "danger",
+    });
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await deleteBooking(selectedBooking.id, deleteReason || undefined);
+      await loadBookings();
+      onDeleteModalClose();
+    } catch (err: any) {
+      alert("Fehler beim Löschen: " + err.message);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -156,14 +199,23 @@ export default function AdminBookingsPage() {
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#E8C7C3]/20">
         <div className="font-bold text-[#017172]">{booking.price.toFixed(2)} CHF</div>
-        <Button
-          size="sm"
-          className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold"
-          startContent={<Edit size={13} />}
-          onPress={() => openStatusModal(booking)}
-        >
-          Status
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold"
+            startContent={<Edit size={13} />}
+            onPress={() => openStatusModal(booking)}
+          >
+            Status
+          </Button>
+          <Button
+            size="sm"
+            variant="flat"
+            className="bg-red-50 text-red-500 min-w-0 px-2"
+            startContent={<Trash2 size={13} />}
+            onPress={() => openDeleteModal(booking)}
+          />
+        </div>
       </div>
     </div>
   );
@@ -316,7 +368,7 @@ export default function AdminBookingsPage() {
                   <table className="w-full">
                     <thead className="bg-[#F5EDEB] border-b border-[#E8C7C3]/30">
                       <tr>
-                        {["Buchungsnr.", "Datum & Zeit", "Kunde", "Service", "Status", "Preis", "Aktion"].map(h => (
+                        {["Buchungsnr.", "Datum & Zeit", "Kunde", "Service", "Status", "Preis", "Aktionen"].map(h => (
                           <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-[#8A8A8A] uppercase tracking-wide">{h}</th>
                         ))}
                       </tr>
@@ -353,12 +405,21 @@ export default function AdminBookingsPage() {
                             <div className="font-bold text-[#017172] text-sm">{booking.price.toFixed(2)} CHF</div>
                           </td>
                           <td className="px-5 py-4">
-                            <Button size="sm"
-                              className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-sm"
-                              startContent={<Edit size={13} />}
-                              onPress={() => openStatusModal(booking)}>
-                              Status
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button size="sm"
+                                className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-sm"
+                                startContent={<Edit size={13} />}
+                                onPress={() => openStatusModal(booking)}>
+                                Status
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="flat"
+                                className="bg-red-50 text-red-500 hover:bg-red-100 min-w-0 px-2"
+                                startContent={<Trash2 size={13} />}
+                                onPress={() => openDeleteModal(booking)}
+                              />
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -398,7 +459,7 @@ export default function AdminBookingsPage() {
       </div>
 
       {/* ── Status update modal ────────────────────────────────────────────── */}
-      <Modal isOpen={isOpen} onClose={onClose} size="md" placement="center" classNames={modalClassNames}>
+      <Modal isOpen={isStatusModalOpen} onClose={onStatusModalClose} size="md" placement="center" classNames={modalClassNames}>
         <ModalContent>
           {(onModalClose) => (
             <>
@@ -470,6 +531,69 @@ export default function AdminBookingsPage() {
           )}
         </ModalContent>
       </Modal>
+
+      {/* ── Delete confirmation modal ──────────────────────────────────────── */}
+      <Modal isOpen={isDeleteModalOpen} onClose={onDeleteModalClose} size="md" placement="center" classNames={modalClassNames}>
+        <ModalContent>
+          {(onModalClose) => (
+            <>
+              <ModalHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-red-500 flex items-center justify-center">
+                    <AlertTriangle size={18} className="text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-[#1E1E1E]">Buchung löschen</h2>
+                    <p className="text-xs text-[#8A8A8A]">{selectedBooking?.bookingNumber}</p>
+                  </div>
+                </div>
+              </ModalHeader>
+              <ModalBody>
+                {selectedBooking && (
+                  <div className="space-y-4">
+                    <div className="bg-red-50 p-4 rounded-xl border border-red-200">
+                      <p className="text-sm text-red-700">
+                        <strong>Achtung:</strong> Diese Aktion kann nicht rückgängig gemacht werden.
+                      </p>
+                    </div>
+
+                    <div className="bg-[#F5EDEB] p-4 rounded-xl border border-[#E8C7C3]/30">
+                      <div className="font-semibold text-[#1E1E1E] text-sm">{selectedBooking.customerName}</div>
+                      <div className="text-xs text-[#8A8A8A] mt-1">{selectedBooking.serviceName}</div>
+                      <div className="text-xs text-[#8A8A8A]">
+                        {new Date(selectedBooking.bookingDate).toLocaleDateString("de-DE")} · {selectedBooking.startTime} – {selectedBooking.endTime}
+                      </div>
+                    </div>
+
+                    <Input
+                      label="Löschgrund (optional)"
+                      placeholder="z.B. Doppelte Buchung..."
+                      value={deleteReason}
+                      onChange={(e) => setDeleteReason(e.target.value)}
+                      classNames={inputClassNames}
+                    />
+                  </div>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <Button variant="flat" className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold" startContent={<X size={14} />} onPress={onModalClose}>
+                  Abbrechen
+                </Button>
+                <Button
+                  className="bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold shadow-lg shadow-red-500/20"
+                  onPress={handleDeleteBooking}
+                  isLoading={deleting}
+                  startContent={<Trash2 size={14} />}
+                >
+                  Endgültig löschen
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {confirmDialog}
     </div>
   );
 }

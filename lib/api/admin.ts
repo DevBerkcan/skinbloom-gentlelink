@@ -1,3 +1,5 @@
+// lib/api/admin.ts
+
 // API Client für Admin-Endpunkte
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:7020/api";
@@ -236,6 +238,29 @@ export async function updateBookingStatus(
   return response.json();
 }
 
+// ── NEW: Delete booking (admin only) ─────────────────────────────────────────
+export async function deleteBooking(
+  bookingId: string,
+  reason?: string
+): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/admin/bookings/${bookingId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      reason: reason || "Manuell gelöscht",
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Fehler beim Löschen der Buchung");
+  }
+
+  return response.json();
+}
+
 // lib/api/admin.ts - Update TrackingStatistics types
 
 // Remove old complex types and add simplified ones
@@ -447,5 +472,28 @@ export async function getAvailability(
     throw new Error("Fehler beim Laden der Verfügbarkeit");
   }
   
+  return response.json();
+}
+
+export interface UpdateBlockedSlot {
+  blockDate: string;
+  startTime: string;
+  endTime: string;
+  reason?: string;
+}
+
+export async function updateBlockedSlot(
+  id: string,
+  data: UpdateBlockedSlot
+): Promise<BlockedTimeSlot> {
+  const response = await fetch(`${API_BASE_URL}/BlockedTimeSlots/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || "Fehler beim Aktualisieren");
+  }
   return response.json();
 }
