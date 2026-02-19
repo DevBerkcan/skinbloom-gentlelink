@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { ServiceSelector } from "@/components/booking/ServiceSelector";
+import { EmployeeSelector, type Employee } from "@/components/booking/EmployeeSelector";
 import { DateTimePicker } from "@/components/booking/DateTimePicker";
 import { ContactForm } from "@/components/booking/ContactForm";
 
@@ -22,18 +23,14 @@ import {
 } from "@/lib/api/booking";
 import { BookingEvents, getTrackingData } from "@/lib/tracking";
 
+const STEP_LABELS = ["Service", "Fachkraft", "Termin", "Kontakt"];
+
 export default function BookingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-
-  useEffect(() => {
-    if (currentStep === 3) {
-      BookingEvents.customerDataEntered();
-    }
-  }, [currentStep]);
-
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
@@ -123,8 +120,9 @@ export default function BookingPage() {
   const canProceed = () => {
     switch (currentStep) {
       case 1: return selectedService !== null;
-      case 2: return selectedDate !== null && selectedTime !== null;
-      case 3: return (
+      case 2: return selectedEmployee !== null;
+      case 3: return selectedDate !== null && selectedTime !== null;
+      case 4: return (
         customerInfo.firstName.trim() !== "" &&
         customerInfo.lastName.trim() !== "" &&
         customerInfo.email.trim() !== "" &&
@@ -140,34 +138,40 @@ export default function BookingPage() {
       <div className="max-w-3xl mx-auto px-4 py-12">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-[#8A8A8A] hover:text-[#E8C7C3] transition-colors mb-6"
+          className="inline-flex items-center gap-2 text-[#8A8A8A] hover:text-[#017172] transition-colors mb-6"
         >
           <Home size={20} />
           <span>Zurück zur Startseite</span>
         </Link>
 
+        {/* Step Indicator */}
         <div className="mb-8">
-          <div className="flex justify-center items-center gap-4">
-            {[1, 2, 3].map((step) => (
+          <div className="flex justify-center items-center gap-2">
+            {[1, 2, 3, 4].map((step) => (
               <div key={step} className="flex items-center">
-                <div
-                  className={`
-                    w-10 h-10 rounded-full flex items-center justify-center font-bold
-                    transition-all duration-300
-                    ${currentStep > step
-                      ? "bg-[#E8C7C3] text-white"
-                      : currentStep === step
-                        ? "bg-[#E8C7C3] text-white ring-4 ring-[#E8C7C3]/20"
-                        : "bg-[#F0E6E4] text-[#8A8A8A]"
-                    }
-                  `}
-                >
-                  {currentStep > step ? <Check size={20} /> : step}
-                </div>
-                {step < 3 && (
+                <div className="flex flex-col items-center gap-1">
                   <div
-                    className={`w-16 h-1 mx-2 rounded transition-all ${
-                      currentStep > step ? "bg-[#E8C7C3]" : "bg-[#F0E6E4]"
+                    className={`
+                      w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm
+                      transition-all duration-300
+                      ${currentStep > step
+                        ? "bg-[#017172] text-white"
+                        : currentStep === step
+                          ? "bg-[#017172] text-white ring-4 ring-[#017172]/20"
+                          : "bg-[#E8C7C3]/30 text-[#8A8A8A]"
+                      }
+                    `}
+                  >
+                    {currentStep > step ? <Check size={16} /> : step}
+                  </div>
+                  <span className={`text-[10px] font-medium hidden sm:block ${
+                    currentStep >= step ? "text-[#017172]" : "text-[#8A8A8A]"
+                  }`}>{STEP_LABELS[step - 1]}</span>
+                </div>
+                {step < 4 && (
+                  <div
+                    className={`w-10 h-1 mx-1 rounded transition-all mb-4 ${
+                      currentStep > step ? "bg-[#017172]" : "bg-[#E8C7C3]/30"
                     }`}
                   />
                 )}
@@ -192,27 +196,19 @@ export default function BookingPage() {
         <div className="bg-white rounded-3xl shadow-2xl p-8 ring-1 ring-[#E8C7C3]/20">
           <AnimatePresence mode="wait">
             {currentStep === 1 && (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <ServiceSelector
-                  services={services}
-                  selectedService={selectedService}
-                  onSelect={handleServiceSelect}
-                />
+              <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <ServiceSelector services={services} selectedService={selectedService} onSelect={handleServiceSelect} />
               </motion.div>
             )}
 
-            {currentStep === 2 && selectedService && (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
+            {currentStep === 2 && (
+              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <EmployeeSelector selectedEmployee={selectedEmployee} onSelect={setSelectedEmployee} />
+              </motion.div>
+            )}
+
+            {currentStep === 3 && selectedService && (
+              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <DateTimePicker
                   service={selectedService}
                   selectedDate={selectedDate}
@@ -226,13 +222,19 @@ export default function BookingPage() {
               </motion.div>
             )}
 
-            {currentStep === 3 && selectedService && selectedDate && selectedTime && (
-              <motion.div
-                key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
+            {currentStep === 4 && selectedService && selectedDate && selectedTime && (
+              <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                {selectedEmployee && (
+                  <div className="mb-4 flex items-center gap-3 bg-[#017172]/5 border border-[#017172]/20 rounded-xl px-4 py-3">
+                    <div className="w-9 h-9 bg-[#017172] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {selectedEmployee.name.charAt(0)}
+                    </div>
+                    <div>
+                      <span className="text-xs text-[#8A8A8A]">Ihre Fachkraft</span>
+                      <p className="text-sm font-semibold text-[#1E1E1E]">{selectedEmployee.name} · {selectedEmployee.role}</p>
+                    </div>
+                  </div>
+                )}
                 <ContactForm
                   service={selectedService}
                   selectedDate={selectedDate}
@@ -253,7 +255,7 @@ export default function BookingPage() {
               variant="flat"
               onPress={() => setCurrentStep(currentStep - 1)}
               startContent={<ChevronLeft size={20} />}
-              className="bg-[#F5EDEB] font-semibold text-[#1E1E1E]"
+              className="bg-[#F5EDEB] font-semibold text-[#1E1E1E] hover:bg-[#E8C7C3]/40"
             >
               Zurück
             </Button>
@@ -261,11 +263,11 @@ export default function BookingPage() {
             <div />
           )}
 
-          {currentStep < 3 ? (
+          {currentStep < 4 ? (
             <Button
               onPress={() => setCurrentStep(currentStep + 1)}
               isDisabled={!canProceed()}
-              className="bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white font-semibold px-8"
+              className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold px-8 shadow-lg shadow-[#017172]/20"
             >
               Weiter
             </Button>
@@ -274,7 +276,7 @@ export default function BookingPage() {
               onPress={handleSubmit}
               isDisabled={!canProceed() || submitting}
               isLoading={submitting}
-              className="bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white font-semibold px-8"
+              className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold px-8 shadow-lg shadow-[#017172]/20"
             >
               {submitting ? "Wird gebucht..." : "Termin buchen"}
             </Button>

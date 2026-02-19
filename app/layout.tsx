@@ -57,7 +57,6 @@ export default function RootLayout({
         <NextUIProvider>
           <Suspense fallback={null}>
             <TrackingProvider>
-              {/* Klaro Cookie Consent - Open Source & Kostenlos */}
               <KlaroCookieConsent />
               {children}
             </TrackingProvider>

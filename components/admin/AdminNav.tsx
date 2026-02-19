@@ -45,7 +45,7 @@ export function AdminNav() {
                     href={item.href}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${
                       isActive
-                        ? "bg-[#E8C7C3] text-white"
+                        ? "bg-[#017172] text-white"
                         : "text-[#8A8A8A] hover:bg-[#4C4C4C] hover:text-white"
                     }`}
                   >
@@ -99,7 +99,7 @@ export function AdminNav() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
-                        ? "bg-[#E8C7C3] text-white"
+                        ? "bg-[#017172] text-white"
                         : "text-[#8A8A8A] hover:bg-[#4C4C4C] hover:text-white"
                     }`}
                   >

@@ -189,13 +189,14 @@ export default function AdminBookingsPage() {
           <CardBody className="p-6">
             <div className="grid grid-cols-4 gap-4">
               <Input
-                placeholder="Suchen..."
+                label="Suchen"
+                placeholder="Name, E-Mail, Buchung..."
                 startContent={<Search size={18} className="text-[#8A8A8A]" />}
                 value={filter.searchTerm || ""}
                 onChange={(e) => handleFilterChange("searchTerm", e.target.value)}
                 classNames={{
                   input: "text-[#1E1E1E]",
-                  inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                  inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#017172]",
                 }}
               />
               <Select
@@ -203,7 +204,7 @@ export default function AdminBookingsPage() {
                 selectedKeys={filter.status ? [filter.status] : [""]}
                 onChange={(e) => handleFilterChange("status", e.target.value)}
                 classNames={{
-                  trigger: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                  trigger: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#017172]",
                   label: "text-[#8A8A8A]",
                 }}
               >
@@ -220,7 +221,7 @@ export default function AdminBookingsPage() {
                 onChange={(e) => handleFilterChange("fromDate", e.target.value)}
                 classNames={{
                   input: "text-[#1E1E1E]",
-                  inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                  inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#017172]",
                   label: "text-[#8A8A8A]",
                 }}
               />
@@ -231,7 +232,7 @@ export default function AdminBookingsPage() {
                 onChange={(e) => handleFilterChange("toDate", e.target.value)}
                 classNames={{
                   input: "text-[#1E1E1E]",
-                  inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                  inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#017172]",
                   label: "text-[#8A8A8A]",
                 }}
               />
@@ -254,7 +255,8 @@ export default function AdminBookingsPage() {
             <Card className="mt-3 border-2 border-[#E8C7C3]/20">
               <CardBody className="p-4 space-y-4">
                 <Input
-                  placeholder="Suchen..."
+                  label="Suchen"
+                placeholder="Name, E-Mail, Buchung..."
                   startContent={<Search size={18} className="text-[#8A8A8A]" />}
                   value={filter.searchTerm || ""}
                   onChange={(e) => handleFilterChange("searchTerm", e.target.value)}
@@ -496,7 +498,7 @@ export default function AdminBookingsPage() {
             onChange={(e) => setNewStatus(e.target.value)}
             isRequired
             classNames={{
-              trigger: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+              trigger: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#017172]",
               label: "text-[#8A8A8A]",
             }}
           >
@@ -514,7 +516,7 @@ export default function AdminBookingsPage() {
             onChange={(e) => setAdminNotes(e.target.value)}
             minRows={3}
             classNames={{
-              inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+              inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#017172]",
             }}
           />
         </div>

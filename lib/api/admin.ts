@@ -353,15 +353,16 @@ export interface Service {
   isActive: boolean;
 }
 
+
 export interface CreateManualBookingDto {
-  serviceId: string;
+  serviceId: string; 
   bookingDate: string;
   startTime: string;
   firstName: string;
   lastName: string;
-  email?: string;
-  phone?: string;
-  customerNotes?: string;
+  email: string | null; 
+  phone: string | null; 
+  customerNotes: string | null; 
 }
 
 export interface ManualBookingResponse {
@@ -395,22 +396,24 @@ export async function getServices(): Promise<Service[]> {
   return response.json();
 }
 
-// lib/api/admin.ts - Fix the createManualBooking function
-
-// Create manual booking (for phone calls)
 export async function createManualBooking(data: CreateManualBookingDto): Promise<ManualBookingResponse> {
-  // Fix the URL - it should match your controller route
-  const response = await fetch(`${API_BASE_URL}/admin/manual/booking`, {  // Changed from /admin/manual/booking
-    method: "POST",
+  const response = await fetch(`${API_BASE_URL}/admin/manual/booking`, {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      ...data,
+      // Ensure empty strings become null
+      email: data.email?.trim() || null,
+      phone: data.phone?.trim() || null,
+      customerNotes: data.customerNotes?.trim() || null,
+    }),
   });
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || "Fehler beim Erstellen der Buchung");
+    throw new Error(error.message || 'Fehler beim Erstellen der Buchung');
   }
 
   return response.json();
