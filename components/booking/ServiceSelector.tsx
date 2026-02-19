@@ -87,7 +87,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
           Wähle deine Leistung
         </h2>
         <p className="text-sm sm:text-base text-[#8A8A8A]">
-          Schritt 1 von 3
+          Schritt 1 von 4
         </p>
       </div>
 
@@ -100,7 +100,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
             <div key={category.id} className="border-2 border-[#E8C7C3] rounded-xl overflow-hidden">
               <button
                 onClick={() => handleToggleCategory(category.id)}
-                className="w-full flex items-center justify-between p-3 sm:p-4 bg-[#F5EDEB] hover:bg-[#F0E6E4] transition-colors"
+                className="w-full flex items-center justify-between p-3 sm:p-4 bg-[#F5EDEB] hover:bg-[#E8C7C3]/20 transition-colors"
               >
                 <div className="text-left flex-1 min-w-0 pr-2">
                   <h3 className="font-bold text-[#1E1E1E] text-sm sm:text-base truncate">
@@ -136,13 +136,21 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
                           key={service.id}
                           isPressable
                           onPress={() => onSelect(service)}
-                          className="w-full"
+                          className={`w-full transition-all ${
+                            selectedService?.id === service.id 
+                              ? "ring-2 ring-[#E8C7C3] ring-offset-2" 
+                              : "hover:ring-2 hover:ring-[#E8C7C3]/30 hover:ring-offset-1"
+                          }`}
                           fullWidth
                         >
                           <CardBody className="p-3 sm:p-4 w-full">
                             <div className="flex items-start gap-3 sm:gap-4 w-full">
-                              <div className="flex-shrink-0 p-2 sm:p-3 bg-[#E8C7C3]/10 rounded-xl">
-                                <Sparkles className="text-[#E8C7C3]" size={20} />
+                              <div className={`flex-shrink-0 p-2 sm:p-3 rounded-xl transition-colors ${
+                                selectedService?.id === service.id 
+                                  ? "bg-[#E8C7C3]" 
+                                  : "bg-[#E8C7C3]/10"
+                              }`}>
+                                <Sparkles className={selectedService?.id === service.id ? "text-white" : "text-[#E8C7C3]"} size={20} />
                               </div>
                               
                               <div className="flex-1 min-w-0">

@@ -7,13 +7,10 @@ import "moment/locale/de";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Card, CardBody } from "@nextui-org/card";
 import { Button } from "@nextui-org/button";
-import { Chip } from "@nextui-org/chip";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@nextui-org/modal";
 import { Spinner } from "@nextui-org/spinner";
 import { Select, SelectItem } from "@nextui-org/select";
 import { Input, Textarea } from "@nextui-org/input";
-import { Divider } from "@nextui-org/divider";
-import { Avatar } from "@nextui-org/avatar";
 import { 
   Calendar as CalendarIcon, Clock, User, Phone, Mail, Plus, AlertCircle,
   CheckCircle, XCircle, Ban, Scissors, MessageCircle, Hash, CreditCard,
@@ -65,6 +62,26 @@ const modalClassNames = {
   footer: "border-t border-[#E8C7C3]/20 bg-[#F5EDEB]/30",
   body: "py-4"
 };
+
+function SearchableServiceSelect({
+  services,
+  value,
+  onChange,
+  disabled,
+}: {
+  services: Service[];
+  value: string;
+  onChange: (id: string) => void;
+  disabled?: boolean;
+}) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const filtered = services.filter((s) =>
+    s.name.toLowerCase().includes(search.toLowerCase())
+  );
+  const selected = services.find((s) => s.id === value);
+}
 
 export default function AdminCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -309,7 +326,7 @@ export default function AdminCalendarPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">Kalender</h1>
             <p className="text-[#8A8A8A] flex items-center gap-2 text-sm">
-              <CalendarDays size={16} /> Verwalten Sie Termine und blockierte Zeiten
+             Verwalten Sie Termine und blockierte Zeiten
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
