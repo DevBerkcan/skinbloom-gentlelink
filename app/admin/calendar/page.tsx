@@ -14,7 +14,8 @@ import { Input, Textarea } from "@nextui-org/input";
 import { 
   Calendar as CalendarIcon, Clock, User, Phone, Mail, Plus, AlertCircle,
   CheckCircle, XCircle, Ban, Scissors, MessageCircle, Hash, CreditCard,
-  CalendarDays, ChevronRight
+  CalendarDays, ChevronRight,
+  Search
 } from "lucide-react";
 import { 
   getBookings, getServices, getBlockedSlots, createManualBooking, updateBookingStatus,
@@ -23,6 +24,7 @@ import {
   type ManualBookingResponse, type BlockedTimeSlot
 } from "@/lib/api/admin";
 import { getAvailability, getEmployees, type TimeSlot, type Employee } from "@/lib/api/booking";
+import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
 
 moment.locale('de');
 const localizer = momentLocalizer(moment);
@@ -120,6 +122,9 @@ export default function AdminCalendarPage() {
   }, []);
 
   useEffect(() => { loadServices(); }, []);
+
+const [isServicePopoverOpen, setIsServicePopoverOpen] = useState(false);
+const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (bookingForm.serviceId && bookingForm.bookingDate) {
@@ -297,6 +302,11 @@ export default function AdminCalendarPage() {
   };
 
   const selectedService = services.find(s => s.id === bookingForm.serviceId);
+
+  const filteredServices = services.filter(s =>
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading && events.length === 0) {
     return (
@@ -686,24 +696,72 @@ export default function AdminCalendarPage() {
                         )}
                       </div>
 
-                      {/* Step 2: Service */}
-                      <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
-                        <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">2. Service auswählen</p>
-                        <Select 
-                          placeholder="Service auswählen" 
-                          selectedKeys={bookingForm.serviceId ? [bookingForm.serviceId] : []}
-                          onChange={(e) => setBookingForm({ ...bookingForm, serviceId: e.target.value })}
-                          isDisabled={submitting}
-                          classNames={{ trigger: "bg-white border border-[#E8C7C3]/30" }}
-                        >
-                          {services.map(service => (
-                            <SelectItem key={service.id} value={service.id}>
-                              {service.name} – {service.price.toFixed(2)} CHF ({service.durationMinutes} Min)
-                            </SelectItem>
-                          ))}
-                        </Select>
-                      </div>
-
+{/* Step 2: Service with integrated search */}
+<div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+  <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">2. Service auswählen</p>
+  
+  <Popover placement="bottom" isOpen={isServicePopoverOpen} onOpenChange={setIsServicePopoverOpen}>
+    <PopoverTrigger>
+      <Button
+        variant="flat"
+        className="w-full justify-start bg-white border border-[#E8C7C3]/30 text-[#1E1E1E] h-12"
+        endContent={<Search size={18} className="text-[#8A8A8A]" />}
+      >
+        {selectedService ? selectedService.name : "Service suchen oder auswählen..."}
+      </Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-[400px] p-0">
+      <div className="w-full">
+        <Input
+          placeholder="Service suchen..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border-b border-[#E8C7C3]/20"
+          startContent={<Search size={18} className="text-[#8A8A8A]" />}
+          classNames={{ 
+            inputWrapper: "bg-transparent shadow-none",
+            base: "p-3"
+          }}
+          autoFocus
+        />
+        <div className="max-h-[300px] overflow-y-auto">
+          {filteredServices.length > 0 ? (
+            filteredServices.map(service => (
+              <button
+                key={service.id}
+                className="w-full text-left p-3 hover:bg-[#F5EDEB] transition-colors border-b border-[#E8C7C3]/10 last:border-0"
+                onClick={() => {
+                  setBookingForm({ ...bookingForm, serviceId: service.id });
+                  setSearchTerm('');
+                  setIsServicePopoverOpen(false);
+                }}
+              >
+                <div className="font-medium text-[#1E1E1E]">{service.name}</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-[#017172] font-semibold">
+                    {service.price.toFixed(2)} CHF
+                  </span>
+                  <span className="text-xs text-[#8A8A8A]">
+                    {service.durationMinutes} Min
+                  </span>
+                </div>
+                {service.description && (
+                  <div className="text-xs text-[#8A8A8A] mt-1 line-clamp-2">
+                    {service.description}
+                  </div>
+                )}
+              </button>
+            ))
+          ) : (
+            <div className="p-4 text-center text-[#8A8A8A]">
+              Keine Services gefunden
+            </div>
+          )}
+        </div>
+      </div>
+    </PopoverContent>
+  </Popover>
+</div>
                       {/* Step 3: Date */}
                       <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
                         <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">3. Datum wählen</p>

@@ -21,7 +21,7 @@ const MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August",
 function getMiniCalendar(year: number, month: number) {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
-  const startDow = (firstDay.getDay() + 6) % 7; // Monday start
+  const startDow = (firstDay.getDay() + 6) % 7;
   const days: (number | null)[] = [];
   for (let i = 0; i < startDow; i++) days.push(null);
   for (let d = 1; d <= lastDay.getDate(); d++) days.push(d);
@@ -99,7 +99,6 @@ export default function BlockedSlotsPage() {
     } catch (err: any) { setError(err.message); }
   }
 
-  // Blocked dates set for calendar
   const blockedDates = useMemo(() => {
     const set = new Set<string>();
     blockedSlots.forEach(s => set.add(s.blockDate));
@@ -113,12 +112,12 @@ export default function BlockedSlotsPage() {
     : blockedSlots;
 
   const handleCalDayClick = (day: number) => {
-    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     setSelectedCalDate(prev => prev === dateStr ? null : dateStr);
   };
 
   const handleCalDayDblClick = (day: number) => {
-    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     setFormData(prev => ({ ...prev, blockDate: dateStr }));
     setIsDateRange(false);
     onOpen();
@@ -133,7 +132,7 @@ export default function BlockedSlotsPage() {
     else setCalMonth(m => m + 1);
   };
 
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   const modalClassNames = {
     base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
@@ -144,7 +143,8 @@ export default function BlockedSlotsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
+
+        {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">Abwesenheiten</h1>
@@ -159,7 +159,7 @@ export default function BlockedSlotsPage() {
           </Button>
         </div>
 
-        {/* Calendar Card */}
+        {/* ── Calendar ───────────────────────────────────────────────────── */}
         <Card className="mb-6 border border-[#E8C7C3]/20 shadow-xl">
           <CardHeader className="pb-2 bg-gradient-to-r from-[#F5EDEB] to-white border-b border-[#E8C7C3]/20">
             <div className="flex items-center justify-between w-full">
@@ -175,17 +175,15 @@ export default function BlockedSlotsPage() {
             </div>
           </CardHeader>
           <CardBody className="p-4">
-            {/* Day headers */}
             <div className="grid grid-cols-7 mb-2">
               {WEEKDAYS.map(d => (
                 <div key={d} className="text-center text-xs font-semibold text-[#8A8A8A] py-1">{d}</div>
               ))}
             </div>
-            {/* Day cells */}
             <div className="grid grid-cols-7 gap-1">
               {calDays.map((day, i) => {
                 if (day === null) return <div key={`empty-${i}`} />;
-                const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
                 const isBlocked = blockedDates.has(dateStr);
                 const isToday = dateStr === todayStr;
                 const isSelected = dateStr === selectedCalDate;
@@ -196,10 +194,14 @@ export default function BlockedSlotsPage() {
                     onDoubleClick={() => handleCalDayDblClick(day)}
                     title={isBlocked ? "Blockierter Tag – Doppelklick zum Erstellen" : "Doppelklick zum Erstellen"}
                     className={`relative flex flex-col items-center justify-center rounded-xl h-10 text-sm font-medium transition-all
-                      ${isSelected ? 'bg-[#017172] text-white shadow-md' :
-                        isToday ? 'ring-2 ring-[#017172] text-[#017172]' :
-                        isBlocked ? 'bg-[#017172]/10 text-[#017172] hover:bg-[#017172]/20' :
-                        'text-[#1E1E1E] hover:bg-[#F5EDEB]'}`}
+                      ${isSelected
+                        ? "bg-[#017172] text-white shadow-md"
+                        : isToday
+                        ? "ring-2 ring-[#017172] text-[#017172]"
+                        : isBlocked
+                        ? "bg-[#017172]/10 text-[#017172] hover:bg-[#017172]/20"
+                        : "text-[#1E1E1E] hover:bg-[#F5EDEB]"
+                      }`}
                   >
                     {day}
                     {isBlocked && !isSelected && (
@@ -212,8 +214,11 @@ export default function BlockedSlotsPage() {
             {selectedCalDate && (
               <div className="mt-3 pt-3 border-t border-[#E8C7C3]/20 flex items-center justify-between">
                 <p className="text-sm text-[#8A8A8A]">
-                  Filter: <span className="font-semibold text-[#017172]">
-                    {new Date(selectedCalDate + 'T00:00').toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  Filter:{" "}
+                  <span className="font-semibold text-[#017172]">
+                    {new Date(selectedCalDate + "T00:00").toLocaleDateString("de-DE", {
+                      day: "2-digit", month: "long", year: "numeric",
+                    })}
                   </span>
                 </p>
                 <Button size="sm" variant="flat" className="bg-[#F5EDEB] text-[#8A8A8A] text-xs" onPress={() => setSelectedCalDate(null)}>
@@ -224,12 +229,12 @@ export default function BlockedSlotsPage() {
           </CardBody>
         </Card>
 
-        {/* List */}
+        {/* ── List ───────────────────────────────────────────────────────── */}
         <div className="space-y-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-[#1E1E1E]">
               {selectedCalDate
-                ? `Blockierungen am ${new Date(selectedCalDate + 'T00:00').toLocaleDateString('de-DE', { day: '2-digit', month: 'long' })}`
+                ? `Blockierungen am ${new Date(selectedCalDate + "T00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "long" })}`
                 : `Alle Blockierungen (${blockedSlots.length})`}
             </h3>
           </div>
@@ -261,7 +266,9 @@ export default function BlockedSlotsPage() {
                       </div>
                       <div>
                         <p className="font-semibold text-[#1E1E1E]">
-                          {new Date(slot.blockDate + 'T00:00').toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                          {new Date(slot.blockDate + "T00:00").toLocaleDateString("de-DE", {
+                            weekday: "long", day: "2-digit", month: "long", year: "numeric",
+                          })}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1 text-sm text-[#8A8A8A]">
                           <Clock size={13} />
@@ -287,7 +294,7 @@ export default function BlockedSlotsPage() {
         </div>
       </div>
 
-      {/* Create Modal */}
+      {/* ── Create Modal ───────────────────────────────────────────────────── */}
       <Modal isOpen={isOpen} onClose={() => { onClose(); setError(null); }} size="lg" classNames={modalClassNames}>
         <ModalContent>
           {(close) => (
@@ -365,12 +372,15 @@ export default function BlockedSlotsPage() {
                 </div>
               </ModalBody>
               <ModalFooter>
-                <Button variant="flat" className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold" onPress={close} isDisabled={submitting}>Abbrechen</Button>
+                <Button variant="flat" className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold" onPress={close} isDisabled={submitting}>
+                  Abbrechen
+                </Button>
                 <Button
                   className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
                   onPress={handleCreateSlot}
                   isLoading={submitting}
-                  startContent={<Ban size={16} />}>
+                  startContent={<Ban size={16} />}
+                >
                   Blockieren
                 </Button>
               </ModalFooter>

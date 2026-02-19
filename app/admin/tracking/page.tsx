@@ -3,12 +3,16 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardBody, CardHeader } from "@nextui-org/card";
-import { Spinner } from "@nextui-org/spinner";
-import { TrendingUp, Users, DollarSign, BarChart3, MousePointerClick, Calendar, Instagram, MapPin, MessageCircle, FileText, Shield } from "lucide-react";
-import { getTrackingStatistics, getRevenueStatistics, type SimplifiedTrackingStatistics, type RevenueStatistics } from "@/lib/api/admin";
+import {
+  TrendingUp, Users, BarChart3, MousePointerClick,
+  Calendar, Instagram, MapPin, MessageCircle, FileText, Shield,
+} from "lucide-react";
+import {
+  getTrackingStatistics, getRevenueStatistics,
+  type SimplifiedTrackingStatistics, type RevenueStatistics,
+} from "@/lib/api/admin";
 import { socialLinks, footerLinks } from "@/lib/config";
 
-// Map icons to link names
 const getIconForLink = (linkName: string) => {
   if (linkName.includes("Online buchen")) return Calendar;
   if (linkName.includes("Instagram")) return Instagram;
@@ -35,13 +39,12 @@ export default function TrackingPage() {
       setError(null);
       const [statsData, revenueData] = await Promise.all([
         getTrackingStatistics(),
-        getRevenueStatistics()
+        getRevenueStatistics(),
       ]);
       setStats(statsData);
       setRevenue(revenueData);
     } catch (err: any) {
       setError(err.message || "Fehler beim Laden der Statistiken");
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -50,7 +53,7 @@ export default function TrackingPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white flex items-center justify-center">
-        <Spinner size="lg" className="text-[#E8C7C3]" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#017172]" />
       </div>
     );
   }
@@ -59,8 +62,8 @@ export default function TrackingPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white p-4">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 text-red-700">
-            <p className="font-semibold mb-2">Fehler beim Laden</p>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+            <p className="font-semibold mb-1">Fehler beim Laden</p>
             <p className="text-sm">{error || "Unbekannter Fehler"}</p>
           </div>
         </div>
@@ -68,191 +71,168 @@ export default function TrackingPage() {
     );
   }
 
-  // Define expected links with default 0 clicks
   const expectedLinks = [
-    ...socialLinks.map(l => l.label),
-    ...footerLinks.map(l => `Footer: ${l.label}`)
+    ...socialLinks.map((l) => l.label),
+    ...footerLinks.map((l) => `Footer: ${l.label}`),
   ];
 
-  // Merge actual stats with defaults
-  const allLinkStats = expectedLinks.map(linkName => {
-    const found = stats.linkClicks.find(l => l.linkName === linkName);
-    return {
-      linkName,
-      clickCount: found?.clickCount || 0,
-      percentage: found?.percentage || 0
-    };
-  }).sort((a, b) => b.clickCount - a.clickCount);
+  const allLinkStats = expectedLinks
+    .map((linkName) => {
+      const found = stats.linkClicks.find((l) => l.linkName === linkName);
+      return {
+        linkName,
+        clickCount: found?.clickCount || 0,
+        percentage: found?.percentage || 0,
+      };
+    })
+    .sort((a, b) => b.clickCount - a.clickCount);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+
+        {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1E1E1E] mb-2">
-            Statistiken
-          </h1>
-          <p className="text-sm sm:text-base text-[#8A8A8A]">
-            Letzte 30 Tage - Übersicht deiner Kennzahlen
-          </p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">Statistiken</h1>
+          <p className="text-sm text-[#8A8A8A]">Letzte 30 Tage – Übersicht deiner Kennzahlen</p>
         </div>
 
-        {/* Overview Cards */}
+        {/* ── Overview Cards ─────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
+
+          <Card className="border border-[#E8C7C3]/30 shadow-xl">
             <CardBody className="p-4 sm:p-6">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Seitenaufrufe</div>
                   <div className="text-2xl sm:text-3xl font-bold text-[#1E1E1E]">{stats.totalPageViews}</div>
                 </div>
-                <div className="p-2 sm:p-3 bg-[#E8C7C3]/20 rounded-xl">
-                  <Users className="text-[#E8C7C3]" size={20} />
+                <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-xl">
+                  <Users className="text-[#017172]" size={20} />
                 </div>
               </div>
             </CardBody>
           </Card>
 
-          <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
+          <Card className="border border-[#E8C7C3]/30 shadow-xl">
             <CardBody className="p-4 sm:p-6">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Total Klicks</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-[#C09995]">{stats.totalLinkClicks}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[#017172]">{stats.totalLinkClicks}</div>
                 </div>
-                <div className="p-2 sm:p-3 bg-[#C09995]/20 rounded-xl">
-                  <MousePointerClick className="text-[#C09995]" size={20} />
+                <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-xl">
+                  <MousePointerClick className="text-[#017172]" size={20} />
                 </div>
               </div>
             </CardBody>
           </Card>
 
-          <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
+          <Card className="border border-[#E8C7C3]/30 shadow-xl">
             <CardBody className="p-4 sm:p-6">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Buchungen</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-[#E8C7C3]">{stats.totalBookings}</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[#017172]">{stats.totalBookings}</div>
                 </div>
-                <div className="p-2 sm:p-3 bg-[#E8C7C3]/20 rounded-xl">
-                  <BarChart3 className="text-[#E8C7C3]" size={20} />
+                <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-xl">
+                  <BarChart3 className="text-[#017172]" size={20} />
                 </div>
               </div>
             </CardBody>
           </Card>
 
-          <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
+          <Card className="border border-[#E8C7C3]/30 shadow-xl">
             <CardBody className="p-4 sm:p-6">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Ø Buchungswert</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-[#D8B0AC]">{stats.averageBookingValue.toFixed(2)} CHF</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[#017172]">
+                    {stats.averageBookingValue.toFixed(2)} CHF
+                  </div>
                 </div>
-                <div className="p-2 sm:p-3 bg-[#D8B0AC]/20 rounded-xl">
-                  <TrendingUp className="text-[#D8B0AC]" size={20} />
+                <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-xl">
+                  <TrendingUp className="text-[#017172]" size={20} />
                 </div>
               </div>
             </CardBody>
           </Card>
         </div>
 
-        {/* Revenue Cards */}
+        {/* ── Revenue Cards ──────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
-            <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0">
-              <h3 className="text-lg font-semibold text-[#1E1E1E]">Heute</h3>
-            </CardHeader>
-            <CardBody className="p-4 sm:p-6 pt-2">
-              <div className="text-2xl sm:text-3xl font-bold text-[#E8C7C3] mb-1">
-                {revenue.todayRevenue.toFixed(2)} CHF
-              </div>
-              <div className="text-sm text-[#8A8A8A]">
-                {revenue.todayBookings} Buchungen
-              </div>
-            </CardBody>
-          </Card>
-
-          <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
-            <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0">
-              <h3 className="text-lg font-semibold text-[#1E1E1E]">Letzte 7 Tage</h3>
-            </CardHeader>
-            <CardBody className="p-4 sm:p-6 pt-2">
-              <div className="text-2xl sm:text-3xl font-bold text-[#C09995] mb-1">
-                {revenue.weekRevenue.toFixed(2)} CHF
-              </div>
-              <div className="text-sm text-[#8A8A8A]">
-                {revenue.weekBookings} Buchungen
-              </div>
-            </CardBody>
-          </Card>
-
-          <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
-            <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0">
-              <h3 className="text-lg font-semibold text-[#1E1E1E]">Letzte 30 Tage</h3>
-            </CardHeader>
-            <CardBody className="p-4 sm:p-6 pt-2">
-              <div className="text-2xl sm:text-3xl font-bold text-[#D8B0AC] mb-1">
-                {revenue.monthRevenue.toFixed(2)} CHF
-              </div>
-              <div className="text-sm text-[#8A8A8A]">
-                {revenue.monthBookings} Buchungen
-              </div>
-            </CardBody>
-          </Card>
+          {[
+            { label: "Heute", bookings: revenue.todayBookings, rev: revenue.todayRevenue },
+            { label: "Letzte 7 Tage", bookings: revenue.weekBookings, rev: revenue.weekRevenue },
+            { label: "Letzte 30 Tage", bookings: revenue.monthBookings, rev: revenue.monthRevenue },
+          ].map(({ label, bookings, rev }) => (
+            <Card key={label} className="border border-[#E8C7C3]/30 shadow-xl">
+              <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0">
+                <h3 className="text-base font-semibold text-[#1E1E1E]">{label}</h3>
+              </CardHeader>
+              <CardBody className="p-4 sm:p-6 pt-2">
+                <div className="text-2xl sm:text-3xl font-bold text-[#017172] mb-1">
+                  {rev.toFixed(2)} CHF
+                </div>
+                <div className="text-sm text-[#8A8A8A]">{bookings} Buchungen</div>
+              </CardBody>
+            </Card>
+          ))}
         </div>
 
-        {/* Link Click Statistics - All Links */}
-        <Card className="border-2 border-[#E8C7C3]/20 shadow-xl">
+        {/* ── Link Click Stats ───────────────────────────────────────────── */}
+        <Card className="border border-[#E8C7C3]/30 shadow-xl">
           <CardHeader className="px-4 sm:px-6 py-4 border-b border-[#E8C7C3]/20">
             <h2 className="text-xl sm:text-2xl font-bold text-[#1E1E1E] flex items-center gap-2">
-              <MousePointerClick size={24} className="text-[#E8C7C3]" />
+              <MousePointerClick size={22} className="text-[#017172]" />
               Klicks nach Link
             </h2>
           </CardHeader>
           <CardBody className="p-4 sm:p-6">
-            {allLinkStats.filter(l => l.clickCount > 0).length === 0 ? (
+            {allLinkStats.filter((l) => l.clickCount > 0).length === 0 ? (
               <div className="text-center py-8 text-[#8A8A8A]">
+                <MousePointerClick className="mx-auto mb-3 text-[#E8C7C3]" size={36} />
                 <p className="text-base">Noch keine Klicks vorhanden</p>
                 <p className="text-sm mt-2">Klicks auf deine Links werden hier angezeigt</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {allLinkStats.filter(l => l.clickCount > 0).map((link) => {
-                  const Icon = getIconForLink(link.linkName);
-                  return (
-                    <div key={link.linkName} className="border-l-4 border-[#E8C7C3] pl-4 py-2">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          <Icon size={20} className="text-[#E8C7C3]" />
-                          <div>
-                            <div className="font-bold text-lg text-[#1E1E1E]">
-                              {link.linkName.replace("Footer: ", "")}
-                              {link.linkName.startsWith("Footer: ") && (
-                                <span className="ml-2 text-xs bg-[#F5EDEB] px-2 py-0.5 rounded-full text-[#8A8A8A]">
-                                  Footer
-                                </span>
-                              )}
+              <div className="space-y-5">
+                {allLinkStats
+                  .filter((l) => l.clickCount > 0)
+                  .map((link) => {
+                    const Icon = getIconForLink(link.linkName);
+                    return (
+                      <div key={link.linkName} className="border-l-4 border-[#017172] pl-4 py-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2.5">
+                            <Icon size={18} className="text-[#017172] shrink-0" />
+                            <div>
+                              <div className="font-bold text-base text-[#1E1E1E]">
+                                {link.linkName.replace("Footer: ", "")}
+                                {link.linkName.startsWith("Footer: ") && (
+                                  <span className="ml-2 text-xs bg-[#F5EDEB] border border-[#E8C7C3]/40 px-2 py-0.5 rounded-full text-[#8A8A8A] font-normal">
+                                    Footer
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-sm text-[#8A8A8A]">{link.clickCount} Klicks</div>
                             </div>
-                            <div className="text-sm text-[#8A8A8A]">
-                              {link.clickCount} Klicks
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-[#017172]">
+                              {link.percentage.toFixed(1)}%
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-[#E8C7C3]">
-                            {link.percentage.toFixed(1)}%
-                          </div>
+                        <div className="w-full bg-[#F5EDEB] rounded-full h-2.5">
+                          <div
+                            className="bg-gradient-to-r from-[#017172] to-[#015f60] h-2.5 rounded-full transition-all"
+                            style={{ width: `${link.percentage}%` }}
+                          />
                         </div>
                       </div>
-                      <div className="w-full bg-[#F5EDEB] rounded-full h-2.5">
-                        <div
-                          className="bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] h-2.5 rounded-full transition-all"
-                          style={{ width: `${link.percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             )}
           </CardBody>

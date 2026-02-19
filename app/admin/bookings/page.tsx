@@ -26,7 +26,6 @@ export default function AdminBookingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Separate search input state from committed filter
   const [searchInput, setSearchInput] = useState("");
   const [filter, setFilter] = useState<BookingFilter>({ page: 1, pageSize: 20 });
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -54,7 +53,6 @@ export default function AdminBookingsPage() {
     }
   }
 
-  // Commit search on Enter or button press
   const commitSearch = useCallback(() => {
     setFilter(prev => ({ ...prev, searchTerm: searchInput.trim() || undefined, page: 1 }));
   }, [searchInput]);
@@ -174,7 +172,7 @@ export default function AdminBookingsPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white py-6 sm:py-8 px-3 sm:px-4">
       <div className="max-w-7xl mx-auto">
 
-        {/* Header */}
+        {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E]">Buchungsverwaltung</h1>
@@ -187,11 +185,10 @@ export default function AdminBookingsPage() {
           <p className="text-sm text-[#8A8A8A]">Buchungen suchen, filtern und Status aktualisieren</p>
         </div>
 
-        {/* Desktop filter bar */}
+        {/* ── Desktop filter bar ─────────────────────────────────────────── */}
         <Card className="hidden md:block mb-6 border border-[#E8C7C3]/30 shadow-lg">
           <CardBody className="p-5">
             <div className="grid grid-cols-5 gap-3 items-end">
-              {/* Search with commit button */}
               <div className="col-span-2 flex gap-2">
                 <Input
                   label="Suchen"
@@ -224,20 +221,10 @@ export default function AdminBookingsPage() {
                 ))}
               </Select>
 
-              <Input
-                type="date"
-                label="Von"
-                value={filter.fromDate || ""}
-                onChange={(e) => handleFilterChange("fromDate", e.target.value)}
-                classNames={inputClassNames}
-              />
-              <Input
-                type="date"
-                label="Bis"
-                value={filter.toDate || ""}
-                onChange={(e) => handleFilterChange("toDate", e.target.value)}
-                classNames={inputClassNames}
-              />
+              <Input type="date" label="Von" value={filter.fromDate || ""}
+                onChange={(e) => handleFilterChange("fromDate", e.target.value)} classNames={inputClassNames} />
+              <Input type="date" label="Bis" value={filter.toDate || ""}
+                onChange={(e) => handleFilterChange("toDate", e.target.value)} classNames={inputClassNames} />
             </div>
 
             {hasActiveFilters && (
@@ -253,13 +240,8 @@ export default function AdminBookingsPage() {
                     {getStatusLabel(filter.status)}
                   </span>
                 )}
-                <Button
-                  size="sm"
-                  variant="flat"
-                  className="bg-red-50 text-red-500 text-xs ml-auto"
-                  startContent={<X size={12} />}
-                  onPress={clearAllFilters}
-                >
+                <Button size="sm" variant="flat" className="bg-red-50 text-red-500 text-xs ml-auto"
+                  startContent={<X size={12} />} onPress={clearAllFilters}>
                   Filter zurücksetzen
                 </Button>
               </div>
@@ -267,7 +249,7 @@ export default function AdminBookingsPage() {
           </CardBody>
         </Card>
 
-        {/* Mobile filters */}
+        {/* ── Mobile filters ─────────────────────────────────────────────── */}
         <div className="md:hidden mb-4 space-y-3">
           <div className="flex gap-2">
             <Input
@@ -279,18 +261,11 @@ export default function AdminBookingsPage() {
               classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/40" }}
               className="flex-1"
             />
-            <Button
-              className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold"
-              onPress={commitSearch}
-            >
+            <Button className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold" onPress={commitSearch}>
               <Search size={16} />
             </Button>
-            <Button
-              variant="flat"
-              className="bg-[#F5EDEB] text-[#1E1E1E]"
-              startContent={<Filter size={16} />}
-              onPress={() => setShowMobileFilters(!showMobileFilters)}
-            >
+            <Button variant="flat" className="bg-[#F5EDEB] text-[#1E1E1E]"
+              startContent={<Filter size={16} />} onPress={() => setShowMobileFilters(!showMobileFilters)}>
               Filter
             </Button>
           </div>
@@ -298,18 +273,17 @@ export default function AdminBookingsPage() {
           {showMobileFilters && (
             <Card className="border border-[#E8C7C3]/30">
               <CardBody className="p-4 space-y-3">
-                <Select
-                  label="Status"
-                  selectedKeys={filter.status ? [filter.status] : [""]}
-                  onChange={(e) => handleFilterChange("status", e.target.value)}
-                  size="sm"
-                >
+                <Select label="Status" selectedKeys={filter.status ? [filter.status] : [""]}
+                  onChange={(e) => handleFilterChange("status", e.target.value)} size="sm">
                   {statusOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                 </Select>
-                <Input type="date" label="Von Datum" value={filter.fromDate || ""} onChange={(e) => handleFilterChange("fromDate", e.target.value)} size="sm" />
-                <Input type="date" label="Bis Datum" value={filter.toDate || ""} onChange={(e) => handleFilterChange("toDate", e.target.value)} size="sm" />
+                <Input type="date" label="Von Datum" value={filter.fromDate || ""}
+                  onChange={(e) => handleFilterChange("fromDate", e.target.value)} size="sm" />
+                <Input type="date" label="Bis Datum" value={filter.toDate || ""}
+                  onChange={(e) => handleFilterChange("toDate", e.target.value)} size="sm" />
                 {hasActiveFilters && (
-                  <Button size="sm" variant="flat" className="bg-red-50 text-red-500 w-full" startContent={<X size={14} />} onPress={clearAllFilters}>
+                  <Button size="sm" variant="flat" className="bg-red-50 text-red-500 w-full"
+                    startContent={<X size={14} />} onPress={clearAllFilters}>
                     Alle Filter zurücksetzen
                   </Button>
                 )}
@@ -318,7 +292,7 @@ export default function AdminBookingsPage() {
           )}
         </div>
 
-        {/* Bookings table */}
+        {/* ── Bookings table ─────────────────────────────────────────────── */}
         <Card className="border border-[#E8C7C3]/30 shadow-xl">
           <CardBody className="p-0">
             {loading ? (
@@ -349,10 +323,8 @@ export default function AdminBookingsPage() {
                     </thead>
                     <tbody className="divide-y divide-[#E8C7C3]/10">
                       {bookings.map((booking, index) => (
-                        <tr
-                          key={booking.id}
-                          className={`hover:bg-[#F5EDEB]/60 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-[#F5EDEB]/20"}`}
-                        >
+                        <tr key={booking.id}
+                          className={`hover:bg-[#F5EDEB]/60 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-[#F5EDEB]/20"}`}>
                           <td className="px-5 py-4">
                             <div className="font-mono text-xs text-[#8A8A8A]">{booking.bookingNumber}</div>
                             <div className="text-xs text-[#8A8A8A] mt-0.5">{new Date(booking.createdAt).toLocaleDateString("de-DE")}</div>
@@ -381,12 +353,10 @@ export default function AdminBookingsPage() {
                             <div className="font-bold text-[#017172] text-sm">{booking.price.toFixed(2)} CHF</div>
                           </td>
                           <td className="px-5 py-4">
-                            <Button
-                              size="sm"
+                            <Button size="sm"
                               className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-sm"
                               startContent={<Edit size={13} />}
-                              onPress={() => openStatusModal(booking)}
-                            >
+                              onPress={() => openStatusModal(booking)}>
                               Status
                             </Button>
                           </td>
@@ -406,24 +376,16 @@ export default function AdminBookingsPage() {
                   <div className="flex items-center justify-between px-5 py-4 border-t border-[#E8C7C3]/20">
                     <div className="text-sm text-[#8A8A8A]">Seite {currentPage} von {totalPages}</div>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="flat"
-                        isDisabled={currentPage === 1}
+                      <Button size="sm" variant="flat" isDisabled={currentPage === 1}
                         onPress={() => handlePageChange(currentPage - 1)}
                         startContent={<ChevronLeft size={15} />}
-                        className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold"
-                      >
+                        className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold">
                         Zurück
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="flat"
-                        isDisabled={currentPage === totalPages}
+                      <Button size="sm" variant="flat" isDisabled={currentPage === totalPages}
                         onPress={() => handlePageChange(currentPage + 1)}
                         endContent={<ChevronRight size={15} />}
-                        className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold"
-                      >
+                        className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold">
                         Weiter
                       </Button>
                     </div>
@@ -435,7 +397,7 @@ export default function AdminBookingsPage() {
         </Card>
       </div>
 
-      {/* Status update modal */}
+      {/* ── Status update modal ────────────────────────────────────────────── */}
       <Modal isOpen={isOpen} onClose={onClose} size="md" placement="center" classNames={modalClassNames}>
         <ModalContent>
           {(onModalClose) => (
