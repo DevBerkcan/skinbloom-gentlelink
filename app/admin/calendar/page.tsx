@@ -21,10 +21,16 @@ import {
   getBookings, getServices, getBlockedSlots, createManualBooking, updateBookingStatus,
   createBlockedSlot,
   type BookingListItem, type Service, type CreateManualBookingDto,
-  type ManualBookingResponse, type BlockedTimeSlot
+  type ManualBookingResponse, type BlockedTimeSlot,
+  CreateBlockedSlot,
+  CreateBlockedDateRange,
+  createBlockedDateRange
 } from "@/lib/api/admin";
 import { getAvailability, getEmployees, type TimeSlot, type Employee } from "@/lib/api/booking";
 import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
+import { Switch } from "@nextui-org/switch";
+import { CalendarRange, X } from "lucide-react";
+
 
 moment.locale('de');
 const localizer = momentLocalizer(moment);
@@ -51,6 +57,8 @@ const statusIcons = {
   Confirmed: CheckCircle, Pending: Clock, Completed: CheckCircle,
   Cancelled: XCircle, NoShow: XCircle
 };
+
+// Blocked slot modal states (copy from Abwesenheiten page)
 
 const modalClassNames = {
   base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
@@ -82,6 +90,20 @@ export default function AdminCalendarPage() {
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
+  const [isRange, setIsRange] = useState(false);
+const [singleForm, setSingleForm] = useState<CreateBlockedSlot>({ 
+  blockDate: "", 
+  startTime: "", 
+  endTime: "", 
+  reason: "" 
+});
+const [rangeForm, setRangeForm] = useState<CreateBlockedDateRange>({ 
+  fromDate: "", 
+  toDate: "", 
+  startTime: "", 
+  endTime: "", 
+  reason: "" 
+});
 
   const [bookingForm, setBookingForm] = useState<{
     serviceId: string;
@@ -258,22 +280,36 @@ const [searchTerm, setSearchTerm] = useState("");
     }
   };
 
-  const handleCreateBlockedSlot = async () => {
-    setError(null);
-    setSubmittingBlocked(true);
-    try {
-      await createBlockedSlot({
-        blockDate: blockedSlotForm.blockDate,
-        startTime: blockedSlotForm.startTime,
-        endTime: blockedSlotForm.endTime,
-        reason: blockedSlotForm.reason || undefined
-      });
-      await loadEvents();
-      setIsBlockedSlotModalOpen(false);
-      setBlockedSlotForm({ blockDate: moment().format('YYYY-MM-DD'), startTime: '09:00', endTime: '17:00', reason: '' });
-    } catch (error: any) { setError(error.message || "Fehler beim Erstellen des blockierten Slots"); }
-    finally { setSubmittingBlocked(false); }
-  };
+const handleCreateBlockedSlot = async () => {
+  setError(null);
+  setSubmittingBlocked(true);
+  try {
+    if (isRange) {
+      if (!rangeForm.fromDate || !rangeForm.toDate || !rangeForm.startTime || !rangeForm.endTime) {
+        throw new Error("Bitte alle Pflichtfelder ausfüllen");
+      }
+      await createBlockedDateRange(rangeForm);
+    } else {
+      if (!singleForm.blockDate || !singleForm.startTime || !singleForm.endTime) {
+        throw new Error("Bitte alle Pflichtfelder ausfüllen");
+      }
+      await createBlockedSlot(singleForm);
+    }
+    
+    await loadEvents();
+    setIsBlockedSlotModalOpen(false);
+    
+    // Reset forms
+    setIsRange(false);
+    setSingleForm({ blockDate: "", startTime: "", endTime: "", reason: "" });
+    setRangeForm({ fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" });
+    
+  } catch (error: any) { 
+    setError(error.message || "Fehler beim Erstellen des blockierten Slots"); 
+  } finally { 
+    setSubmittingBlocked(false); 
+  }
+};
 
   const eventStyleGetter = (event: CalendarEvent) => {
     if (event.type === 'blocked') {
@@ -556,60 +592,153 @@ const [searchTerm, setSearchTerm] = useState("");
         </Modal>
 
         {/* Blocked Slot Modal */}
-        <Modal isOpen={isBlockedSlotModalOpen} onClose={() => { setIsBlockedSlotModalOpen(false); setError(null); }} size="lg" classNames={modalClassNames}>
-          <ModalContent>
-            {(onClose) => (
-              <>
-                <ModalHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#6b7280] flex items-center justify-center">
-                      <Ban size={18} className="text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#1E1E1E]">Zeitslot blockieren</h2>
-                      <p className="text-xs text-[#8A8A8A]">Markieren Sie einen Zeitraum als nicht verfügbar</p>
-                    </div>
-                  </div>
-                </ModalHeader>
-                <ModalBody>
-                  <div className="space-y-4">
-                    {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">{error}</div>}
-                    <Input type="date" label="Datum" value={blockedSlotForm.blockDate}
-                      onChange={(e) => setBlockedSlotForm({ ...blockedSlotForm, blockDate: e.target.value })}
-                      min={moment().format('YYYY-MM-DD')}
-                      classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30" }}
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input type="time" label="Von" value={blockedSlotForm.startTime}
-                        onChange={(e) => setBlockedSlotForm({ ...blockedSlotForm, startTime: e.target.value })}
-                        classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30" }}
-                      />
-                      <Input type="time" label="Bis" value={blockedSlotForm.endTime}
-                        onChange={(e) => setBlockedSlotForm({ ...blockedSlotForm, endTime: e.target.value })}
-                        classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30" }}
-                      />
-                    </div>
-                    <Input label="Grund (optional)" placeholder="z.B. Urlaub, Wartung..." value={blockedSlotForm.reason}
-                      onChange={(e) => setBlockedSlotForm({ ...blockedSlotForm, reason: e.target.value })}
-                      classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30" }}
-                    />
-                  </div>
-                </ModalBody>
-                <ModalFooter>
-                  <Button variant="flat" className="bg-[#F5EDEB] text-[#1E1E1E] font-semibold" onPress={onClose} isDisabled={submittingBlocked}>Abbrechen</Button>
-                  <Button
-                    className="bg-gradient-to-r from-[#6b7280] to-[#4b5563] text-white font-semibold"
-                    onPress={handleCreateBlockedSlot}
-                    isLoading={submittingBlocked}
-                    isDisabled={!blockedSlotForm.blockDate || !blockedSlotForm.startTime || !blockedSlotForm.endTime}
-                    startContent={<Ban size={16} />}>
-                    Blockieren
-                  </Button>
-                </ModalFooter>
-              </>
+       {/* Blocked Slot Modal - Enhanced with Range Toggle */}
+<Modal 
+  isOpen={isBlockedSlotModalOpen} 
+  onClose={() => { 
+    setIsBlockedSlotModalOpen(false); 
+    setError(null);
+    setIsRange(false);
+    setSingleForm({ blockDate: "", startTime: "", endTime: "", reason: "" });
+    setRangeForm({ fromDate: "", toDate: "", startTime: "", endTime: "", reason: "" });
+  }} 
+  size="lg" 
+  placement="center"
+  classNames={modalClassNames}
+>
+  <ModalContent>
+    {(onClose) => (
+      <>
+        <ModalHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#017172] flex items-center justify-center">
+              <Ban size={16} className="text-white" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-[#1E1E1E]">Zeitslot blockieren</h2>
+              <p className="text-xs text-[#8A8A8A]">Zeiten als nicht verfügbar markieren</p>
+            </div>
+          </div>
+        </ModalHeader>
+        <ModalBody>
+          <div className="space-y-4">
+            {error && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl border border-red-200 text-red-600 text-sm">
+                <AlertCircle size={14} />{error}
+              </div>
             )}
-          </ModalContent>
-        </Modal>
+
+            {/* Range toggle */}
+            <div className="flex items-center gap-3 p-3 bg-[#F5EDEB] rounded-xl border border-[#E8C7C3]/30">
+              <Switch 
+                isSelected={isRange} 
+                onValueChange={setIsRange} 
+                color="primary" 
+                size="sm" 
+              />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-[#1E1E1E]">Datumsbereich</p>
+                <p className="text-xs text-[#8A8A8A]">Mehrere Tage auf einmal blockieren</p>
+              </div>
+              <CalendarRange size={18} className="text-[#8A8A8A]" />
+            </div>
+
+            {/* Date(s) */}
+            {!isRange ? (
+              <Input 
+                type="date" 
+                label="Datum" 
+                isRequired 
+                value={singleForm.blockDate}
+                onChange={(e) => setSingleForm(f => ({ ...f, blockDate: e.target.value }))} 
+                min={moment().format('YYYY-MM-DD')}
+                classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
+              />
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <Input 
+                  type="date" 
+                  label="Von Datum" 
+                  isRequired 
+                  value={rangeForm.fromDate}
+                  onChange={(e) => setRangeForm(f => ({ ...f, fromDate: e.target.value }))} 
+                  min={moment().format('YYYY-MM-DD')}
+                  classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
+                />
+                <Input 
+                  type="date" 
+                  label="Bis Datum" 
+                  isRequired 
+                  value={rangeForm.toDate}
+                  onChange={(e) => setRangeForm(f => ({ ...f, toDate: e.target.value }))} 
+                  min={moment().format('YYYY-MM-DD')}
+                  classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
+                />
+              </div>
+            )}
+
+            {/* Times */}
+            <div className="grid grid-cols-2 gap-3">
+              <Input 
+                type="time" 
+                label="Von Uhrzeit" 
+                isRequired
+                value={isRange ? rangeForm.startTime : singleForm.startTime}
+                onChange={(e) => isRange 
+                  ? setRangeForm(f => ({ ...f, startTime: e.target.value })) 
+                  : setSingleForm(f => ({ ...f, startTime: e.target.value }))
+                }
+                classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
+              />
+              <Input 
+                type="time" 
+                label="Bis Uhrzeit" 
+                isRequired
+                value={isRange ? rangeForm.endTime : singleForm.endTime}
+                onChange={(e) => isRange 
+                  ? setRangeForm(f => ({ ...f, endTime: e.target.value })) 
+                  : setSingleForm(f => ({ ...f, endTime: e.target.value }))
+                }
+                classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
+              />
+            </div>
+
+            {/* Reason */}
+            <Input 
+              label="Grund (optional)" 
+              placeholder="z.B. Urlaub, Fortbildung…"
+              value={isRange ? rangeForm.reason : singleForm.reason}
+              onChange={(e) => isRange 
+                ? setRangeForm(f => ({ ...f, reason: e.target.value })) 
+                : setSingleForm(f => ({ ...f, reason: e.target.value }))
+              }
+              classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }} 
+            />
+          </div>
+        </ModalBody>
+        <ModalFooter className="gap-2">
+          <Button 
+            variant="flat" 
+            className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+            onPress={onClose} 
+            isDisabled={submittingBlocked} 
+            startContent={<X size={14} />}
+          >
+            Abbrechen
+          </Button>
+          <Button 
+            className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
+            onPress={handleCreateBlockedSlot} 
+            isLoading={submittingBlocked} 
+            startContent={!submittingBlocked && <Ban size={15} />}
+          >
+            Blockieren
+          </Button>
+        </ModalFooter>
+      </>
+    )}
+  </ModalContent>
+</Modal>
 
         {/* Manual Booking Modal */}
         <Modal
