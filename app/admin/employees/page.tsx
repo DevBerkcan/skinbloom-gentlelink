@@ -1,4 +1,3 @@
-// app/admin/employees/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -116,8 +115,11 @@ export default function EmployeesPage() {
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">Mitarbeiter</h1>
             <p className="text-sm text-[#8A8A8A]">Fachkräfte verwalten und zuweisen</p>
           </div>
-          <Button className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
-            startContent={<Plus size={18} />} onPress={openCreate}>
+          <Button 
+            className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
+            startContent={<Plus size={18} />} 
+            onPress={openCreate}
+          >
             Mitarbeiter hinzufügen
           </Button>
         </div>
@@ -162,8 +164,11 @@ export default function EmployeesPage() {
               <Users size={28} className="text-[#E8C7C3]" />
             </div>
             <p className="text-[#8A8A8A] font-medium">Noch keine Mitarbeiter vorhanden</p>
-            <Button className="mt-4 bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold"
-              startContent={<Plus size={16} />} onPress={openCreate}>
+            <Button 
+              className="mt-4 bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold"
+              startContent={<Plus size={16} />} 
+              onPress={openCreate}
+            >
               Ersten Mitarbeiter hinzufügen
             </Button>
           </div>
@@ -190,22 +195,37 @@ export default function EmployeesPage() {
                       <p className="text-sm text-[#8A8A8A] font-medium">{emp.role}</p>
                       {emp.specialty && <p className="text-xs text-[#8A8A8A] mt-1 italic">{emp.specialty}</p>}
                     </div>
-                    {/* Actions */}
+                    {/* Actions - All as proper buttons */}
                     <div className="flex flex-col gap-1.5 shrink-0">
-                      <Button isIconOnly size="sm" variant="flat"
+                      <Button 
+                        isIconOnly 
+                        size="sm" 
+                        variant="flat"
                         className="bg-[#F5EDEB] text-[#017172] hover:bg-[#017172]/10"
-                        onPress={() => openEdit(emp)} title="Bearbeiten">
+                        onPress={() => openEdit(emp)} 
+                        title="Bearbeiten"
+                      >
                         <Edit size={14} />
                       </Button>
-                      <Button isIconOnly size="sm" variant="flat"
+                      <Button 
+                        isIconOnly 
+                        size="sm" 
+                        variant="flat"
                         className={emp.isActive ? "bg-amber-50 text-amber-600 hover:bg-amber-100" : "bg-[#017172]/10 text-[#017172] hover:bg-[#017172]/20"}
-                        onPress={() => handleToggle(emp)} title={emp.isActive ? "Deaktivieren" : "Aktivieren"}>
+                        onPress={() => handleToggle(emp)} 
+                        title={emp.isActive ? "Deaktivieren" : "Aktivieren"}
+                      >
                         {emp.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
                       </Button>
-                      <Button isIconOnly size="sm" variant="flat"
+                      <Button 
+                        isIconOnly 
+                        size="sm" 
+                        variant="flat"
                         className="bg-red-50 text-red-500 hover:bg-red-100"
-                        onPress={() => handleDelete(emp)} title="Löschen">
-                        <Trash2 size={14} />
+                        startContent={<Trash2 size={14} />}
+                        onPress={() => handleDelete(emp)} 
+                        title="Löschen"
+                      >
                       </Button>
                     </div>
                   </div>
@@ -244,13 +264,32 @@ export default function EmployeesPage() {
                       <AlertCircle size={14} />{modalErr}
                     </div>
                   )}
-                  <Input label="Name" placeholder="z.B. Anna Meier" value={form.name} isRequired isDisabled={submitting}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })} classNames={INPUT_CLS} />
-                  <Input label="Rolle" placeholder="z.B. Ästhetik-Expertin" value={form.role} isRequired isDisabled={submitting}
-                    onChange={(e) => setForm({ ...form, role: e.target.value })} classNames={INPUT_CLS} />
-                  <Input label="Spezialgebiet (optional)" placeholder="z.B. Wimpern, Botox, Filler"
-                    value={form.specialty ?? ""} isDisabled={submitting}
-                    onChange={(e) => setForm({ ...form, specialty: e.target.value })} classNames={INPUT_CLS} />
+                  <Input 
+                    label="Name" 
+                    placeholder="z.B. Anna Meier" 
+                    value={form.name} 
+                    isRequired 
+                    isDisabled={submitting}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })} 
+                    classNames={INPUT_CLS} 
+                  />
+                  <Input 
+                    label="Rolle" 
+                    placeholder="z.B. Ästhetik-Expertin" 
+                    value={form.role} 
+                    isRequired 
+                    isDisabled={submitting}
+                    onChange={(e) => setForm({ ...form, role: e.target.value })} 
+                    classNames={INPUT_CLS} 
+                  />
+                  <Input 
+                    label="Spezialgebiet (optional)" 
+                    placeholder="z.B. Wimpern, Botox, Filler"
+                    value={form.specialty ?? ""} 
+                    isDisabled={submitting}
+                    onChange={(e) => setForm({ ...form, specialty: e.target.value })} 
+                    classNames={INPUT_CLS} 
+                  />
                   {editing && (
                     <div className="flex items-center gap-3 p-3 bg-[#F5EDEB] rounded-xl border border-[#E8C7C3]/30">
                       <Switch isSelected={formActive} onValueChange={setFormActive} size="sm" color="primary" isDisabled={submitting} />
@@ -265,14 +304,22 @@ export default function EmployeesPage() {
                 </div>
               </ModalBody>
               <ModalFooter className="gap-2">
-                <Button variant="flat" className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
-                  onPress={close} isDisabled={submitting} startContent={<X size={14} />}>
+                <Button 
+                  variant="flat" 
+                  className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                  onPress={close} 
+                  isDisabled={submitting} 
+                  startContent={<X size={14} />}
+                >
                   Abbrechen
                 </Button>
-                <Button className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
-                  onPress={handleSubmit} isLoading={submitting}
+                <Button 
+                  className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
+                  onPress={handleSubmit} 
+                  isLoading={submitting}
                   isDisabled={!form.name.trim() || !form.role.trim()}
-                  startContent={!submitting && <Save size={14} />}>
+                  startContent={!submitting && <Save size={14} />}
+                >
                   {editing ? "Speichern" : "Hinzufügen"}
                 </Button>
               </ModalFooter>
