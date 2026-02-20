@@ -14,23 +14,16 @@ import { Input, Textarea } from "@nextui-org/input";
 import {
   Calendar as CalendarIcon, Clock, User, Phone, Mail, Plus, AlertCircle,
   CheckCircle, XCircle, Ban, Scissors, MessageCircle, Hash, CreditCard,
-  CalendarDays, ChevronRight,
-  Search
+  CalendarDays, ChevronRight, Search
 } from "lucide-react";
-import {
-  getBookings, getServices, getBlockedSlots, createManualBooking, updateBookingStatus,
-  createBlockedSlot,
-  type BookingListItem, type Service, type CreateManualBookingDto,
-  type ManualBookingResponse, type BlockedTimeSlot,
-  CreateBlockedSlot,
-  CreateBlockedDateRange,
-  createBlockedDateRange
-} from "@/lib/api/admin";
-import { getAvailability, getEmployees, type TimeSlot, type Employee } from "@/lib/api/booking";
 import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
 import { Switch } from "@nextui-org/switch";
 import { CalendarRange, X } from "lucide-react";
 
+import { adminApi, BookingListItem, Service, CreateManualBookingDto, ManualBookingResponse } from "@/lib/api/admin";
+import { bookingApi, TimeSlot, Employee } from "@/lib/api/booking";
+import { blockedTimeSlotsApi, BlockedTimeSlot, CreateBlockedTimeSlotDto, CreateBlockedDateRangeDto } from "@/lib/api/blockedTimeSlots";
+import { useAuth } from "@/lib/contexts/AuthContext";
 
 moment.locale('de');
 const localizer = momentLocalizer(moment);
@@ -58,8 +51,6 @@ const statusIcons = {
   Cancelled: XCircle, NoShow: XCircle
 };
 
-// Blocked slot modal states (copy from Abwesenheiten page)
-
 const modalClassNames = {
   base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
   header: "border-b border-[#E8C7C3]/20 bg-gradient-to-r from-[#F5EDEB] to-white",
@@ -68,6 +59,9 @@ const modalClassNames = {
 };
 
 export default function AdminCalendarPage() {
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole(['Admin', 'Owner']);
+
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -91,13 +85,13 @@ export default function AdminCalendarPage() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
   const [isRange, setIsRange] = useState(false);
-  const [singleForm, setSingleForm] = useState<CreateBlockedSlot>({
+  const [singleForm, setSingleForm] = useState<CreateBlockedTimeSlotDto>({
     blockDate: "",
     startTime: "",
     endTime: "",
     reason: ""
   });
-  const [rangeForm, setRangeForm] = useState<CreateBlockedDateRange>({
+  const [rangeForm, setRangeForm] = useState<CreateBlockedDateRangeDto>({
     fromDate: "",
     toDate: "",
     startTime: "",
@@ -125,17 +119,10 @@ export default function AdminCalendarPage() {
     customerNotes: ''
   });
 
-  const [blockedSlotForm, setBlockedSlotForm] = useState({
-    blockDate: moment().format('YYYY-MM-DD'),
-    startTime: '09:00',
-    endTime: '17:00',
-    reason: ''
-  });
-
   // Load employees from API on mount
   useEffect(() => {
-    getEmployees()
-      .then((data) => {
+    bookingApi.getEmployees()
+      .then((data: Employee[]) => {
         setEmployees(data);
         if (data.length > 0) setSelectedEmployeeId(data[0].id);
       })
@@ -161,62 +148,94 @@ export default function AdminCalendarPage() {
       setLoading(true);
       const startOfMonth = moment(date).startOf('month').format('YYYY-MM-DD');
       const endOfMonth = moment(date).endOf('month').format('YYYY-MM-DD');
-      const bookingsResponse = await getBookings({ fromDate: startOfMonth, toDate: endOfMonth, pageSize: 100 });
-      const blockedSlots = await getBlockedSlots(startOfMonth, endOfMonth);
+
+      // Load bookings (admin sees all)
+      const bookingsResponse = await adminApi.getBookings({ 
+        fromDate: startOfMonth, 
+        toDate: endOfMonth, 
+        pageSize: 100
+      });
+
+      // Load blocked slots (admin sees all with all=true)
+      const startDate = new Date(date);
+      startDate.setMonth(startDate.getMonth() - 1);
+      const endDate = new Date(date);
+      endDate.setMonth(endDate.getMonth() + 1);
+      
+      const blockedSlots = await blockedTimeSlotsApi.getAll(startDate, endDate, isAdmin);
+
       const bookingEvents: BookingEvent[] = bookingsResponse.items.map((booking: BookingListItem) => ({
         id: booking.id,
         title: `${booking.customerName} - ${booking.serviceName}`,
         start: new Date(`${booking.bookingDate}T${booking.startTime}`),
         end: new Date(`${booking.bookingDate}T${booking.endTime}`),
-        resource: booking, type: 'booking', status: booking.status
+        resource: booking,
+        type: 'booking',
+        status: booking.status
       }));
+
       const blockedEvents: BlockedEvent[] = blockedSlots.map((slot: BlockedTimeSlot) => ({
         id: `blocked-${slot.id}`,
         title: `🚫 Blockiert${slot.reason ? `: ${slot.reason}` : ''}`,
         start: new Date(`${slot.blockDate}T${slot.startTime}`),
         end: new Date(`${slot.blockDate}T${slot.endTime}`),
-        resource: slot, type: 'blocked'
+        resource: slot,
+        type: 'blocked'
       }));
+
       setEvents([...bookingEvents, ...blockedEvents]);
-    } catch (error) { console.error("Error loading events:", error); }
-    finally { setLoading(false); }
-  }, [date]);
+    } catch (error) {
+      console.error("Error loading events:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [date, isAdmin]);
 
   useEffect(() => { loadEvents(); }, [loadEvents]);
 
   async function loadServices() {
-    try { const data = await getServices(); setServices(data); }
-    catch (error) { console.error("Error loading services:", error); }
+    try {
+      const data = await adminApi.getServices();
+      setServices(data);
+    } catch (error) {
+      console.error("Error loading services:", error);
+    }
   }
 
   async function loadAvailableSlots() {
     if (!bookingForm.serviceId || !bookingForm.bookingDate) return;
     try {
       setLoadingSlots(true);
-      const data = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
-      const available = data.availableSlots?.filter(slot => slot.isAvailable) || [];
+      const data = await bookingApi.getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
+      const available = data.availableSlots?.filter((slot: { isAvailable: any; }) => slot.isAvailable) || [];
       setAvailableSlots(available);
       if (bookingForm.startTime) {
-        const isStillAvailable = available.some(slot => slot.startTime === bookingForm.startTime);
+        const isStillAvailable = available.some((slot: { startTime: string; }) => slot.startTime === bookingForm.startTime);
         if (!isStillAvailable) setBookingForm(prev => ({ ...prev, startTime: '' }));
       }
-    } catch { setAvailableSlots([]); }
-    finally { setLoadingSlots(false); }
+    } catch {
+      setAvailableSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
   }
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!selectedEvent || selectedEvent.type !== 'booking') return;
     try {
       setUpdating(true);
-      await updateBookingStatus(selectedEvent.resource.id, { status: newStatus });
+      await adminApi.updateBookingStatus(selectedEvent.resource.id, { status: newStatus });
       setEvents(prev => prev.map(event =>
         event.id === selectedEvent.id && event.type === 'booking'
           ? { ...event, status: newStatus, resource: { ...event.resource, status: newStatus } as BookingListItem }
           : event
       ));
       setIsBookingModalOpen(false);
-    } catch (error) { console.error("Error updating status:", error); }
-    finally { setUpdating(false); }
+    } catch (error) {
+      console.error("Error updating status:", error);
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const resetManualBookingForm = () => {
@@ -245,9 +264,9 @@ export default function AdminCalendarPage() {
       const selectedService = services.find(s => s.id === bookingForm.serviceId);
       if (!selectedService) throw new Error("Service nicht gefunden");
 
-      const availabilityCheck = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
+      const availabilityCheck = await bookingApi.getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
       const isSlotAvailable = availabilityCheck.availableSlots?.some(
-        slot => slot.startTime === bookingForm.startTime && slot.isAvailable
+        (        slot: { startTime: string; isAvailable: any; }) => slot.startTime === bookingForm.startTime && slot.isAvailable
       );
       if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
 
@@ -263,7 +282,7 @@ export default function AdminCalendarPage() {
         employeeId: selectedEmployeeId || null,
       };
 
-      const booking = await createManualBooking(bookingData);
+      const booking = await adminApi.createManualBooking(bookingData);
       setCreatedBooking(booking);
       setSuccess(true);
       await loadEvents();
@@ -288,12 +307,14 @@ export default function AdminCalendarPage() {
         if (!rangeForm.fromDate || !rangeForm.toDate || !rangeForm.startTime || !rangeForm.endTime) {
           throw new Error("Bitte alle Pflichtfelder ausfüllen");
         }
-        await createBlockedDateRange(rangeForm);
+        const result = await blockedTimeSlotsApi.createRange(rangeForm);
+        if (!result.success) throw new Error(result.message);
       } else {
         if (!singleForm.blockDate || !singleForm.startTime || !singleForm.endTime) {
           throw new Error("Bitte alle Pflichtfelder ausfüllen");
         }
-        await createBlockedSlot(singleForm);
+        const result = await blockedTimeSlotsApi.create(singleForm);
+        if (!result.success) throw new Error(result.message);
       }
 
       await loadEvents();
@@ -313,21 +334,50 @@ export default function AdminCalendarPage() {
 
   const eventStyleGetter = (event: CalendarEvent) => {
     if (event.type === 'blocked') {
-      return { style: { backgroundColor: '#6b7280', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px)', borderRadius: "4px", opacity: 0.8, color: "white", border: "2px dashed #9ca3af", display: "block" } };
+      return {
+        style: {
+          backgroundColor: '#6b7280',
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.1) 5px, rgba(255,255,255,0.1) 10px)',
+          borderRadius: "4px",
+          opacity: 0.8,
+          color: "white",
+          border: "2px dashed #9ca3af",
+          display: "block"
+        }
+      };
     }
     const backgroundColor = statusColors[(event.status as keyof typeof statusColors)] || "#3b82f6";
-    return { style: { backgroundColor, borderRadius: "4px", opacity: 0.9, color: "white", border: "none", display: "block", fontWeight: 500, fontSize: '0.85rem' } };
+    return {
+      style: {
+        backgroundColor,
+        borderRadius: "4px",
+        opacity: 0.9,
+        color: "white",
+        border: "none",
+        display: "block",
+        fontWeight: 500,
+        fontSize: '0.85rem'
+      }
+    };
   };
 
   const filteredEvents = filterStatus === "all" ? events
     : filterStatus === "blocked" ? events.filter(e => e.type === 'blocked')
       : events.filter(e => e.type === 'booking' && e.status === filterStatus);
 
-  const handleSelectEvent = (event: CalendarEvent) => { setSelectedEvent(event); setIsBookingModalOpen(true); };
+  const handleSelectEvent = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setIsBookingModalOpen(true);
+  };
 
   const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
     setSelectedSlot(slotInfo);
-    setBookingForm({ ...bookingForm, bookingDate: moment(slotInfo.start).format('YYYY-MM-DD'), startTime: '', serviceId: '' });
+    setBookingForm({
+      ...bookingForm,
+      bookingDate: moment(slotInfo.start).format('YYYY-MM-DD'),
+      startTime: '',
+      serviceId: ''
+    });
     setAvailableSlots([]);
     setIsManualBookingModalOpen(true);
   };
@@ -347,7 +397,10 @@ export default function AdminCalendarPage() {
   if (loading && events.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white flex items-center justify-center">
-        <div className="text-center"><Spinner size="lg" /><p className="mt-4 text-[#8A8A8A]">Kalender wird geladen...</p></div>
+        <div className="text-center">
+          <Spinner size="lg" />
+          <p className="mt-4 text-[#8A8A8A]">Kalender wird geladen...</p>
+        </div>
       </div>
     );
   }
@@ -424,7 +477,19 @@ export default function AdminCalendarPage() {
                 onView={(newView) => setView(newView as typeof view)}
                 date={date}
                 onNavigate={setDate}
-                messages={{ next: "Nächster", previous: "Vorheriger", today: "Heute", month: "Monat", week: "Woche", day: "Tag", agenda: "Liste", date: "Datum", time: "Zeit", event: "Termin", noEventsInRange: "Keine Termine in diesem Zeitraum" }}
+                messages={{
+                  next: "Nächster",
+                  previous: "Vorheriger",
+                  today: "Heute",
+                  month: "Monat",
+                  week: "Woche",
+                  day: "Tag",
+                  agenda: "Liste",
+                  date: "Datum",
+                  time: "Zeit",
+                  event: "Termin",
+                  noEventsInRange: "Keine Termine in diesem Zeitraum"
+                }}
                 formats={{
                   dateFormat: 'DD',
                   dayFormat: 'ddd DD.MM',
@@ -456,7 +521,9 @@ export default function AdminCalendarPage() {
               })}
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded bg-[#6b7280]" />
-                <span className="text-[#1E1E1E] flex items-center gap-1"><Ban size={14} className="text-[#8A8A8A]" />Blockierte Zeit</span>
+                <span className="text-[#1E1E1E] flex items-center gap-1">
+                  <Ban size={14} className="text-[#8A8A8A]" />Blockierte Zeit
+                </span>
               </div>
             </div>
           </CardBody>
@@ -584,7 +651,9 @@ export default function AdminCalendarPage() {
                   )}
                 </ModalBody>
                 <ModalFooter>
-                  <Button variant="flat" className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold" onPress={onClose}>Schließen</Button>
+                  <Button variant="flat" className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold" onPress={onClose}>
+                    Schließen
+                  </Button>
                 </ModalFooter>
               </>
             )}
@@ -592,7 +661,6 @@ export default function AdminCalendarPage() {
         </Modal>
 
         {/* Blocked Slot Modal */}
-        {/* Blocked Slot Modal - Enhanced with Range Toggle */}
         <Modal
           isOpen={isBlockedSlotModalOpen}
           onClose={() => {
@@ -671,7 +739,7 @@ export default function AdminCalendarPage() {
                           isRequired
                           value={rangeForm.toDate}
                           onChange={(e) => setRangeForm(f => ({ ...f, toDate: e.target.value }))}
-                          min={moment().format('YYYY-MM-DD')}
+                          min={rangeForm.fromDate || moment().format('YYYY-MM-DD')}
                           classNames={{ inputWrapper: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]" }}
                         />
                       </div>
@@ -764,54 +832,54 @@ export default function AdminCalendarPage() {
                 </ModalHeader>
                 <ModalBody>
                   {success && createdBooking ? (
-<div className="bg-emerald-50 rounded-xl border border-emerald-200 p-5">
-  <div className="flex gap-4">
-    <div className="shrink-0">
-      <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md">
-        <CheckCircle className="text-white" size={24} />
-      </div>
-    </div>
-    <div className="flex-1">
-      <h3 className="text-lg font-bold text-emerald-800 mb-1">Buchung erfolgreich!</h3>
-      <p className="text-sm text-emerald-600 font-mono mb-4">Nr: {createdBooking.bookingNumber}</p>
-      
-      <div className="bg-white rounded-xl border border-emerald-100 divide-y divide-emerald-50">
-        <div className="p-4 flex justify-between items-center">
-          <span className="text-sm text-gray-500">Service</span>
-          <span className="text-base font-semibold text-gray-800">{createdBooking.booking.serviceName}</span>
-        </div>
-        <div className="p-4 flex justify-between items-center">
-          <span className="text-sm text-gray-500">Datum</span>
-          <span className="text-base font-medium text-gray-800">
-            {new Date(createdBooking.booking.bookingDate).toLocaleDateString('de-DE', {
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric'
-            })}
-          </span>
-        </div>
-        <div className="p-4 flex justify-between items-center">
-          <span className="text-sm text-gray-500">Uhrzeit</span>
-          <span className="text-base font-medium text-gray-800">
-            {createdBooking.booking.startTime} – {createdBooking.booking.endTime} Uhr
-          </span>
-        </div>
-        <div className="p-4 flex justify-between items-center">
-          <span className="text-sm text-gray-500">Kunde</span>
-          <span className="text-base font-medium text-gray-800">
-            {createdBooking.customer.firstName} {createdBooking.customer.lastName}
-          </span>
-        </div>
-        {createdBooking.employee && (
-          <div className="p-4 flex justify-between items-center">
-            <span className="text-sm text-gray-500">Fachkraft</span>
-            <span className="text-base font-medium text-gray-800">{createdBooking.employee.name}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
+                    <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-5">
+                      <div className="flex gap-4">
+                        <div className="shrink-0">
+                          <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+                            <CheckCircle className="text-white" size={24} />
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-emerald-800 mb-1">Buchung erfolgreich!</h3>
+                          <p className="text-sm text-emerald-600 font-mono mb-4">Nr: {createdBooking.bookingNumber}</p>
+
+                          <div className="bg-white rounded-xl border border-emerald-100 divide-y divide-emerald-50">
+                            <div className="p-4 flex justify-between items-center">
+                              <span className="text-sm text-gray-500">Service</span>
+                              <span className="text-base font-semibold text-gray-800">{createdBooking.booking.serviceName}</span>
+                            </div>
+                            <div className="p-4 flex justify-between items-center">
+                              <span className="text-sm text-gray-500">Datum</span>
+                              <span className="text-base font-medium text-gray-800">
+                                {new Date(createdBooking.booking.bookingDate).toLocaleDateString('de-DE', {
+                                  day: '2-digit',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                            <div className="p-4 flex justify-between items-center">
+                              <span className="text-sm text-gray-500">Uhrzeit</span>
+                              <span className="text-base font-medium text-gray-800">
+                                {createdBooking.booking.startTime} – {createdBooking.booking.endTime} Uhr
+                              </span>
+                            </div>
+                            <div className="p-4 flex justify-between items-center">
+                              <span className="text-sm text-gray-500">Kunde</span>
+                              <span className="text-base font-medium text-gray-800">
+                                {createdBooking.customer.firstName} {createdBooking.customer.lastName}
+                              </span>
+                            </div>
+                            {createdBooking.employee && (
+                              <div className="p-4 flex justify-between items-center">
+                                <span className="text-sm text-gray-500">Fachkraft</span>
+                                <span className="text-base font-medium text-gray-800">{createdBooking.employee.name}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
@@ -919,6 +987,7 @@ export default function AdminCalendarPage() {
                           </PopoverContent>
                         </Popover>
                       </div>
+
                       {/* Step 3: Date */}
                       <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
                         <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">3. Datum wählen</p>
@@ -937,14 +1006,23 @@ export default function AdminCalendarPage() {
                       <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
                         <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">4. Uhrzeit wählen</p>
                         {loadingSlots ? (
-                          <div className="flex items-center gap-2 p-3 bg-white rounded-lg"><Spinner size="sm" /><span className="text-sm text-[#8A8A8A]">Lade verfügbare Zeiten...</span></div>
+                          <div className="flex items-center gap-2 p-3 bg-white rounded-lg">
+                            <Spinner size="sm" />
+                            <span className="text-sm text-[#8A8A8A]">Lade verfügbare Zeiten...</span>
+                          </div>
                         ) : availableSlots.length > 0 ? (
                           <div className="grid grid-cols-4 gap-2">
                             {availableSlots.map(slot => (
-                              <Button key={slot.startTime} size="sm"
-                                className={`${bookingForm.startTime === slot.startTime ? 'bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold' : 'bg-white border border-[#E8C7C3] text-[#1E1E1E] hover:border-[#017172]/40'}`}
+                              <Button
+                                key={slot.startTime}
+                                size="sm"
+                                className={`${bookingForm.startTime === slot.startTime
+                                  ? 'bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold'
+                                  : 'bg-white border border-[#E8C7C3] text-[#1E1E1E] hover:border-[#017172]/40'
+                                  }`}
                                 onPress={() => setBookingForm({ ...bookingForm, startTime: slot.startTime })}
-                                isDisabled={submitting}>
+                                isDisabled={submitting}
+                              >
                                 {slot.startTime}
                               </Button>
                             ))}
@@ -1030,9 +1108,9 @@ export default function AdminCalendarPage() {
                     className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
                     onPress={onClose}
                     startContent={<X size={14} />}
-                    isDisabled={submitting}>
+                    isDisabled={submitting}
+                  >
                     {success ? "Schließen" : "Abbrechen"}
-
                   </Button>
                   {!success && !createdBooking && (
                     <Button
@@ -1040,7 +1118,8 @@ export default function AdminCalendarPage() {
                       onPress={handleCreateManualBooking}
                       isLoading={submitting}
                       isDisabled={!bookingForm.serviceId || !bookingForm.bookingDate || !bookingForm.startTime || !bookingForm.firstName || !bookingForm.lastName}
-                      endContent={<ChevronRight size={18} />}>
+                      endContent={<ChevronRight size={18} />}
+                    >
                       Buchung erstellen
                     </Button>
                   )}

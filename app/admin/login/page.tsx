@@ -1,33 +1,43 @@
 // app/admin/login/page.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardBody } from "@nextui-org/card";
-import { Input } from "@nextui-org/input";
-import { Button } from "@nextui-org/button";
-import { Lock, User } from "lucide-react";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardBody } from '@nextui-org/card';
+import { Input } from '@nextui-org/input';
+import { Button } from '@nextui-org/button';
+import { Lock, User, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const { login } = useAuth();
+
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setLoading(true);
 
-    const ADMIN_USERNAME = "admin";
-    const ADMIN_PASSWORD = "barber2025";
-
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      localStorage.setItem("admin_authenticated", "true");
-      router.push("/admin/dashboard");
-    } else {
-      setError("Ungültige Anmeldedaten");
+    try {
+      const result = await login({ 
+        username: username.trim().toLowerCase(), 
+        password 
+      });
+      
+      if (result.success) {
+        router.push('/admin/dashboard');
+      } else {
+        setError(result.message || 'Ungültige Anmeldedaten');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Ungültige Anmeldedaten');
+    } finally {
       setLoading(false);
     }
   };
@@ -41,7 +51,7 @@ export default function AdminLoginPage() {
               <Lock className="text-white" size={40} />
             </div>
             <h1 className="text-3xl font-bold text-[#1E1E1E] mb-2">
-              Admin Login
+              Anmelden
             </h1>
             <p className="text-[#8A8A8A]">
               Skinbloom Aesthetics Buchungssystem
@@ -52,30 +62,45 @@ export default function AdminLoginPage() {
             <Input
               type="text"
               label="Benutzername"
-              placeholder="admin"
+              placeholder="benutzername"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               startContent={<User size={18} className="text-[#8A8A8A]" />}
+              autoComplete="username"
+              autoFocus
               isRequired
               classNames={{
                 input: "text-[#1E1E1E]",
                 label: "text-[#8A8A8A]",
-                inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                inputWrapper:
+                  "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
               }}
             />
 
             <Input
-              type="password"
+              type={showPassword ? "text" : "password"}
               label="Passwort"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               startContent={<Lock size={18} className="text-[#8A8A8A]" />}
+              endContent={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="text-[#8A8A8A] hover:text-[#1E1E1E] transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              }
+              autoComplete="current-password"
               isRequired
               classNames={{
                 input: "text-[#1E1E1E]",
                 label: "text-[#8A8A8A]",
-                inputWrapper: "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
+                inputWrapper:
+                  "bg-white border-2 border-[#E8C7C3]/30 hover:border-[#E8C7C3]",
               }}
             />
 
@@ -94,10 +119,6 @@ export default function AdminLoginPage() {
               Anmelden
             </Button>
           </form>
-
-          <div className="mt-6 text-center text-sm text-[#8A8A8A]">
-            Standard: admin / barber2025
-          </div>
         </CardBody>
       </Card>
     </div>

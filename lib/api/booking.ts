@@ -1,5 +1,24 @@
 // lib/api/booking.ts
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://localhost:7020/api";
+// Public-facing booking API.
+// credentials: "include" is set on all calls so the JWT cookie is forwarded
+// when the user is authenticated (e.g. an employee using the admin UI).
+// Anonymous callers simply have no cookie and the server treats them as guests.
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://localhost:7020/api";
+
+  export const bookingApi = {
+  getEmployees,
+  getServiceCategories,
+  getServicesByCategory,
+  getServices,
+  getAvailability,
+  createBooking,
+  getBookingsByEmail,
+  cancelBooking,
+};
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface Service {
   id: string;
@@ -8,6 +27,15 @@ export interface Service {
   durationMinutes: number;
   price: number;
   displayOrder: number;
+}
+
+export interface ServiceCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  services: Service[];
 }
 
 export interface TimeSlot {
@@ -30,8 +58,6 @@ export interface CustomerInfo {
   phone: string;
 }
 
-// ── Employee ──────────────────────────────────────────────────────────────────
-
 export interface Employee {
   id: string;
   name: string;
@@ -40,21 +66,13 @@ export interface Employee {
   isActive: boolean;
 }
 
-export async function getEmployees(): Promise<Employee[]> {
-  const response = await fetch(`${API_BASE_URL}/employees?activeOnly=true`);
-  if (!response.ok) throw new Error("Fehler beim Laden der Mitarbeiter");
-  return response.json();
-}
-
-// ── Booking ───────────────────────────────────────────────────────────────────
-
 export interface CreateBookingRequest {
   serviceId: string;
   bookingDate: string;
   startTime: string;
   customer: CustomerInfo;
   customerNotes?: string;
-  employeeId?: string | null;  // NEW
+  employeeId?: string | null;
 }
 
 export interface BookingResponse {
@@ -75,86 +93,114 @@ export interface BookingResponse {
     lastName: string;
     email: string | null;
   };
-  employee?: {           // NEW – optional
+  employee?: {
     id: string;
     name: string;
     role: string;
     specialty: string | null;
-  };
+  } | null;
 }
 
-export interface ServiceCategory {
-  id: string;
-  name: string;
-  description: string | null;
-  displayOrder: number;
-  isActive: boolean;
-  services: Service[];
+// ── Employees ─────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch active employees for the booking widget.
+ * The /employees endpoint is [AllowAnonymous] for public use.
+ * credentials:include so the JWT cookie is forwarded when present.
+ */
+export async function getEmployees(): Promise<Employee[]> {
+  const res = await fetch(`${API_BASE_URL}/employees?activeOnly=true`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Fehler beim Laden der Mitarbeiter");
+  return res.json();
 }
+
+// ── Services ──────────────────────────────────────────────────────────────────
 
 export async function getServiceCategories(): Promise<ServiceCategory[]> {
-  const response = await fetch(`${API_BASE_URL}/services/categories`);
-  if (!response.ok) throw new Error("Fehler beim Laden der Kategorien");
-  return response.json();
+  const res = await fetch(`${API_BASE_URL}/services/categories`);
+  if (!res.ok) throw new Error("Fehler beim Laden der Kategorien");
+  return res.json();
 }
 
-export async function getServicesByCategory(categoryId: string): Promise<Service[]> {
-  const response = await fetch(`${API_BASE_URL}/services/services/${categoryId}`);
-  if (!response.ok) throw new Error("Fehler beim Laden der Services für diese Kategorie");
-  return response.json();
+export async function getServicesByCategory(
+  categoryId: string
+): Promise<Service[]> {
+  const res = await fetch(`${API_BASE_URL}/services/services/${categoryId}`);
+  if (!res.ok)
+    throw new Error("Fehler beim Laden der Services für diese Kategorie");
+  return res.json();
 }
 
 export async function getServices(): Promise<Service[]> {
-  const response = await fetch(`${API_BASE_URL}/services`);
-  if (!response.ok) throw new Error("Fehler beim Laden der Services");
-  return response.json();
+  const res = await fetch(`${API_BASE_URL}/services`);
+  if (!res.ok) throw new Error("Fehler beim Laden der Services");
+  return res.json();
 }
+
+// ── Availability ──────────────────────────────────────────────────────────────
 
 export async function getAvailability(
   serviceId: string,
   date: string
 ): Promise<AvailabilityResponse> {
-  const response = await fetch(`${API_BASE_URL}/availability/${serviceId}?date=${date}`);
-  if (!response.ok) throw new Error("Fehler beim Laden der Verfügbarkeit");
-  return response.json();
+  const res = await fetch(
+    `${API_BASE_URL}/availability/${serviceId}?date=${date}`
+  );
+  if (!res.ok) throw new Error("Fehler beim Laden der Verfügbarkeit");
+  return res.json();
 }
 
-export async function createBooking(data: CreateBookingRequest): Promise<BookingResponse> {
-  const response = await fetch(`${API_BASE_URL}/bookings`, {
+// ── Bookings ──────────────────────────────────────────────────────────────────
+
+/**
+ * Create a booking.
+ * credentials:include forwards the JWT cookie so the backend can
+ * auto-assign the authenticated employee when no employeeId is specified.
+ */
+export async function createBooking(
+  data: CreateBookingRequest
+): Promise<BookingResponse> {
+  const res = await fetch(`${API_BASE_URL}/bookings`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!response.ok) {
-    const error = await response.json();
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
     throw new Error(error.message || "Fehler beim Buchen");
   }
-  return response.json();
+  return res.json();
 }
 
-export async function getBookingsByEmail(email: string): Promise<BookingResponse[]> {
-  const response = await fetch(
+export async function getBookingsByEmail(
+  email: string
+): Promise<BookingResponse[]> {
+  const res = await fetch(
     `${API_BASE_URL}/bookings/by-email/${encodeURIComponent(email)}`
   );
-  if (!response.ok) throw new Error("Fehler beim Laden der Buchungen");
-  return response.json();
+  if (!res.ok) throw new Error("Fehler beim Laden der Buchungen");
+  return res.json();
 }
 
 export async function cancelBooking(
   bookingId: string,
   reason?: string
 ): Promise<{ success: boolean; message: string }> {
-  const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}`, {
+  const res = await fetch(`${API_BASE_URL}/bookings/${bookingId}`, {
     method: "DELETE",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       reason: reason || "Vom Kunden storniert",
       notifyCustomer: true,
     }),
   });
-  if (!response.ok) {
-    const error = await response.json();
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
     throw new Error(error.message || "Fehler beim Stornieren");
   }
-  return response.json();
+  return res.json();
 }

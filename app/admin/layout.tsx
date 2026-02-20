@@ -1,34 +1,29 @@
 // app/admin/layout.tsx
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { AdminNav } from '@/components/admin/AdminNav';
+import { AuthProvider, useAuth } from '@/lib/contexts/AuthContext';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    if (pathname === "/admin/login") {
-      setIsLoading(false);
+    // Don't redirect on login page
+    if (pathname === '/admin/login') {
       return;
     }
 
-    const authenticated = localStorage.getItem("admin_authenticated") === "true";
-
-    if (!authenticated) {
-      router.push("/admin/login");
-    } else {
-      setIsAuthenticated(true);
+    // If not authenticated and not loading, redirect to login
+    if (!loading && !isAuthenticated) {
+      router.push('/admin/login');
     }
+  }, [isAuthenticated, loading, pathname, router]);
 
-    setIsLoading(false);
-  }, [pathname, router]);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#E8C7C3]" />
@@ -36,7 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (pathname === "/admin/login") {
+  if (pathname === '/admin/login') {
     return <>{children}</>;
   }
 
@@ -50,4 +45,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return null;
+}
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </AuthProvider>
+  );
 }
