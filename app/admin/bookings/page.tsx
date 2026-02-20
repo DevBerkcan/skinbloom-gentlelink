@@ -9,14 +9,20 @@ import { Select, SelectItem } from "@nextui-org/select";
 import { Chip } from "@nextui-org/chip";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@nextui-org/modal";
 import { Textarea } from "@nextui-org/input";
+import { Spinner } from "@nextui-org/spinner";
+import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
 import { 
   Search, ChevronLeft, ChevronRight, Edit, Filter, X, Calendar, CheckCircle, 
-  Trash2, AlertTriangle 
+  Trash2, AlertTriangle, Plus, Clock, User, Phone, Mail, Ban, Scissors, ChevronRight as ChevronRightIcon
 } from "lucide-react";
+import moment from "moment";
+
 import { 
-  getBookings, updateBookingStatus, deleteBooking,
-  type BookingListItem, type BookingFilter 
+  getBookings, updateBookingStatus, deleteBooking, getServices, createManualBooking,
+  type BookingListItem, type BookingFilter, type Service, type CreateManualBookingDto,
+  type ManualBookingResponse
 } from "@/lib/api/admin";
+import { getAvailability, getEmployees, type TimeSlot, type Employee } from "@/lib/api/booking";
 import { useConfirm } from "@/components/ConfirmDialog";
 
 const modalClassNames = {
@@ -26,13 +32,27 @@ const modalClassNames = {
   body: "py-5",
 };
 
+const manualBookingModalClassNames = {
+  base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
+  header: "border-b border-[#E8C7C3]/20 bg-gradient-to-r from-[#F5EDEB] to-white",
+  footer: "border-t border-[#E8C7C3]/20 bg-[#F5EDEB]/30",
+  body: "py-4"
+};
+
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<BookingListItem[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [createdBooking, setCreatedBooking] = useState<ManualBookingResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [searchInput, setSearchInput] = useState("");
   const [filter, setFilter] = useState<BookingFilter>({ page: 1, pageSize: 20 });
@@ -40,6 +60,7 @@ export default function AdminBookingsPage() {
 
   const { isOpen: isStatusModalOpen, onOpen: onStatusModalOpen, onClose: onStatusModalClose } = useDisclosure();
   const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
+  const { isOpen: isManualBookingModalOpen, onOpen: onManualBookingModalOpen, onClose: onManualBookingModalClose } = useDisclosure();
   
   const [selectedBooking, setSelectedBooking] = useState<BookingListItem | null>(null);
   const [newStatus, setNewStatus] = useState("");
@@ -47,9 +68,66 @@ export default function AdminBookingsPage() {
   const [updating, setUpdating] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
 
+  // Manual booking states
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
+  const [isServicePopoverOpen, setIsServicePopoverOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [bookingForm, setBookingForm] = useState<{
+    serviceId: string;
+    bookingDate: string;
+    startTime: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    customerNotes: string;
+  }>({
+    serviceId: '',
+    bookingDate: moment().format('YYYY-MM-DD'),
+    startTime: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    customerNotes: ''
+  });
+
   const { confirm, dialog: confirmDialog } = useConfirm();
 
-  useEffect(() => { loadBookings(); }, [filter]);
+  // Load data on mount
+  useEffect(() => {
+    loadBookings();
+    loadServices();
+    loadEmployees();
+  }, []);
+
+  useEffect(() => {
+    loadBookings();
+  }, [filter]);
+
+  async function loadEmployees() {
+    try {
+      const data = await getEmployees();
+      setEmployees(data);
+      if (data.length > 0) setSelectedEmployeeId(data[0].id);
+    } catch (err) {
+      console.error("Failed to load employees:", err);
+    } finally {
+      setLoadingEmployees(false);
+    }
+  }
+
+  async function loadServices() {
+    try { 
+      const data = await getServices(); 
+      setServices(data); 
+    } catch (error) { 
+      console.error("Error loading services:", error); 
+    }
+  }
 
   async function loadBookings() {
     setLoading(true);
@@ -65,6 +143,32 @@ export default function AdminBookingsPage() {
       setLoading(false);
     }
   }
+
+  async function loadAvailableSlots() {
+    if (!bookingForm.serviceId || !bookingForm.bookingDate) return;
+    try {
+      setLoadingSlots(true);
+      const data = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
+      const available = data.availableSlots?.filter(slot => slot.isAvailable) || [];
+      setAvailableSlots(available);
+      if (bookingForm.startTime) {
+        const isStillAvailable = available.some(slot => slot.startTime === bookingForm.startTime);
+        if (!isStillAvailable) setBookingForm(prev => ({ ...prev, startTime: '' }));
+      }
+    } catch { 
+      setAvailableSlots([]); 
+    } finally { 
+      setLoadingSlots(false); 
+    }
+  }
+
+  useEffect(() => {
+    if (bookingForm.serviceId && bookingForm.bookingDate) {
+      loadAvailableSlots();
+    } else {
+      setAvailableSlots([]);
+    }
+  }, [bookingForm.serviceId, bookingForm.bookingDate]);
 
   const commitSearch = useCallback(() => {
     setFilter(prev => ({ ...prev, searchTerm: searchInput.trim() || undefined, page: 1 }));
@@ -100,6 +204,24 @@ export default function AdminBookingsPage() {
     setDeleteReason("");
     onDeleteModalOpen();
   }
+
+  const resetManualBookingForm = () => {
+    setSuccess(false);
+    setCreatedBooking(null);
+    setError(null);
+    if (employees.length > 0) setSelectedEmployeeId(employees[0].id);
+    setBookingForm({
+      serviceId: '',
+      bookingDate: moment().format('YYYY-MM-DD'),
+      startTime: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      customerNotes: ''
+    });
+    setAvailableSlots([]);
+  };
 
   async function handleStatusUpdate() {
     if (!selectedBooking) return;
@@ -142,6 +264,48 @@ export default function AdminBookingsPage() {
     }
   }
 
+  async function handleCreateManualBooking() {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const selectedService = services.find(s => s.id === bookingForm.serviceId);
+      if (!selectedService) throw new Error("Service nicht gefunden");
+
+      const availabilityCheck = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
+      const isSlotAvailable = availabilityCheck.availableSlots?.some(
+        slot => slot.startTime === bookingForm.startTime && slot.isAvailable
+      );
+      if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
+
+      const bookingData: CreateManualBookingDto = {
+        serviceId: bookingForm.serviceId,
+        bookingDate: bookingForm.bookingDate,
+        startTime: bookingForm.startTime,
+        firstName: bookingForm.firstName.trim(),
+        lastName: bookingForm.lastName.trim(),
+        email: bookingForm.email?.trim() || null,
+        phone: bookingForm.phone?.trim() || null,
+        customerNotes: bookingForm.customerNotes?.trim() || null,
+        employeeId: selectedEmployeeId || null,
+      };
+
+      const booking = await createManualBooking(bookingData);
+      setCreatedBooking(booking);
+      setSuccess(true);
+      await loadBookings();
+
+      setTimeout(() => {
+        onManualBookingModalClose();
+        resetManualBookingForm();
+      }, 3000);
+    } catch (error: any) {
+      console.error("Error creating manual booking:", error);
+      setError(error.message || "Fehler beim Erstellen der Buchung");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Confirmed": return "success";
@@ -180,6 +344,12 @@ export default function AdminBookingsPage() {
     inputWrapper: "bg-white border border-[#E8C7C3]/40 hover:border-[#017172] data-[focus=true]:border-[#017172]",
     label: "text-[#8A8A8A]",
   };
+
+  const selectedService = services.find(s => s.id === bookingForm.serviceId);
+  const filteredServices = services.filter(s =>
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const MobileBookingCard = ({ booking }: { booking: BookingListItem }) => (
     <div className="bg-white border border-[#E8C7C3]/30 rounded-xl p-4 mb-3 shadow-sm hover:shadow-md transition-shadow">
@@ -225,16 +395,28 @@ export default function AdminBookingsPage() {
       <div className="max-w-7xl mx-auto">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E]">Buchungsverwaltung</h1>
-            {totalCount > 0 && (
-              <span className="bg-[#017172]/10 text-[#017172] text-sm font-semibold px-3 py-1 rounded-full">
-                {totalCount}
-              </span>
-            )}
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E]">Buchungsverwaltung</h1>
+              {totalCount > 0 && (
+                <span className="bg-[#017172]/10 text-[#017172] text-sm font-semibold px-3 py-1 rounded-full">
+                  {totalCount}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-[#8A8A8A]">Buchungen suchen, filtern und Status aktualisieren</p>
           </div>
-          <p className="text-sm text-[#8A8A8A]">Buchungen suchen, filtern und Status aktualisieren</p>
+          <Button
+            className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
+            startContent={<Plus size={18} />}
+            onPress={() => {
+              resetManualBookingForm();
+              onManualBookingModalOpen();
+            }}
+          >
+            Buchung erstellen
+          </Button>
         </div>
 
         {/* ── Desktop filter bar ─────────────────────────────────────────── */}
@@ -587,6 +769,325 @@ export default function AdminBookingsPage() {
                 >
                   Endgültig löschen
                 </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* ── Manual Booking Modal ───────────────────────────────────────────── */}
+      <Modal
+        isOpen={isManualBookingModalOpen}
+        onClose={() => { onManualBookingModalClose(); resetManualBookingForm(); }}
+        size="2xl"
+        scrollBehavior="inside"
+        classNames={manualBookingModalClassNames}
+      >
+        <ModalContent>
+          {(onModalClose) => (
+            <>
+              <ModalHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#017172] flex items-center justify-center">
+                    <Plus size={18} className="text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-[#1E1E1E]">Manuelle Buchung</h2>
+                    <p className="text-xs text-[#8A8A8A]">Termin manuell für einen Kunden anlegen</p>
+                  </div>
+                </div>
+              </ModalHeader>
+              <ModalBody>
+                {success && createdBooking ? (
+                  <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-5">
+                    <div className="flex gap-4">
+                      <div className="shrink-0">
+                        <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+                          <CheckCircle className="text-white" size={24} />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-emerald-800 mb-1">Buchung erfolgreich!</h3>
+                        <p className="text-sm text-emerald-600 font-mono mb-4">Nr: {createdBooking.bookingNumber}</p>
+
+                        <div className="bg-white rounded-xl border border-emerald-100 divide-y divide-emerald-50">
+                          <div className="p-4 flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Service</span>
+                            <span className="text-base font-semibold text-gray-800">{createdBooking.booking.serviceName}</span>
+                          </div>
+                          <div className="p-4 flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Datum</span>
+                            <span className="text-base font-medium text-gray-800">
+                              {new Date(createdBooking.booking.bookingDate).toLocaleDateString('de-DE', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                          <div className="p-4 flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Uhrzeit</span>
+                            <span className="text-base font-medium text-gray-800">
+                              {createdBooking.booking.startTime} – {createdBooking.booking.endTime} Uhr
+                            </span>
+                          </div>
+                          <div className="p-4 flex justify-between items-center">
+                            <span className="text-sm text-gray-500">Kunde</span>
+                            <span className="text-base font-medium text-gray-800">
+                              {createdBooking.customer.firstName} {createdBooking.customer.lastName}
+                            </span>
+                          </div>
+                          {createdBooking.employee && (
+                            <div className="p-4 flex justify-between items-center">
+                              <span className="text-sm text-gray-500">Fachkraft</span>
+                              <span className="text-base font-medium text-gray-800">{createdBooking.employee.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
+
+                    {/* Step 1: Employee */}
+                    <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                      <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">1. Fachkraft wählen</p>
+                      {loadingEmployees ? (
+                        <div className="flex items-center gap-2 p-3 bg-white rounded-lg">
+                          <Spinner size="sm" />
+                          <span className="text-sm text-[#8A8A8A]">Lade Mitarbeiter...</span>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {employees.map(emp => (
+                            <button
+                              key={emp.id}
+                              onClick={() => setSelectedEmployeeId(emp.id)}
+                              className={`text-left p-3 rounded-xl border-2 transition-all ${selectedEmployeeId === emp.id
+                                ? 'border-[#017172] bg-[#017172]/5'
+                                : 'border-[#E8C7C3]/30 bg-white hover:border-[#017172]/30'
+                                }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${selectedEmployeeId === emp.id
+                                  ? 'bg-[#017172] text-white'
+                                  : 'bg-[#E8C7C3]/20 text-[#017172]'
+                                  }`}>
+                                  {emp.name.charAt(0)}
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-[#1E1E1E] text-sm">{emp.name}</p>
+                                  <p className="text-[10px] text-[#8A8A8A]">{emp.role}</p>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Step 2: Service with integrated search */}
+                    <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                      <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">2. Service auswählen</p>
+
+                      <Popover placement="bottom" isOpen={isServicePopoverOpen} onOpenChange={setIsServicePopoverOpen}>
+                        <PopoverTrigger>
+                          <Button
+                            variant="flat"
+                            className="w-full justify-start bg-white border border-[#E8C7C3]/30 text-[#1E1E1E] h-12"
+                            endContent={<Search size={18} className="text-[#8A8A8A]" />}
+                          >
+                            {selectedService ? selectedService.name : "Service suchen oder auswählen..."}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[400px] p-0">
+                          <div className="w-full">
+                            <Input
+                              placeholder="Service suchen..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="border-b border-[#E8C7C3]/20"
+                              startContent={<Search size={18} className="text-[#8A8A8A]" />}
+                              classNames={{
+                                inputWrapper: "bg-transparent shadow-none",
+                                base: "p-3"
+                              }}
+                              autoFocus
+                            />
+                            <div className="max-h-[300px] overflow-y-auto">
+                              {filteredServices.length > 0 ? (
+                                filteredServices.map(service => (
+                                  <button
+                                    key={service.id}
+                                    className="w-full text-left p-3 hover:bg-[#F5EDEB] transition-colors border-b border-[#E8C7C3]/10 last:border-0"
+                                    onClick={() => {
+                                      setBookingForm({ ...bookingForm, serviceId: service.id });
+                                      setSearchTerm('');
+                                      setIsServicePopoverOpen(false);
+                                    }}
+                                  >
+                                    <div className="font-medium text-[#1E1E1E]">{service.name}</div>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-xs text-[#017172] font-semibold">
+                                        {service.price.toFixed(2)} CHF
+                                      </span>
+                                      <span className="text-xs text-[#8A8A8A]">
+                                        {service.durationMinutes} Min
+                                      </span>
+                                    </div>
+                                    {service.description && (
+                                      <div className="text-xs text-[#8A8A8A] mt-1 line-clamp-2">
+                                        {service.description}
+                                      </div>
+                                    )}
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="p-4 text-center text-[#8A8A8A]">
+                                  Keine Services gefunden
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    {/* Step 3: Date */}
+                    <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                      <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">3. Datum wählen</p>
+                      <Input
+                        type="date"
+                        value={bookingForm.bookingDate}
+                        min={moment().format('YYYY-MM-DD')}
+                        max={moment().add(60, 'days').format('YYYY-MM-DD')}
+                        onChange={(e) => setBookingForm({ ...bookingForm, bookingDate: e.target.value })}
+                        isDisabled={submitting}
+                        classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
+                      />
+                    </div>
+
+                    {/* Step 4: Time */}
+                    <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                      <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">4. Uhrzeit wählen</p>
+                      {loadingSlots ? (
+                        <div className="flex items-center gap-2 p-3 bg-white rounded-lg">
+                          <Spinner size="sm" />
+                          <span className="text-sm text-[#8A8A8A]">Lade verfügbare Zeiten...</span>
+                        </div>
+                      ) : availableSlots.length > 0 ? (
+                        <div className="grid grid-cols-4 gap-2">
+                          {availableSlots.map(slot => (
+                            <Button
+                              key={slot.startTime}
+                              size="sm"
+                              className={`${bookingForm.startTime === slot.startTime
+                                ? 'bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold'
+                                : 'bg-white border border-[#E8C7C3] text-[#1E1E1E] hover:border-[#017172]/40'
+                                }`}
+                              onPress={() => setBookingForm({ ...bookingForm, startTime: slot.startTime })}
+                              isDisabled={submitting}
+                            >
+                              {slot.startTime}
+                            </Button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-white rounded-lg text-center text-sm text-[#8A8A8A]">
+                          {bookingForm.serviceId ? "Keine verfügbaren Zeiten" : "Bitte zuerst Service und Datum wählen"}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Step 5: Customer */}
+                    <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                      <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">5. Kundendaten</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Input
+                          label="Vorname"
+                          placeholder="Max"
+                          value={bookingForm.firstName}
+                          onChange={(e) => setBookingForm({ ...bookingForm, firstName: e.target.value })}
+                          isRequired
+                          isDisabled={submitting}
+                          classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
+                        />
+                        <Input
+                          label="Nachname"
+                          placeholder="Mustermann"
+                          value={bookingForm.lastName}
+                          onChange={(e) => setBookingForm({ ...bookingForm, lastName: e.target.value })}
+                          isRequired
+                          isDisabled={submitting}
+                          classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
+                        />
+                        <Input
+                          label="E-Mail (optional)"
+                          type="email"
+                          value={bookingForm.email}
+                          onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })}
+                          isDisabled={submitting}
+                          classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
+                        />
+                        <Input
+                          label="Telefon (optional)"
+                          type="tel"
+                          value={bookingForm.phone}
+                          onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
+                          isDisabled={submitting}
+                          classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
+                        />
+                      </div>
+                      <div className="mt-3">
+                        <Textarea
+                          label="Notizen (optional)"
+                          value={bookingForm.customerNotes}
+                          onChange={(e) => setBookingForm({ ...bookingForm, customerNotes: e.target.value })}
+                          isDisabled={submitting}
+                          classNames={{ inputWrapper: "bg-white border border-[#E8C7C3]/30" }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Summary */}
+                    {selectedService && (
+                      <div className="bg-[#017172]/5 border border-[#017172]/20 p-3 rounded-xl flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-[#1E1E1E] text-sm">{selectedService.name}</p>
+                          <p className="text-xs text-[#8A8A8A]">
+                            {selectedService.durationMinutes} Min
+                            {employees.find(e => e.id === selectedEmployeeId)?.name
+                              ? ` · ${employees.find(e => e.id === selectedEmployeeId)!.name}`
+                              : ''}
+                          </p>
+                        </div>
+                        <p className="text-lg font-bold text-[#017172]">{selectedService.price.toFixed(2)} CHF</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <Button
+                  variant="flat"
+                  className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                  onPress={onModalClose}
+                  startContent={<X size={14} />}
+                  isDisabled={submitting}>
+                  {success ? "Schließen" : "Abbrechen"}
+                </Button>
+                {!success && !createdBooking && (
+                  <Button
+                    className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
+                    onPress={handleCreateManualBooking}
+                    isLoading={submitting}
+                    isDisabled={!bookingForm.serviceId || !bookingForm.bookingDate || !bookingForm.startTime || !bookingForm.firstName || !bookingForm.lastName}
+                    endContent={<ChevronRightIcon size={18} />}>
+                    Buchung erstellen
+                  </Button>
+                )}
               </ModalFooter>
             </>
           )}
