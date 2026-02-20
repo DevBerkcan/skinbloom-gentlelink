@@ -243,15 +243,6 @@ export default function AdminBookingsPage() {
   async function handleDeleteBooking() {
     if (!selectedBooking) return;
     
-    const confirmed = await confirm({
-      title: "Buchung löschen",
-      message: `Möchten Sie die Buchung ${selectedBooking.bookingNumber} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
-      confirmLabel: "Löschen",
-      variant: "danger",
-    });
-
-    if (!confirmed) return;
-
     setDeleting(true);
     try {
       await deleteBooking(selectedBooking.id, deleteReason || undefined);
