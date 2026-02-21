@@ -11,13 +11,13 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure
 import { Textarea } from "@nextui-org/input";
 import { Spinner } from "@nextui-org/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
-import { 
-  Search, ChevronLeft, ChevronRight, Edit, Filter, X, Calendar, CheckCircle, 
+import {
+  Search, ChevronLeft, ChevronRight, Edit, Filter, X, Calendar, CheckCircle,
   Trash2, AlertTriangle, Plus, Clock, User, Phone, Mail, Ban, Scissors, ChevronRight as ChevronRightIcon
 } from "lucide-react";
 import moment from "moment";
 
-import { 
+import {
   getBookings, updateBookingStatus, deleteBooking, getServices, createManualBooking,
   type BookingListItem, type BookingFilter, type Service, type CreateManualBookingDto,
   type ManualBookingResponse
@@ -43,7 +43,7 @@ const manualBookingModalClassNames = {
 export default function AdminBookingsPage() {
   const { employee, hasRole } = useAuth();
   const isAdmin = hasRole(['Admin', 'Owner']);
-  
+
   const [bookings, setBookings] = useState<BookingListItem[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -65,7 +65,7 @@ export default function AdminBookingsPage() {
   const { isOpen: isStatusModalOpen, onOpen: onStatusModalOpen, onClose: onStatusModalClose } = useDisclosure();
   const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
   const { isOpen: isManualBookingModalOpen, onOpen: onManualBookingModalOpen, onClose: onManualBookingModalClose } = useDisclosure();
-  
+
   const [selectedBooking, setSelectedBooking] = useState<BookingListItem | null>(null);
   const [newStatus, setNewStatus] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
@@ -125,11 +125,11 @@ export default function AdminBookingsPage() {
   }
 
   async function loadServices() {
-    try { 
-      const data = await getServices(); 
-      setServices(data); 
-    } catch (error) { 
-      console.error("Error loading services:", error); 
+    try {
+      const data = await getServices();
+      setServices(data);
+    } catch (error) {
+      console.error("Error loading services:", error);
     }
   }
 
@@ -150,30 +150,36 @@ export default function AdminBookingsPage() {
   }
 
   async function loadAvailableSlots() {
-    if (!bookingForm.serviceId || !bookingForm.bookingDate) return;
+    if (!bookingForm.serviceId || !bookingForm.bookingDate || !selectedEmployeeId) {
+      setAvailableSlots([]);
+      return;
+    }
+
     try {
       setLoadingSlots(true);
-      const data = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
+      // Pass employeeId to getAvailability
+      const data = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate, selectedEmployeeId);
       const available = data.availableSlots?.filter(slot => slot.isAvailable) || [];
       setAvailableSlots(available);
+
       if (bookingForm.startTime) {
         const isStillAvailable = available.some(slot => slot.startTime === bookingForm.startTime);
         if (!isStillAvailable) setBookingForm(prev => ({ ...prev, startTime: '' }));
       }
-    } catch { 
-      setAvailableSlots([]); 
-    } finally { 
-      setLoadingSlots(false); 
+    } catch {
+      setAvailableSlots([]);
+    } finally {
+      setLoadingSlots(false);
     }
   }
 
   useEffect(() => {
-    if (bookingForm.serviceId && bookingForm.bookingDate) {
+    if (bookingForm.serviceId && bookingForm.bookingDate && selectedEmployeeId) {
       loadAvailableSlots();
     } else {
       setAvailableSlots([]);
     }
-  }, [bookingForm.serviceId, bookingForm.bookingDate]);
+  }, [bookingForm.serviceId, bookingForm.bookingDate, selectedEmployeeId]);
 
   const commitSearch = useCallback(() => {
     setFilter(prev => ({ ...prev, searchTerm: searchInput.trim() || undefined, page: 1 }));
@@ -247,7 +253,7 @@ export default function AdminBookingsPage() {
 
   async function handleDeleteBooking() {
     if (!selectedBooking) return;
-    
+
     setDeleting(true);
     try {
       await deleteBooking(selectedBooking.id, deleteReason || undefined);

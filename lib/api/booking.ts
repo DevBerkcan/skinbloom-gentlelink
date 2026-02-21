@@ -139,15 +139,21 @@ export async function getServices(): Promise<Service[]> {
   return res.json();
 }
 
-// ── Availability ──────────────────────────────────────────────────────────────
+// lib/api/booking.ts - Update getAvailability
 
 export async function getAvailability(
   serviceId: string,
-  date: string
+  date: string,
+  employeeId?: string  // Add optional employeeId parameter
 ): Promise<AvailabilityResponse> {
-  const res = await fetch(
-    `${API_BASE_URL}/availability/${serviceId}?date=${date}`
-  );
+  let url = `${API_BASE_URL}/availability/${serviceId}?date=${date}`;
+  
+  // Add employeeId to query params if provided
+  if (employeeId) {
+    url += `&employeeId=${employeeId}`;
+  }
+  
+  const res = await fetch(url);
   if (!res.ok) throw new Error("Fehler beim Laden der Verfügbarkeit");
   return res.json();
 }

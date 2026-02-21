@@ -4,21 +4,23 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@nextui-org/button";
-import type { Service, TimeSlot } from "@/lib/api/booking";
+import type { Service, TimeSlot, Employee } from "@/lib/api/booking";
 
 interface DateTimePickerProps {
   service: Service;
+  selectedEmployee: Employee | null;  // Add this
   selectedDate: string | null;
   selectedTime: string | null;
   availableSlots: TimeSlot[];
   onDateSelect: (date: string) => void;
   onTimeSelect: (time: string) => void;
-  onLoadSlots: (date: string) => void;
+  onLoadSlots: (date: string, employeeId?: string) => void;  // Update this
   loading: boolean;
 }
 
 export function DateTimePicker({
   service,
+  selectedEmployee,  // Add this
   selectedDate,
   selectedTime,
   availableSlots,
@@ -77,6 +79,15 @@ export function DateTimePicker({
     return date < today;
   };
 
+  // Show message if no employee selected
+  if (!selectedEmployee) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-[#8A8A8A]">Bitte wählen Sie zuerst eine Fachkraft aus.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -84,7 +95,7 @@ export function DateTimePicker({
           Wähle Datum & Uhrzeit
         </h2>
         <p className="text-[#8A8A8A]">
-          Schritt 2 von 3 • {service.name}
+          Schritt 3 von 4 • {service.name} • {selectedEmployee.name}
         </p>
       </div>
 
@@ -136,7 +147,7 @@ export function DateTimePicker({
               onClick={() => {
                 if (!isDisabled) {
                   onDateSelect(dateStr);
-                  onLoadSlots(dateStr);
+                  onLoadSlots(dateStr, selectedEmployee.id);  // Pass employee ID
                 }
               }}
               disabled={isDisabled}
@@ -168,7 +179,7 @@ export function DateTimePicker({
       {selectedDate && (
         <div className="space-y-4">
           <h3 className="font-semibold text-[#1E1E1E]">
-            Verfügbare Zeiten am {new Date(selectedDate + 'T00:00:00').toLocaleDateString('de-DE', {
+            Verfügbare Zeiten für {selectedEmployee.name} am {new Date(selectedDate + 'T00:00:00').toLocaleDateString('de-DE', {
               weekday: 'long',
               day: '2-digit',
               month: 'long'
@@ -181,7 +192,7 @@ export function DateTimePicker({
             </div>
           ) : availableSlots.length === 0 ? (
             <div className="text-center py-8 text-[#8A8A8A]">
-              Keine verfügbaren Termine an diesem Tag
+              Keine verfügbaren Termine an diesem Tag für {selectedEmployee.name}
             </div>
           ) : (
             <div className="grid grid-cols-4 md:grid-cols-6 gap-2">

@@ -21,7 +21,7 @@ import { Switch } from "@nextui-org/switch";
 import { CalendarRange, X } from "lucide-react";
 
 import { adminApi, BookingListItem, Service, CreateManualBookingDto, ManualBookingResponse } from "@/lib/api/admin";
-import { bookingApi, TimeSlot, Employee } from "@/lib/api/booking";
+import { bookingApi, TimeSlot, Employee, getAvailability } from "@/lib/api/booking";
 import { blockedTimeSlotsApi, BlockedTimeSlot, CreateBlockedTimeSlotDto, CreateBlockedDateRangeDto } from "@/lib/api/blockedTimeSlots";
 import { useAuth } from "@/lib/contexts/AuthContext";
 
@@ -136,12 +136,12 @@ export default function AdminCalendarPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    if (bookingForm.serviceId && bookingForm.bookingDate) {
+    if (bookingForm.serviceId && bookingForm.bookingDate && selectedEmployeeId) {
       loadAvailableSlots();
     } else {
       setAvailableSlots([]);
     }
-  }, [bookingForm.serviceId, bookingForm.bookingDate]);
+  }, [bookingForm.serviceId, bookingForm.bookingDate, selectedEmployeeId]);
 
   const loadEvents = useCallback(async () => {
     try {
@@ -150,9 +150,9 @@ export default function AdminCalendarPage() {
       const endOfMonth = moment(date).endOf('month').format('YYYY-MM-DD');
 
       // Load bookings (admin sees all)
-      const bookingsResponse = await adminApi.getBookings({ 
-        fromDate: startOfMonth, 
-        toDate: endOfMonth, 
+      const bookingsResponse = await adminApi.getBookings({
+        fromDate: startOfMonth,
+        toDate: endOfMonth,
         pageSize: 100
       });
 
@@ -161,7 +161,7 @@ export default function AdminCalendarPage() {
       startDate.setMonth(startDate.getMonth() - 1);
       const endDate = new Date(date);
       endDate.setMonth(endDate.getMonth() + 1);
-      
+
       const blockedSlots = await blockedTimeSlotsApi.getAll(startDate, endDate, isAdmin);
 
       const bookingEvents: BookingEvent[] = bookingsResponse.items.map((booking: BookingListItem) => ({
@@ -203,14 +203,20 @@ export default function AdminCalendarPage() {
   }
 
   async function loadAvailableSlots() {
-    if (!bookingForm.serviceId || !bookingForm.bookingDate) return;
+    if (!bookingForm.serviceId || !bookingForm.bookingDate || !selectedEmployeeId) {
+      setAvailableSlots([]);
+      return;
+    }
+
     try {
       setLoadingSlots(true);
-      const data = await bookingApi.getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
-      const available = data.availableSlots?.filter((slot: { isAvailable: any; }) => slot.isAvailable) || [];
+      // Pass employeeId to getAvailability
+      const data = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate, selectedEmployeeId);
+      const available = data.availableSlots?.filter(slot => slot.isAvailable) || [];
       setAvailableSlots(available);
+
       if (bookingForm.startTime) {
-        const isStillAvailable = available.some((slot: { startTime: string; }) => slot.startTime === bookingForm.startTime);
+        const isStillAvailable = available.some(slot => slot.startTime === bookingForm.startTime);
         if (!isStillAvailable) setBookingForm(prev => ({ ...prev, startTime: '' }));
       }
     } catch {
@@ -266,7 +272,7 @@ export default function AdminCalendarPage() {
 
       const availabilityCheck = await bookingApi.getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
       const isSlotAvailable = availabilityCheck.availableSlots?.some(
-        (        slot: { startTime: string; isAvailable: any; }) => slot.startTime === bookingForm.startTime && slot.isAvailable
+        (slot: { startTime: string; isAvailable: any; }) => slot.startTime === bookingForm.startTime && slot.isAvailable
       );
       if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
 
