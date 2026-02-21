@@ -72,7 +72,10 @@ export default function AdminBookingsPage() {
   const [updating, setUpdating] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
 
-  // Manual booking states
+  // Add new state for booking details
+  const [selectedBookingDetails, setSelectedBookingDetails] = useState<BookingListItem | null>(null);
+  const { isOpen: isBookingDetailsModalOpen, onOpen: onBookingDetailsModalOpen, onClose: onBookingDetailsModalClose } = useDisclosure();
+  const [isEditMode, setIsEditMode] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
@@ -111,6 +114,19 @@ export default function AdminBookingsPage() {
   useEffect(() => {
     loadBookings();
   }, [filter]);
+
+  function openBookingDetails(booking: BookingListItem) {
+    setSelectedBookingDetails(booking);
+    setIsEditMode(false);
+    onBookingDetailsModalOpen();
+  }
+
+  function openBookingEdit(booking: BookingListItem) {
+    setSelectedBookingDetails(booking);
+    setIsEditMode(true);
+    // Pre-fill form data if needed
+    onBookingDetailsModalOpen();
+  }
 
   async function loadEmployees() {
     try {
@@ -487,6 +503,149 @@ export default function AdminBookingsPage() {
           </CardBody>
         </Card>
 
+        {/* Booking Details Modal */}
+        <Modal
+          isOpen={isBookingDetailsModalOpen}
+          onClose={onBookingDetailsModalClose}
+          size="2xl"
+          scrollBehavior="inside"
+          classNames={modalClassNames}
+        >
+          <ModalContent>
+            {(onModalClose) => (
+              <>
+                <ModalHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#017172] flex items-center justify-center">
+                      <Calendar size={18} className="text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-[#1E1E1E]">
+                        {isEditMode ? "Buchung bearbeiten" : "Buchungsdetails"}
+                      </h2>
+                      {selectedBookingDetails && (
+                        <p className="text-xs text-[#8A8A8A]">
+                          {selectedBookingDetails.bookingNumber}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </ModalHeader>
+
+                <ModalBody>
+                  {selectedBookingDetails && (
+                    <div className="space-y-4">
+                      {/* Service Info */}
+                      <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                        <h3 className="font-semibold text-[#1E1E1E] text-sm mb-3">Service</h3>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-medium text-[#1E1E1E]">{selectedBookingDetails.serviceName}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Clock size={13} className="text-[#017172]" />
+                              <p className="text-xs text-[#8A8A8A]">
+                                {selectedBookingDetails.startTime} – {selectedBookingDetails.endTime}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="text-xl font-bold text-[#017172]">
+                            {selectedBookingDetails.price.toFixed(2)} CHF
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Customer Info */}
+                      <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                        <h3 className="font-semibold text-[#1E1E1E] text-sm mb-3">Kunde</h3>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-9 h-9 rounded-full bg-[#017172] flex items-center justify-center text-white font-bold text-sm">
+                            {selectedBookingDetails.customerName.charAt(0)}
+                          </div>
+                          <p className="font-medium text-[#1E1E1E]">{selectedBookingDetails.customerName}</p>
+                        </div>
+                        <div className="space-y-2">
+                          {selectedBookingDetails.customerEmail && (
+                            <div className="flex items-center gap-2">
+                              <Mail size={14} className="text-[#017172]" />
+                              <a href={`mailto:${selectedBookingDetails.customerEmail}`}
+                                className="text-sm text-[#1E1E1E] hover:text-[#017172] break-all">
+                                {selectedBookingDetails.customerEmail}
+                              </a>
+                            </div>
+                          )}
+                          {selectedBookingDetails.customerPhone && (
+                            <div className="flex items-center gap-2">
+                              <Phone size={14} className="text-[#017172]" />
+                              <a href={`tel:${selectedBookingDetails.customerPhone}`}
+                                className="text-sm text-[#1E1E1E] hover:text-[#017172]">
+                                {selectedBookingDetails.customerPhone}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Status */}
+                      <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                        <h3 className="font-semibold text-[#1E1E1E] text-sm mb-3">Status</h3>
+                        <Chip color={getStatusColor(selectedBookingDetails.status)} size="md" variant="flat">
+                          {getStatusLabel(selectedBookingDetails.status)}
+                        </Chip>
+                      </div>
+
+                      {/* Notes */}
+                      {selectedBookingDetails.customerNotes && (
+                        <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                          <h3 className="font-semibold text-[#1E1E1E] text-sm mb-2">Notizen</h3>
+                          <p className="text-sm text-[#1E1E1E] italic">"{selectedBookingDetails.customerNotes}"</p>
+                        </div>
+                      )}
+
+                      {/* Timestamps */}
+                      <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+                        <h3 className="font-semibold text-[#1E1E1E] text-sm mb-3">Zeitstempel</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-white p-3 rounded-lg">
+                            <p className="text-xs text-[#8A8A8A]">Erstellt am</p>
+                            <p className="text-sm font-semibold text-[#1E1E1E]">
+                              {moment(selectedBookingDetails.createdAt).format("DD.MM.YYYY HH:mm")}
+                            </p>
+                          </div>
+                          <div className="bg-white p-3 rounded-lg">
+                            <p className="text-xs text-[#8A8A8A]">Datum</p>
+                            <p className="text-sm font-semibold text-[#1E1E1E]">
+                              {moment(selectedBookingDetails.bookingDate).format("DD.MM.YYYY")}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </ModalBody>
+
+                <ModalFooter>
+                  <Button
+                    variant="flat"
+                    className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                    onPress={onModalClose}
+                  >
+                    Schließen
+                  </Button>
+                  {!isEditMode && (
+                    <Button
+                      className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
+                      onPress={() => openStatusModal(selectedBookingDetails!)}
+                    >
+                      <Edit size={14} className="mr-2" />
+                      Status ändern
+                    </Button>
+                  )}
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
+
         {/* ── Mobile filters ─────────────────────────────────────────────── */}
         <div className="md:hidden mb-4 space-y-3">
           <div className="flex gap-2">
@@ -562,6 +721,7 @@ export default function AdminBookingsPage() {
                     <tbody className="divide-y divide-[#E8C7C3]/10">
                       {bookings.map((booking, index) => (
                         <tr key={booking.id}
+                          onClick={() => openBookingDetails(booking)}
                           className={`hover:bg-[#F5EDEB]/60 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-[#F5EDEB]/20"}`}>
                           <td className="px-5 py-4">
                             <div className="font-mono text-xs text-[#8A8A8A]">{booking.bookingNumber}</div>
@@ -591,7 +751,7 @@ export default function AdminBookingsPage() {
                             <div className="font-bold text-[#017172] text-sm">{booking.price.toFixed(2)} CHF</div>
                           </td>
                           <td className="px-5 py-4">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                               <Button size="sm"
                                 className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-sm"
                                 startContent={<Edit size={13} />}
