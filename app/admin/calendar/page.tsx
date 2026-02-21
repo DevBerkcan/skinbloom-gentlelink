@@ -12,7 +12,7 @@ import { Spinner } from "@nextui-org/spinner";
 import { Select, SelectItem } from "@nextui-org/select";
 import { Input, Textarea } from "@nextui-org/input";
 import {
-  Calendar as CalendarIcon, Clock, User, Phone, Mail, Plus, AlertCircle,
+  Calendar as CalendarIconLucide, Clock, User, Phone, Mail, Plus, AlertCircle,
   CheckCircle, XCircle, Ban, Scissors, MessageCircle, Hash, CreditCard,
   CalendarDays, ChevronRight, Search
 } from "lucide-react";
@@ -838,54 +838,86 @@ export default function AdminCalendarPage() {
                 </ModalHeader>
                 <ModalBody>
                   {success && createdBooking ? (
-                    <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-5">
-                      <div className="flex gap-4">
-                        <div className="shrink-0">
-                          <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center shadow-md">
-                            <CheckCircle className="text-white" size={24} />
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-emerald-800 mb-1">Buchung erfolgreich!</h3>
-                          <p className="text-sm text-emerald-600 font-mono mb-4">Nr: {createdBooking.bookingNumber}</p>
+<div className="bg-[#F5EDEB] rounded-xl border-2 border-[#E8C7C3]/30 shadow-lg overflow-hidden">
+  <div className="p-5 border-b-2 border-[#E8C7C3]/20">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 rounded-full bg-[#017172] flex items-center justify-center">
+        <CheckCircle size={20} className="text-white" />
+      </div>
+      <div>
+        <h3 className="text-lg font-bold text-[#1E1E1E]">Buchung erfolgreich!</h3>
+        <p className="text-xs text-[#8A8A8A] font-mono">Nr: {createdBooking.bookingNumber}</p>
+      </div>
+    </div>
+  </div>
 
-                          <div className="bg-white rounded-xl border border-emerald-100 divide-y divide-emerald-50">
-                            <div className="p-4 flex justify-between items-center">
-                              <span className="text-sm text-gray-500">Service</span>
-                              <span className="text-base font-semibold text-gray-800">{createdBooking.booking.serviceName}</span>
-                            </div>
-                            <div className="p-4 flex justify-between items-center">
-                              <span className="text-sm text-gray-500">Datum</span>
-                              <span className="text-base font-medium text-gray-800">
-                                {new Date(createdBooking.booking.bookingDate).toLocaleDateString('de-DE', {
-                                  day: '2-digit',
-                                  month: 'long',
-                                  year: 'numeric'
-                                })}
-                              </span>
-                            </div>
-                            <div className="p-4 flex justify-between items-center">
-                              <span className="text-sm text-gray-500">Uhrzeit</span>
-                              <span className="text-base font-medium text-gray-800">
-                                {createdBooking.booking.startTime} – {createdBooking.booking.endTime} Uhr
-                              </span>
-                            </div>
-                            <div className="p-4 flex justify-between items-center">
-                              <span className="text-sm text-gray-500">Kunde</span>
-                              <span className="text-base font-medium text-gray-800">
-                                {createdBooking.customer.firstName} {createdBooking.customer.lastName}
-                              </span>
-                            </div>
-                            {createdBooking.employee && (
-                              <div className="p-4 flex justify-between items-center">
-                                <span className="text-sm text-gray-500">Fachkraft</span>
-                                <span className="text-base font-medium text-gray-800">{createdBooking.employee.name}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+  <div className="p-5 border-b-2 border-[#E8C7C3]/20">
+    <div className="flex items-center gap-2 mb-3">
+      <div className="w-7 h-7 rounded-lg bg-[#017172]/10 flex items-center justify-center">
+        <Scissors size={16} className="text-[#017172]" />
+      </div>
+      <span className="font-semibold text-[#1E1E1E] text-sm uppercase tracking-wide">Service</span>
+    </div>
+    <div className="flex items-center justify-between">
+      <p className="font-medium text-[#1E1E1E] text-base">{createdBooking.booking.serviceName}</p>
+      <p className="text-xl font-bold text-[#017172]">{createdBooking.booking.price.toFixed(2)} CHF</p>
+    </div>
+  </div>
+
+  <div className="p-5 border-b-2 border-[#E8C7C3]/20">
+    <div className="flex items-center gap-2 mb-3">
+      <div className="w-7 h-7 rounded-lg bg-[#017172]/10 flex items-center justify-center">
+        <CalendarIconLucide size={16} className="text-[#017172]" />
+      </div>
+      <span className="font-semibold text-[#1E1E1E] text-sm uppercase tracking-wide">Datum & Zeit</span>
+    </div>
+    <div className="space-y-2">
+      <p className="text-[#1E1E1E] font-medium">
+        {new Date(createdBooking.booking.bookingDate).toLocaleDateString('de-DE', {
+          weekday: 'long',
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric'
+        })}
+      </p>
+      <div className="flex items-center gap-2">
+        <Clock size={16} className="text-[#8A8A8A]" />
+        <p className="text-[#1E1E1E]">
+          {createdBooking.booking.startTime} – {createdBooking.booking.endTime} Uhr
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div className="p-5 border-b-2 border-[#E8C7C3]/20">
+    <div className="flex items-center gap-2 mb-3">
+      <div className="w-7 h-7 rounded-lg bg-[#017172]/10 flex items-center justify-center">
+        <User size={16} className="text-[#017172]" />
+      </div>
+      <span className="font-semibold text-[#1E1E1E] text-sm uppercase tracking-wide">Kunde</span>
+    </div>
+    <p className="text-[#1E1E1E] font-medium text-base">
+      {createdBooking.customer.firstName} {createdBooking.customer.lastName}
+    </p>
+  </div>
+
+  {createdBooking.employee && (
+    <div className="p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 rounded-lg bg-[#017172]/10 flex items-center justify-center">
+          <User size={16} className="text-[#017172]" />
+        </div>
+        <span className="font-semibold text-[#1E1E1E] text-sm uppercase tracking-wide">Fachkraft</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-[#017172] flex items-center justify-center text-white font-bold text-sm">
+          {createdBooking.employee.name.charAt(0)}
+        </div>
+        <p className="text-[#1E1E1E] font-medium">{createdBooking.employee.name}</p>
+      </div>
+    </div>
+  )}
+</div>
                   ) : (
                     <div className="space-y-4">
                       {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
