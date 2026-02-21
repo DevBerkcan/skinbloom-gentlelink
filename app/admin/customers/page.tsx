@@ -804,138 +804,124 @@ export default function CustomersPage() {
         </ModalContent>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          onDeleteModalClose();
-          setDeleteReason("");
-        }}
-        size="lg"
-        placement="center"
-        classNames={modalClassNames}
-      >
-        <ModalContent>
-          {(onModalClose) => (
-            <>
-              <ModalHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center">
-                    <AlertTriangle size={20} className="text-white" />
+     {/* Delete Confirmation Modal */}
+<Modal
+  isOpen={isDeleteModalOpen}
+  onClose={() => {
+    onDeleteModalClose();
+    setDeleteReason("");
+  }}
+  size="lg"
+  placement="center"
+  classNames={modalClassNames}
+>
+  <ModalContent>
+    {(onModalClose) => (
+      <>
+        <ModalHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center">
+              <AlertTriangle size={20} className="text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-[#1E1E1E]">Kunde löschen</h2>
+              <p className="text-xs text-[#8A8A8A]">
+                {selectedCustomer?.fullName}
+              </p>
+            </div>
+          </div>
+        </ModalHeader>
+
+        <ModalBody>
+          {selectedCustomer && (
+            <div className="space-y-4">
+              {/* Warning Message */}
+              <div className="bg-red-50 p-4 rounded-xl border border-red-200">
+                <p className="text-sm text-red-700 flex items-start gap-2">
+                  <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Achtung:</strong> Das Löschen eines Kunden ist endgültig und kann nicht rückgängig gemacht werden.
+                  </span>
+                </p>
+              </div>
+
+              {/* Customer Info */}
+              <div className="bg-[#F5EDEB] p-4 rounded-xl border border-[#E8C7C3]/30">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-[#017172] flex items-center justify-center text-white font-bold shrink-0">
+                    {selectedCustomer.fullName.charAt(0)}
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-[#1E1E1E]">Kunde löschen</h2>
-                    <p className="text-xs text-[#8A8A8A]">
-                      {selectedCustomer?.fullName}
+                    <p className="font-semibold text-[#1E1E1E]">{selectedCustomer.fullName}</p>
+                    <p className="text-xs text-[#8A8A8A]">Kunde seit {moment(selectedCustomer.createdAt).format("DD.MM.YYYY")}</p>
+                  </div>
+                </div>
+
+                {/* Booking Stats */}
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <div className="bg-white p-3 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays size={14} className="text-[#017172] shrink-0" />
+                      <span className="text-xs text-[#8A8A8A]">Buchungen</span>
+                    </div>
+                    <p className="text-xl font-bold text-[#1E1E1E]">{selectedCustomer.totalBookings}</p>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Clock size={14} className="text-[#017172] shrink-0" />
+                      <span className="text-xs text-[#8A8A8A]">Letzter Besuch</span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#1E1E1E]">
+                      {selectedCustomer.lastVisit
+                        ? moment(selectedCustomer.lastVisit).format("DD.MM.YYYY")
+                        : "—"}
                     </p>
                   </div>
                 </div>
-              </ModalHeader>
+              </div>
 
-              <ModalBody>
-                {selectedCustomer && (
-                  <div className="space-y-4">
-                    {/* Warning Message */}
-                    <div className="bg-red-50 p-4 rounded-xl border border-red-200">
-                      <p className="text-sm text-red-700 flex items-start gap-2">
-                        <AlertTriangle size={16} className="shrink-0 mt-0.5" />
-                        <span>
-                          <strong>Achtung:</strong> Das Löschen eines Kunden ist endgültig und kann nicht rückgängig gemacht werden.
-                        </span>
-                      </p>
-                    </div>
-
-                    {/* Customer Info */}
-                    <div className="bg-[#F5EDEB] p-4 rounded-xl border border-[#E8C7C3]/30">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-[#017172] flex items-center justify-center text-white font-bold shrink-0">
-                          {selectedCustomer.fullName.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-[#1E1E1E]">{selectedCustomer.fullName}</p>
-                          <p className="text-xs text-[#8A8A8A]">Kunde seit {moment(selectedCustomer.createdAt).format("DD.MM.YYYY")}</p>
-                        </div>
-                      </div>
-
-                      {/* Booking Stats */}
-                      <div className="grid grid-cols-2 gap-2 mt-3">
-                        <div className="bg-white p-3 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <CalendarDays size={14} className="text-[#017172] shrink-0" />
-                            <span className="text-xs text-[#8A8A8A]">Buchungen</span>
-                          </div>
-                          <p className="text-xl font-bold text-[#1E1E1E]">{selectedCustomer.totalBookings}</p>
-                        </div>
-                        <div className="bg-white p-3 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <Clock size={14} className="text-[#017172] shrink-0" />
-                            <span className="text-xs text-[#8A8A8A]">Letzter Besuch</span>
-                          </div>
-                          <p className="text-sm font-semibold text-[#1E1E1E]">
-                            {selectedCustomer.lastVisit
-                              ? moment(selectedCustomer.lastVisit).format("DD.MM.YYYY")
-                              : "—"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Impact Warning */}
-                    {selectedCustomer.totalBookings > 0 && (
-                      <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
-                        <p className="text-sm text-amber-700 flex items-start gap-2">
-                          <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                          <span>
-                            <strong>Auswirkung:</strong> Dieser Kunde hat <strong>{selectedCustomer.totalBookings} Buchungen</strong>.
-                            Beim Löschen des Kunden werden auch alle zugehörigen Buchungen unwiderruflich gelöscht.
-                          </span>
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Confirmation Input */}
-                    <div className="space-y-2">
-                      <p className="text-sm text-[#1E1E1E] font-medium">
-                        Geben Sie <span className="font-mono bg-[#F5EDEB] px-2 py-1 rounded">LÖSCHEN</span> ein, um fortzufahren:
-                      </p>
-                      <Input
-                        placeholder="LÖSCHEN"
-                        value={deleteReason}
-                        onChange={(e) => setDeleteReason(e.target.value)}
-                        classNames={inputClassNames}
-                      />
-                    </div>
-                  </div>
-                )}
-              </ModalBody>
-
-              <ModalFooter>
-                <Button
-                  variant="flat"
-                  className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
-                  onPress={() => {
-                    onModalClose();
-                    setDeleteReason("");
-                  }}
-                  isDisabled={deleting}
-                  startContent={<X size={14} />}
-                >
-                  Abbrechen
-                </Button>
-                <Button
-                  className="bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold shadow-lg shadow-red-500/20"
-                  onPress={handleDeleteCustomer}
-                  isLoading={deleting}
-                  isDisabled={deleteReason !== "LÖSCHEN"}
-                  startContent={!deleting && <Trash2 size={14} />}
-                >
-                  Endgültig löschen
-                </Button>
-              </ModalFooter>
-            </>
+              {/* Impact Warning */}
+              {selectedCustomer.totalBookings > 0 && (
+                <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                  <p className="text-sm text-amber-700 flex items-start gap-2">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                    <span>
+                      <strong>Auswirkung:</strong> Dieser Kunde hat <strong>{selectedCustomer.totalBookings} Buchungen</strong>.
+                      Beim Löschen des Kunden werden auch alle zugehörigen Buchungen unwiderruflich gelöscht.
+                    </span>
+                  </p>
+                </div>
+              )}
+            </div>
           )}
-        </ModalContent>
-      </Modal>
+        </ModalBody>
+
+        <ModalFooter>
+          <Button
+            variant="flat"
+            className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+            onPress={() => {
+              onModalClose();
+              setDeleteReason("");
+            }}
+            isDisabled={deleting}
+            startContent={<X size={14} />}
+          >
+            Abbrechen
+          </Button>
+          <Button
+            className="bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold shadow-lg shadow-red-500/20"
+            onPress={handleDeleteCustomer}
+            isLoading={deleting}
+            startContent={!deleting && <Trash2 size={14} />}
+          >
+            Endgültig löschen
+          </Button>
+        </ModalFooter>
+      </>
+    )}
+  </ModalContent>
+</Modal>
 
       {confirmDialog}
     </div>

@@ -51,17 +51,17 @@ const navItems = [
   return (
     <nav className="bg-[#1E1E1E] text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-24">
 
-          {/* Logo */}
-          <Link href="/admin/dashboard" className="flex items-center gap-3 shrink-0">
-            <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16">
+          {/* Logo - Moved left and made much bigger */}
+          <Link href="/admin/dashboard" className="flex items-center -ml-4 sm:-ml-6 shrink-0">
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28">
               <Image
                 src="/icon.png"
                 alt="Skinbloom"
                 fill
-                sizes="(max-width: 640px) 48px, (max-width: 768px) 56px, 64px"
-                className="rounded-lg object-contain brightness-0 invert"
+                sizes="(max-width: 640px) 80px, (max-width: 768px) 96px, 112px"
+                className="rounded-xl object-contain brightness-0 invert"
                 priority
               />
             </div>
