@@ -1,20 +1,5 @@
 // lib/api/admin.ts
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://localhost:7020/api";
-
-const ADMIN_SECRET =
-  process.env.NEXT_PUBLIC_ADMIN_SECRET || "skinbloom-admin-bootstrap-2026";
-
-// ── Auth helpers ──────────────────────────────────────────────────────────────
-
-function authHeaders(extra?: Record<string, string>): HeadersInit {
-  return { "Content-Type": "application/json", ...extra };
-}
-
-/** Use for endpoints that require the X-Admin-Secret header (cross-employee views etc.) */
-function adminHeaders(): HeadersInit {
-  return authHeaders({ "X-Admin-Secret": ADMIN_SECRET });
-}
+import api from './client';
 
 export const adminApi = {
   getDashboard,
@@ -113,6 +98,7 @@ export interface BookingFilter {
   searchTerm?: string;
   page?: number;
   pageSize?: number;
+  all?: boolean;
 }
 
 export interface UpdateBookingStatus {
@@ -238,22 +224,20 @@ export interface RevenueStatistics {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
-export async function getDashboard(): Promise<DashboardOverview> {
-  const res = await fetch(`${API_BASE_URL}/admin/dashboard`, {
-    credentials: "include",
-    headers: adminHeaders(),
-  });
-  if (!res.ok) throw new Error("Fehler beim Laden des Dashboards");
-  return res.json();
+export async function getDashboard(all: boolean = false): Promise<DashboardOverview> {
+  const params = new URLSearchParams();
+  if (all) params.append("all", "true");
+  
+  const response = await api.get(`/admin/dashboard${params.toString() ? `?${params}` : ''}`);
+  return response.data;
 }
 
-export async function getStatistics(): Promise<DashboardStatistics> {
-  const res = await fetch(`${API_BASE_URL}/admin/statistics`, {
-    credentials: "include",
-    headers: adminHeaders(),
-  });
-  if (!res.ok) throw new Error("Fehler beim Laden der Statistiken");
-  return res.json();
+export async function getStatistics(all: boolean = false): Promise<DashboardStatistics> {
+  const params = new URLSearchParams();
+  if (all) params.append("all", "true");
+  
+  const response = await api.get(`/admin/statistics${params.toString() ? `?${params}` : ''}`);
+  return response.data;
 }
 
 // ── Bookings ──────────────────────────────────────────────────────────────────
@@ -269,52 +253,28 @@ export async function getBookings(
   if (filter.searchTerm) params.append("searchTerm", filter.searchTerm);
   if (filter.page) params.append("page", filter.page.toString());
   if (filter.pageSize) params.append("pageSize", filter.pageSize.toString());
-  // ?all=true so the admin sees all employees' bookings
-  params.append("all", "true");
+  if (filter.all) params.append("all", "true");
 
-  const res = await fetch(`${API_BASE_URL}/admin/bookings?${params}`, {
-    credentials: "include",
-    headers: adminHeaders(),
-  });
-  if (!res.ok) throw new Error("Fehler beim Laden der Buchungen");
-  return res.json();
+  const response = await api.get(`/admin/bookings?${params}`);
+  return response.data;
 }
 
 export async function updateBookingStatus(
   bookingId: string,
   data: UpdateBookingStatus
 ): Promise<BookingListItem> {
-  const res = await fetch(
-    `${API_BASE_URL}/admin/bookings/${bookingId}/status`,
-    {
-      method: "PATCH",
-      credentials: "include",
-      headers: adminHeaders(),
-      body: JSON.stringify(data),
-    }
-  );
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message || "Fehler beim Aktualisieren des Status");
-  }
-  return res.json();
+  const response = await api.patch(`/admin/bookings/${bookingId}/status`, data);
+  return response.data;
 }
 
 export async function deleteBooking(
   bookingId: string,
   reason?: string
 ): Promise<{ success: boolean; message: string }> {
-  const res = await fetch(`${API_BASE_URL}/admin/bookings/${bookingId}`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: adminHeaders(),
-    body: JSON.stringify({ reason: reason || "Manuell gelöscht" }),
+  const response = await api.delete(`/admin/bookings/${bookingId}`, {
+    data: { reason: reason || "Manuell gelöscht" }
   });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message || "Fehler beim Löschen der Buchung");
-  }
-  return res.json();
+  return response.data;
 }
 
 // ── Manual booking ────────────────────────────────────────────────────────────
@@ -322,166 +282,96 @@ export async function deleteBooking(
 export async function createManualBooking(
   data: CreateManualBookingDto
 ): Promise<ManualBookingResponse> {
-  const res = await fetch(`${API_BASE_URL}/admin/manual/booking`, {
-    method: "POST",
-    credentials: "include",
-    headers: adminHeaders(),
-    body: JSON.stringify({
-      ...data,
-      email: data.email?.trim() || null,
-      phone: data.phone?.trim() || null,
-      customerNotes: data.customerNotes?.trim() || null,
-    }),
+  const response = await api.post('/admin/manual/booking', {
+    ...data,
+    email: data.email?.trim() || null,
+    phone: data.phone?.trim() || null,
+    customerNotes: data.customerNotes?.trim() || null,
   });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message || "Fehler beim Erstellen der Buchung");
-  }
-  return res.json();
+  return response.data;
 }
 
 // ── Services & Availability ───────────────────────────────────────────────────
 
 export async function getServices(): Promise<Service[]> {
-  const res = await fetch(`${API_BASE_URL}/services`);
-  if (!res.ok) throw new Error("Fehler beim Laden der Services");
-  return res.json();
+  const response = await api.get('/services');
+  return response.data;
 }
 
 export async function getAvailability(
   serviceId: string,
   date: string
 ): Promise<AvailabilityResponse> {
-  const res = await fetch(
-    `${API_BASE_URL}/availability/${serviceId}?date=${date}`
-  );
-  if (!res.ok) throw new Error("Fehler beim Laden der Verfügbarkeit");
-  return res.json();
+  const response = await api.get(`/availability/${serviceId}?date=${date}`);
+  return response.data;
 }
 
 // ── Blocked time slots ────────────────────────────────────────────────────────
 
-/**
- * Fetch blocked slots.
- * JWT cookie is sent automatically. X-Admin-Secret + ?all=true so admin
- * sees slots from ALL employees, not just the authenticated one.
- */
 export async function getBlockedSlots(
   fromDate?: string,
-  toDate?: string
+  toDate?: string,
+  all: boolean = false
 ): Promise<BlockedTimeSlot[]> {
   const params = new URLSearchParams();
   if (fromDate) params.append("startDate", fromDate);
   if (toDate) params.append("endDate", toDate);
-  params.append("all", "true");
+  if (all) params.append("all", "true");
 
-  const res = await fetch(
-    `${API_BASE_URL}/BlockedTimeSlots?${params}`,
-    {
-      credentials: "include",
-      headers: adminHeaders(),
-    }
-  );
-  if (!res.ok) throw new Error("Fehler beim Laden der blockierten Zeitslots");
-  return res.json();
+  const response = await api.get(`/BlockedTimeSlots?${params}`);
+  return response.data;
 }
 
 export async function createBlockedSlot(
   data: CreateBlockedSlot
 ): Promise<BlockedTimeSlot> {
-  const res = await fetch(`${API_BASE_URL}/BlockedTimeSlots`, {
-    method: "POST",
-    credentials: "include",
-    headers: authHeaders(),
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(
-      error.message || "Fehler beim Erstellen des blockierten Zeitslots"
-    );
-  }
-  return res.json();
+  const response = await api.post('/BlockedTimeSlots', data);
+  return response.data;
 }
 
 export async function createBlockedDateRange(
   data: CreateBlockedDateRange
 ): Promise<BlockedTimeSlot[]> {
-  const res = await fetch(`${API_BASE_URL}/BlockedTimeSlots/range`, {
-    method: "POST",
-    credentials: "include",
-    headers: authHeaders(),
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(
-      error.message || "Fehler beim Erstellen der blockierten Zeitslots"
-    );
-  }
-  return res.json();
+  const response = await api.post('/BlockedTimeSlots/range', data);
+  return response.data;
 }
 
 export async function updateBlockedSlot(
   id: string,
   data: UpdateBlockedSlot
 ): Promise<BlockedTimeSlot> {
-  const res = await fetch(`${API_BASE_URL}/BlockedTimeSlots/${id}`, {
-    method: "PUT",
-    credentials: "include",
-    headers: authHeaders(),
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message || "Fehler beim Aktualisieren");
-  }
-  return res.json();
+  const response = await api.put(`/BlockedTimeSlots/${id}`, data);
+  return response.data;
 }
 
 export async function deleteBlockedSlot(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/BlockedTimeSlots/${id}`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: authHeaders(),
-  });
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(
-      error.message || "Fehler beim Löschen des blockierten Zeitslots"
-    );
-  }
+  await api.delete(`/BlockedTimeSlots/${id}`);
 }
 
 // ── Tracking ──────────────────────────────────────────────────────────────────
 
 export async function getTrackingStatistics(
   fromDate?: string,
-  toDate?: string
+  toDate?: string,
+  all: boolean = false
 ): Promise<SimplifiedTrackingStatistics> {
   const params = new URLSearchParams();
   if (fromDate) params.append("fromDate", fromDate);
   if (toDate) params.append("toDate", toDate);
+  if (all) params.append("all", "true");
 
-  const res = await fetch(
-    `${API_BASE_URL}/admin/tracking${params.toString() ? `?${params}` : ""}`,
-    { credentials: "include", headers: adminHeaders() }
-  );
-  if (!res.ok) {
-    throw new Error(
-      `Fehler beim Laden der Tracking-Statistiken: ${res.status}`
-    );
-  }
-  return res.json();
+  const response = await api.get(`/admin/tracking${params.toString() ? `?${params}` : ''}`);
+  return response.data;
 }
 
-export async function getRevenueStatistics(): Promise<RevenueStatistics> {
-  const res = await fetch(`${API_BASE_URL}/admin/tracking/revenue`, {
-    credentials: "include",
-    headers: adminHeaders(),
-  });
-  if (!res.ok) throw new Error("Fehler beim Laden der Umsatzstatistiken");
-  return res.json();
+export async function getRevenueStatistics(
+  all: boolean = false
+): Promise<RevenueStatistics> {
+  const params = new URLSearchParams();
+  if (all) params.append("all", "true");
+  
+  const response = await api.get(`/admin/tracking/revenue${params.toString() ? `?${params}` : ''}`);
+  return response.data;
 }
 
 export async function trackLinkClick(data: {
@@ -489,9 +379,5 @@ export async function trackLinkClick(data: {
   linkUrl: string;
   sessionId?: string;
 }): Promise<void> {
-  await fetch(`${API_BASE_URL}/admin/tracking/click`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(data),
-  }).catch(() => {});
+  await api.post('/admin/tracking/click', data).catch(() => {});
 }

@@ -23,6 +23,7 @@ import {
   type ManualBookingResponse
 } from "@/lib/api/admin";
 import { getAvailability, getEmployees, type TimeSlot, type Employee } from "@/lib/api/booking";
+import { useAuth } from "@/lib/contexts/AuthContext";
 import { useConfirm } from "@/components/ConfirmDialog";
 
 const modalClassNames = {
@@ -40,6 +41,9 @@ const manualBookingModalClassNames = {
 };
 
 export default function AdminBookingsPage() {
+  const { employee, hasRole } = useAuth();
+  const isAdmin = hasRole(['Admin', 'Owner']);
+  
   const [bookings, setBookings] = useState<BookingListItem[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -132,6 +136,7 @@ export default function AdminBookingsPage() {
   async function loadBookings() {
     setLoading(true);
     try {
+      // Only add all=true for admin users, otherwise show only user's bookings
       const response = await getBookings(filter);
       setBookings(response.items);
       setTotalPages(response.totalPages);
@@ -396,7 +401,14 @@ export default function AdminBookingsPage() {
                 </span>
               )}
             </div>
-            <p className="text-sm text-[#8A8A8A]">Buchungen suchen, filtern und Status aktualisieren</p>
+            <p className="text-sm text-[#8A8A8A]">
+              {isAdmin ? "Alle Buchungen verwalten (Admin)" : "Ihre persönlichen Buchungen verwalten"}
+            </p>
+            {!isAdmin && employee && (
+              <p className="text-xs text-[#017172] mt-1 font-medium">
+                Angemeldet als: {employee.name}
+              </p>
+            )}
           </div>
           <Button
             className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
