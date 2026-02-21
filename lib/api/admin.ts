@@ -287,6 +287,7 @@ export async function createManualBooking(
     email: data.email?.trim() || null,
     phone: data.phone?.trim() || null,
     customerNotes: data.customerNotes?.trim() || null,
+    employeeId: data.employeeId || null,
   });
   return response.data;
 }
