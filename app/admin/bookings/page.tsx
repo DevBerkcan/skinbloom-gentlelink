@@ -410,11 +410,6 @@ export default function AdminBookingsPage() {
             <p className="text-sm text-[#8A8A8A]">
               {isAdmin ? "Alle Buchungen verwalten (Admin)" : "Ihre persönlichen Buchungen verwalten"}
             </p>
-            {!isAdmin && employee && (
-              <p className="text-xs text-[#017172] mt-1 font-medium">
-                Angemeldet als: {employee.name}
-              </p>
-            )}
           </div>
           <Button
             className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
