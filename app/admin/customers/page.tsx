@@ -12,14 +12,6 @@ import {
   ModalFooter,
   useDisclosure,
 } from "@nextui-org/modal";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@nextui-org/table";
 import { Chip } from "@nextui-org/chip";
 import { Spinner } from "@nextui-org/spinner";
 import {
@@ -37,6 +29,8 @@ import {
   Save,
   User as UserIcon,
   Clock,
+  CalendarDays,
+  AlertTriangle
 } from "lucide-react";
 import { customersApi, CustomerListItem, CustomerDetail } from "@/lib/api/customers";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -45,8 +39,8 @@ import moment from "moment";
 const modalClassNames = {
   base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
   header: "border-b border-[#E8C7C3]/20 bg-gradient-to-r from-[#F5EDEB] to-white",
-  footer: "border-t border-[#E8C7C3]/20 bg-[#F5EDEB]/30",
-  body: "py-4",
+  footer: "border-t border-[#E8C7C3]/20",
+  body: "py-5",
 };
 
 const inputClassNames = {
@@ -60,14 +54,17 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [deleteReason, setDeleteReason] = useState("");
 
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
   const [modalMode, setModalMode] = useState<ModalMode>("create");
   const [modalError, setModalError] = useState<string | null>(null);
 
@@ -143,6 +140,13 @@ export default function CustomersPage() {
     onOpen();
   }
 
+  function openDeleteModal(customer: CustomerListItem) {
+    setSelectedCustomer(null);
+    loadCustomerDetails(customer.id).then(() => {
+      onDeleteModalOpen();
+    });
+  }
+
   function handleClose() {
     onClose();
     setModalError(null);
@@ -186,21 +190,19 @@ export default function CustomersPage() {
     }
   }
 
-  async function handleDelete(customer: CustomerListItem) {
-    const ok = await confirm({
-      title: "Kunde löschen",
-      message: `${customer.fullName} wirklich löschen? Dies kann nur rückgängig gemacht werden, wenn der Kunde keine Buchungen hat.`,
-      confirmLabel: "Löschen",
-      variant: "danger",
-    });
+  async function handleDeleteCustomer() {
+    if (!selectedCustomer) return;
 
-    if (!ok) return;
-
+    setDeleting(true);
     try {
-      await customersApi.delete(customer.id);
+      await customersApi.delete(selectedCustomer.id);
       await loadCustomers();
+      onDeleteModalClose();
+      setDeleteReason("");
     } catch (err: any) {
       setError(err.message || "Fehler beim Löschen");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -232,6 +234,74 @@ export default function CustomersPage() {
       default: return status;
     }
   };
+
+  const MobileCustomerCard = ({ customer }: { customer: CustomerListItem }) => (
+    <div className="bg-white border border-[#E8C7C3]/30 rounded-xl p-4 mb-3 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#017172] flex items-center justify-center text-white font-bold text-sm shrink-0">
+            {customer.fullName.charAt(0)}
+          </div>
+          <div>
+            <div className="font-semibold text-[#1E1E1E] text-base">{customer.fullName}</div>
+            <div className="text-xs text-[#8A8A8A] mt-0.5">ID: {customer.id.slice(-8)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2 mb-3">
+        {customer.email && (
+          <div className="flex items-center gap-2 text-sm text-[#8A8A8A]">
+            <Mail size={14} className="text-[#017172] shrink-0" />
+            <span className="truncate">{customer.email}</span>
+          </div>
+        )}
+        {customer.phone && (
+          <div className="flex items-center gap-2 text-sm text-[#8A8A8A]">
+            <Phone size={14} className="text-[#017172] shrink-0" />
+            <span>{customer.phone}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-sm text-[#8A8A8A]">
+          <Calendar size={14} className="text-[#017172] shrink-0" />
+          <span>
+            Letzter Besuch: {customer.lastVisit
+              ? moment(customer.lastVisit).format("DD.MM.YYYY")
+              : "Noch kein Besuch"}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-3 border-t border-[#E8C7C3]/20">
+        <Chip size="sm" variant="flat" className="bg-[#017172]/10 text-[#017172]">
+          {customer.totalBookings} Buchungen
+        </Chip>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            isIconOnly
+            variant="flat"
+            className="bg-[#F5EDEB] text-[#017172] hover:bg-[#017172]/10"
+            onPress={async () => {
+              const details = await customersApi.getById(customer.id);
+              openEditModal(details);
+            }}
+          >
+            <Edit size={14} />
+          </Button>
+          <Button
+            size="sm"
+            isIconOnly
+            variant="flat"
+            className="bg-red-50 text-red-500 hover:bg-red-100"
+            onPress={() => openDeleteModal(customer)}
+          >
+            <Trash2 size={14} />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] to-white py-6 sm:py-8 px-3 sm:px-4">
@@ -292,7 +362,7 @@ export default function CustomersPage() {
           </div>
         )}
 
-        {/* Customers Table */}
+        {/* Customers Table/Cards */}
         <Card className="border border-[#E8C7C3]/30 shadow-xl">
           <CardBody className="p-0">
             {loading ? (
@@ -341,7 +411,7 @@ export default function CustomersPage() {
                         >
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-[#017172] flex items-center justify-center text-white font-bold text-sm">
+                              <div className="w-8 h-8 rounded-full bg-[#017172] flex items-center justify-center text-white font-bold text-sm shrink-0">
                                 {customer.fullName.charAt(0)}
                               </div>
                               <div>
@@ -353,24 +423,26 @@ export default function CustomersPage() {
                           <td className="px-5 py-4">
                             {customer.email && (
                               <div className="flex items-center gap-1 text-xs text-[#8A8A8A] mb-1">
-                                <Mail size={12} /> {customer.email}
+                                <Mail size={12} className="shrink-0" /> 
+                                <span className="truncate max-w-[200px]">{customer.email}</span>
                               </div>
                             )}
                             {customer.phone && (
                               <div className="flex items-center gap-1 text-xs text-[#8A8A8A]">
-                                <Phone size={12} /> {customer.phone}
+                                <Phone size={12} className="shrink-0" /> 
+                                <span>{customer.phone}</span>
                               </div>
                             )}
                           </td>
                           <td className="px-5 py-4">
                             <Chip size="sm" variant="flat" className="bg-[#017172]/10 text-[#017172]">
-                              {customer.totalBookings} Buchungen
+                              {customer.totalBookings}
                             </Chip>
                           </td>
                           <td className="px-5 py-4 text-sm text-[#8A8A8A]">
                             {customer.lastVisit
                               ? moment(customer.lastVisit).format("DD.MM.YYYY")
-                              : "Noch kein Besuch"}
+                              : "—"}
                           </td>
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -391,7 +463,7 @@ export default function CustomersPage() {
                                 isIconOnly
                                 variant="flat"
                                 className="bg-red-50 text-red-500 hover:bg-red-100"
-                                onPress={() => handleDelete(customer)}
+                                onPress={() => openDeleteModal(customer)}
                               >
                                 <Trash2 size={14} />
                               </Button>
@@ -404,63 +476,9 @@ export default function CustomersPage() {
                 </div>
 
                 {/* Mobile Cards */}
-                <div className="md:hidden p-4 space-y-3">
+                <div className="md:hidden p-4">
                   {customers.map((customer) => (
-                    <Card
-                      key={customer.id}
-                      className="border border-[#E8C7C3]/30 cursor-pointer hover:shadow-md transition-shadow"
-                      isPressable
-                      onPress={() => openViewModal(customer)}
-                    >
-                      <CardBody className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-[#017172] flex items-center justify-center text-white font-bold text-sm">
-                              {customer.fullName.charAt(0)}
-                            </div>
-                            <div>
-                              <div className="font-semibold text-[#1E1E1E]">{customer.fullName}</div>
-                              <Chip size="sm" variant="flat" className="mt-1 bg-[#017172]/10 text-[#017172] text-xs">
-                                {customer.totalBookings} Buchungen
-                              </Chip>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="space-y-1 text-sm text-[#8A8A8A]">
-                          {customer.email && <div>📧 {customer.email}</div>}
-                          {customer.phone && <div>📞 {customer.phone}</div>}
-                          <div>📅 Letzter Besuch: {customer.lastVisit
-                            ? moment(customer.lastVisit).format("DD.MM.YYYY")
-                            : "Kein Besuch"}
-                          </div>
-                        </div>
-                        <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-[#E8C7C3]/20">
-                          <Button
-                            size="sm"
-                            isIconOnly
-                            variant="flat"
-                            className="bg-[#F5EDEB] text-[#017172]"
-                            onPress={async () => {
-                              const details = await customersApi.getById(customer.id);
-                              openEditModal(details);
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Edit size={14} />
-                          </Button>
-                          <Button
-                            size="sm"
-                            isIconOnly
-                            variant="flat"
-                            className="bg-red-50 text-red-500"
-                            onPress={() => handleDelete(customer)}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 size={14} />
-                          </Button>
-                        </div>
-                      </CardBody>
-                    </Card>
+                    <MobileCustomerCard key={customer.id} customer={customer} />
                   ))}
                 </div>
 
@@ -468,7 +486,7 @@ export default function CustomersPage() {
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between px-5 py-4 border-t border-[#E8C7C3]/20">
                     <div className="text-sm text-[#8A8A8A]">
-                      Seite {page} von {totalPages} (insgesamt {totalCount} Kunden)
+                      Seite {page} von {totalPages}
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -667,15 +685,15 @@ export default function CustomersPage() {
                       <div className="space-y-2">
                         {selectedCustomer.email && (
                           <div className="flex items-center gap-2">
-                            <Mail size={14} className="text-[#017172]" />
-                            <a href={`mailto:${selectedCustomer.email}`} className="text-sm text-[#1E1E1E] hover:text-[#017172]">
+                            <Mail size={14} className="text-[#017172] shrink-0" />
+                            <a href={`mailto:${selectedCustomer.email}`} className="text-sm text-[#1E1E1E] hover:text-[#017172] break-all">
                               {selectedCustomer.email}
                             </a>
                           </div>
                         )}
                         {selectedCustomer.phone && (
                           <div className="flex items-center gap-2">
-                            <Phone size={14} className="text-[#017172]" />
+                            <Phone size={14} className="text-[#017172] shrink-0" />
                             <a href={`tel:${selectedCustomer.phone}`} className="text-sm text-[#1E1E1E] hover:text-[#017172]">
                               {selectedCustomer.phone}
                             </a>
@@ -701,7 +719,7 @@ export default function CustomersPage() {
                           <p className="text-sm font-semibold text-[#1E1E1E]">
                             {selectedCustomer.lastVisit
                               ? moment(selectedCustomer.lastVisit).format("DD.MM.YYYY")
-                              : "Noch kein Besuch"}
+                              : "—"}
                           </p>
                         </div>
                         <div className="bg-white p-3 rounded-lg">
@@ -731,18 +749,18 @@ export default function CustomersPage() {
                               key={booking.id}
                               className="bg-white p-3 rounded-lg border border-[#E8C7C3]/20"
                             >
-                              <div className="flex justify-between items-start">
+                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                                 <div>
                                   <p className="font-semibold text-[#1E1E1E] text-sm">{booking.serviceName}</p>
                                   <p className="text-xs text-[#8A8A8A] mt-1">
                                     {moment(booking.bookingDate).format("DD.MM.YYYY")} · {booking.startTime} – {booking.endTime}
                                   </p>
                                 </div>
-                                <div className="text-right">
+                                <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
                                   <Chip color={getStatusColor(booking.status)} size="sm" variant="flat">
                                     {getStatusLabel(booking.status)}
                                   </Chip>
-                                  <p className="text-xs font-semibold text-[#017172] mt-1">
+                                  <p className="text-xs font-semibold text-[#017172] whitespace-nowrap">
                                     {booking.price.toFixed(2)} CHF
                                   </p>
                                 </div>
@@ -780,6 +798,139 @@ export default function CustomersPage() {
                     Bearbeiten
                   </Button>
                 )}
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          onDeleteModalClose();
+          setDeleteReason("");
+        }}
+        size="lg"
+        placement="center"
+        classNames={modalClassNames}
+      >
+        <ModalContent>
+          {(onModalClose) => (
+            <>
+              <ModalHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center">
+                    <AlertTriangle size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-[#1E1E1E]">Kunde löschen</h2>
+                    <p className="text-xs text-[#8A8A8A]">
+                      {selectedCustomer?.fullName}
+                    </p>
+                  </div>
+                </div>
+              </ModalHeader>
+
+              <ModalBody>
+                {selectedCustomer && (
+                  <div className="space-y-4">
+                    {/* Warning Message */}
+                    <div className="bg-red-50 p-4 rounded-xl border border-red-200">
+                      <p className="text-sm text-red-700 flex items-start gap-2">
+                        <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Achtung:</strong> Das Löschen eines Kunden ist endgültig und kann nicht rückgängig gemacht werden.
+                        </span>
+                      </p>
+                    </div>
+
+                    {/* Customer Info */}
+                    <div className="bg-[#F5EDEB] p-4 rounded-xl border border-[#E8C7C3]/30">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-[#017172] flex items-center justify-center text-white font-bold shrink-0">
+                          {selectedCustomer.fullName.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[#1E1E1E]">{selectedCustomer.fullName}</p>
+                          <p className="text-xs text-[#8A8A8A]">Kunde seit {moment(selectedCustomer.createdAt).format("DD.MM.YYYY")}</p>
+                        </div>
+                      </div>
+
+                      {/* Booking Stats */}
+                      <div className="grid grid-cols-2 gap-2 mt-3">
+                        <div className="bg-white p-3 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays size={14} className="text-[#017172] shrink-0" />
+                            <span className="text-xs text-[#8A8A8A]">Buchungen</span>
+                          </div>
+                          <p className="text-xl font-bold text-[#1E1E1E]">{selectedCustomer.totalBookings}</p>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Clock size={14} className="text-[#017172] shrink-0" />
+                            <span className="text-xs text-[#8A8A8A]">Letzter Besuch</span>
+                          </div>
+                          <p className="text-sm font-semibold text-[#1E1E1E]">
+                            {selectedCustomer.lastVisit
+                              ? moment(selectedCustomer.lastVisit).format("DD.MM.YYYY")
+                              : "—"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Impact Warning */}
+                    {selectedCustomer.totalBookings > 0 && (
+                      <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                        <p className="text-sm text-amber-700 flex items-start gap-2">
+                          <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                          <span>
+                            <strong>Auswirkung:</strong> Dieser Kunde hat <strong>{selectedCustomer.totalBookings} Buchungen</strong>.
+                            Beim Löschen des Kunden werden auch alle zugehörigen Buchungen unwiderruflich gelöscht.
+                          </span>
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Confirmation Input */}
+                    <div className="space-y-2">
+                      <p className="text-sm text-[#1E1E1E] font-medium">
+                        Geben Sie <span className="font-mono bg-[#F5EDEB] px-2 py-1 rounded">LÖSCHEN</span> ein, um fortzufahren:
+                      </p>
+                      <Input
+                        placeholder="LÖSCHEN"
+                        value={deleteReason}
+                        onChange={(e) => setDeleteReason(e.target.value)}
+                        classNames={inputClassNames}
+                      />
+                    </div>
+                  </div>
+                )}
+              </ModalBody>
+
+              <ModalFooter>
+                <Button
+                  variant="flat"
+                  className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                  onPress={() => {
+                    onModalClose();
+                    setDeleteReason("");
+                  }}
+                  isDisabled={deleting}
+                  startContent={<X size={14} />}
+                >
+                  Abbrechen
+                </Button>
+                <Button
+                  className="bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold shadow-lg shadow-red-500/20"
+                  onPress={handleDeleteCustomer}
+                  isLoading={deleting}
+                  isDisabled={deleteReason !== "LÖSCHEN"}
+                  startContent={!deleting && <Trash2 size={14} />}
+                >
+                  Endgültig löschen
+                </Button>
               </ModalFooter>
             </>
           )}
