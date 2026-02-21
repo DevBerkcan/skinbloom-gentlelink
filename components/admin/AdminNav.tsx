@@ -20,14 +20,15 @@ export function AdminNav() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { employee, logout, isAuthenticated } = useAuth();
 
-  const navItems = [
-    { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/admin/calendar", label: "Kalender", icon: Calendar },
-    { href: "/admin/bookings", label: "Buchungen", icon: Calendar },
-    { href: "/admin/blocked-slots", label: "Abwesenheiten", icon: Ban },
-    { href: "/admin/employees", label: "Mitarbeiter", icon: Users },
-    { href: "/admin/tracking", label: "Tracking", icon: BarChart3 },
-  ];
+const navItems = [
+  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/calendar", label: "Kalender", icon: Calendar },
+  { href: "/admin/bookings", label: "Buchungen", icon: Calendar },
+  { href: "/admin/customers", label: "Kunden", icon: Users }, 
+  { href: "/admin/blocked-slots", label: "Abwesenheiten", icon: Ban },
+  { href: "/admin/employees", label: "Mitarbeiter", icon: Users },
+  { href: "/admin/tracking", label: "Tracking", icon: BarChart3 },
+];
 
   const handleLogout = async () => {
     await logout();
