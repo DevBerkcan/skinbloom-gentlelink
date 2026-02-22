@@ -1,10 +1,8 @@
-// app/booking/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@nextui-org/button";
-import { ChevronLeft, Check, Home } from "lucide-react";
+import { Check, Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -45,6 +43,7 @@ export default function BookingPage() {
   });
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,15 +54,8 @@ export default function BookingPage() {
 
   const handleLoadSlots = async (date: string, employeeId?: string) => {
     if (!selectedService) return;
-
-    // Use the provided employeeId or fall back to selectedEmployee
     const empId = employeeId || selectedEmployee?.id;
-
-    if (!empId) {
-      setError("Bitte wählen Sie zuerst eine Fachkraft aus");
-      return;
-    }
-
+    if (!empId) return;
     setLoadingSlots(true);
     setSelectedTime(null);
     try {
@@ -82,12 +74,22 @@ export default function BookingPage() {
     BookingEvents.serviceSelected(service.name, service.price);
   };
 
+  const handleEmployeeSelect = (employee: Employee) => {
+    if (selectedEmployee?.id !== employee.id) {
+      setAvailableSlots([]);
+      setSelectedDate(null);
+      setSelectedTime(null);
+    }
+    setSelectedEmployee(employee);
+  };
+
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
     BookingEvents.timeSlotSelected(time);
   };
 
   const handleSubmit = async () => {
+    setSubmitAttempted(true);
     if (!selectedService || !selectedDate || !selectedTime) {
       setError("Bitte alle Felder ausfüllen");
       return;
@@ -96,6 +98,13 @@ export default function BookingPage() {
       setError("Bitte stimmen Sie den Datenschutzbestimmungen zu");
       return;
     }
+    const hasErrors =
+      !customerInfo.firstName.trim() ||
+      !customerInfo.lastName.trim() ||
+      !customerInfo.email.trim() ||
+      !customerInfo.phone.trim();
+    if (hasErrors) return;
+
     setSubmitting(true);
     setError(null);
     try {
@@ -119,24 +128,12 @@ export default function BookingPage() {
     }
   };
 
-  const canProceed = () => {
-    switch (currentStep) {
-      case 1: return selectedService !== null;
-      case 2: return selectedEmployee !== null;  // employee step
-      case 3: return selectedDate !== null && selectedTime !== null;
-      case 4:
-        return (
-          customerInfo.firstName.trim() !== "" &&
-          customerInfo.lastName.trim() !== "" &&
-          privacyAccepted
-        );
-      default: return false;
-    }
-  };
+  const next = () => setCurrentStep((s) => Math.min(s + 1, TOTAL_STEPS));
+  const back = () => setCurrentStep((s) => Math.max(s - 1, 1));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F5EDEB] via-[#F5EDEB] to-white">
-      <div className="max-w-3xl mx-auto px-4 py-12">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-[#8A8A8A] hover:text-[#E8C7C3] transition-colors mb-6"
@@ -147,27 +144,25 @@ export default function BookingPage() {
 
         {/* Step indicators */}
         <div className="mb-8">
-          <div className="flex justify-center items-center gap-4">
+          <div className="flex justify-center items-center gap-2 sm:gap-4">
             {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((step) => (
               <div key={step} className="flex items-center">
                 <div
-                  className={`
-                    w-10 h-10 rounded-full flex items-center justify-center font-bold
-                    transition-all duration-300
-                    ${currentStep > step
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+                    currentStep > step
                       ? "bg-[#E8C7C3] text-white"
                       : currentStep === step
-                        ? "bg-[#E8C7C3] text-white ring-4 ring-[#E8C7C3]/20"
-                        : "bg-[#F0E6E4] text-[#8A8A8A]"
-                    }
-                  `}
+                      ? "bg-[#E8C7C3] text-white ring-4 ring-[#E8C7C3]/20"
+                      : "bg-[#F0E6E4] text-[#8A8A8A]"
+                  }`}
                 >
-                  {currentStep > step ? <Check size={20} /> : step}
+                  {currentStep > step ? <Check size={18} /> : step}
                 </div>
                 {step < TOTAL_STEPS && (
                   <div
-                    className={`w-12 h-1 mx-2 rounded transition-all ${currentStep > step ? "bg-[#E8C7C3]" : "bg-[#F0E6E4]"
-                      }`}
+                    className={`w-8 sm:w-12 h-1 mx-1 sm:mx-2 rounded transition-all ${
+                      currentStep > step ? "bg-[#E8C7C3]" : "bg-[#F0E6E4]"
+                    }`}
                   />
                 )}
               </div>
@@ -181,32 +176,33 @@ export default function BookingPage() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl text-red-700"
+              className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-xl text-red-700 text-sm"
             >
               {error}
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-8 ring-1 ring-[#E8C7C3]/20">
+        <div className="bg-white rounded-3xl shadow-2xl p-5 sm:p-8 ring-1 ring-[#E8C7C3]/20">
           <AnimatePresence mode="wait">
-            {/* Step 1 – Service */}
             {currentStep === 1 && (
               <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <ServiceSelector
                   services={services}
                   selectedService={selectedService}
                   onSelect={handleServiceSelect}
+                  onNext={next}
                 />
               </motion.div>
             )}
 
-            {/* Step 2 – Employee */}
             {currentStep === 2 && (
               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <EmployeeSelector
                   selectedEmployee={selectedEmployee}
-                  onSelect={setSelectedEmployee}
+                  onSelect={handleEmployeeSelect}
+                  onNext={next}
+                  onBack={back}
                 />
               </motion.div>
             )}
@@ -215,19 +211,20 @@ export default function BookingPage() {
               <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <DateTimePicker
                   service={selectedService}
-                  selectedEmployee={selectedEmployee}  // Add this
+                  selectedEmployee={selectedEmployee}
                   selectedDate={selectedDate}
                   selectedTime={selectedTime}
                   availableSlots={availableSlots}
                   onDateSelect={setSelectedDate}
                   onTimeSelect={handleTimeSelect}
                   onLoadSlots={handleLoadSlots}
+                  onNext={next}
+                  onBack={back}
                   loading={loadingSlots}
                 />
               </motion.div>
             )}
 
-            {/* Step 4 – Contact */}
             {currentStep === 4 && selectedService && selectedDate && selectedTime && (
               <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                 <ContactForm
@@ -239,47 +236,16 @@ export default function BookingPage() {
                   privacyAccepted={privacyAccepted}
                   onPrivacyChange={setPrivacyAccepted}
                   selectedEmployee={selectedEmployee}
-
+                  onSubmitAttempt={submitAttempted}
+                  onBack={back}
+                  onSubmit={handleSubmit}
+                  submitting={submitting}
                 />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-
-        {/* Navigation */}
-        <div className="flex justify-between items-center mt-8">
-          {currentStep > 1 ? (
-            <Button
-              variant="flat"
-              onPress={() => setCurrentStep(currentStep - 1)}
-              startContent={<ChevronLeft size={20} />}
-              className="bg-[#F5EDEB] font-semibold text-[#1E1E1E]"
-            >
-              Zurück
-            </Button>
-          ) : (
-            <div />
-          )}
-
-          {currentStep < TOTAL_STEPS ? (
-            <Button
-              onPress={() => setCurrentStep(currentStep + 1)}
-              isDisabled={!canProceed()}
-              className="bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white font-semibold px-8"
-            >
-              Weiter
-            </Button>
-          ) : (
-            <Button
-              onPress={handleSubmit}
-              isDisabled={!canProceed() || submitting}
-              isLoading={submitting}
-              className="bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] text-white font-semibold px-8"
-            >
-              {submitting ? "Wird gebucht..." : "Termin buchen"}
-            </Button>
-          )}
-        </div>
+        {/* Navigation bar removed — each step handles its own sticky bar */}
       </div>
     </div>
   );
