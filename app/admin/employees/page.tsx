@@ -7,7 +7,10 @@ import { Input } from "@nextui-org/input";
 import { Switch } from "@nextui-org/switch";
 import { Chip } from "@nextui-org/chip";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@nextui-org/modal";
-import { Plus, Edit, Trash2, Users, AlertCircle, X, Save, UserCheck, UserX } from "lucide-react";
+import {
+  Plus, Edit, Trash2, Users, AlertCircle, X, Save, UserCheck, UserX,
+  Lock, Eye, EyeOff, Key
+} from "lucide-react";
 import { getEmployees, createEmployee, updateEmployee, deleteEmployee, type Employee, type CreateEmployeeDto } from "@/lib/api/employees";
 import { useConfirm } from "@/components/ConfirmDialog";
 
@@ -24,28 +27,39 @@ const INPUT_CLS = {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const AVATAR_COLORS = [
-  "bg-[#017172]","bg-[#C09995]","bg-[#D8B0AC]","bg-[#6b7280]",
-  "bg-emerald-600","bg-amber-600","bg-violet-600",
+  "bg-[#017172]", "bg-[#C09995]", "bg-[#D8B0AC]", "bg-[#6b7280]",
+  "bg-emerald-600", "bg-amber-600", "bg-violet-600",
 ];
 const initials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?";
-const avatarBg  = (name: string) => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
+const avatarBg = (name: string) => AVATAR_COLORS[name.charCodeAt(0) % AVATAR_COLORS.length];
 
-const EMPTY: CreateEmployeeDto = { name: "", role: "", specialty: "" };
+const EMPTY: CreateEmployeeDto = {
+  name: "",
+  role: "",
+  specialty: "",
+  username: "",
+  password: ""
+};
 
 export default function EmployeesPage() {
-  const [employees, setEmployees]     = useState<Employee[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState<string | null>(null);
-  const [submitting, setSubmitting]   = useState(false);
-  const [showInactive, setShowInactive] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [showInactive, setShowInactive] = useState<boolean>(false);
 
-  const { isOpen, onOpen, onClose }   = useDisclosure();
-  const [editing, setEditing]         = useState<Employee | null>(null);
-  const [form, setForm]               = useState<CreateEmployeeDto>(EMPTY);
-  const [formActive, setFormActive]   = useState(true);
-  const [modalErr, setModalErr]       = useState<string | null>(null);
+  // Password visibility
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
 
-  const { confirm, dialog }           = useConfirm();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [editing, setEditing] = useState<Employee | null>(null);
+  const [form, setForm] = useState<CreateEmployeeDto>(EMPTY);
+  const [formActive, setFormActive] = useState<boolean>(true);
+  const [modalErr, setModalErr] = useState<string | null>(null);
+  const [resetPassword, setResetPassword] = useState<boolean>(false);
+
+  const { confirm, dialog } = useConfirm();
 
   useEffect(() => { load(); }, [showInactive]);
 
@@ -57,31 +71,96 @@ export default function EmployeesPage() {
   }
 
   function openCreate() {
-    setEditing(null); setForm(EMPTY); setFormActive(true); setModalErr(null); onOpen();
+    setEditing(null);
+    setForm(EMPTY);
+    setFormActive(true);
+    setModalErr(null);
+    setResetPassword(false);
+    setShowPassword(false);
+    onOpen();
   }
+
   function openEdit(emp: Employee) {
     setEditing(emp);
-    setForm({ name: emp.name, role: emp.role, specialty: emp.specialty ?? "" });
-    setFormActive(emp.isActive); setModalErr(null); onOpen();
+    setForm({
+      name: emp.name,
+      role: emp.role,
+      specialty: emp.specialty ?? "",
+      username: emp.username ?? ""
+    });
+    setFormActive(emp.isActive);
+    setModalErr(null);
+    setResetPassword(false);
+    setShowNewPassword(false);
+    onOpen();
   }
 
   async function handleSubmit() {
-    if (!form.name.trim() || !form.role.trim()) { setModalErr("Name und Rolle sind Pflichtfelder"); return; }
-    setSubmitting(true); setModalErr(null);
+    if (!form.name.trim() || !form.role.trim()) {
+      setModalErr("Name und Rolle sind Pflichtfelder");
+      return;
+    }
+
+    // For new employees, username and password are required
+    if (!editing && (!form.username?.trim() || !form.password?.trim())) {
+      setModalErr("Benutzername und Passwort sind erforderlich");
+      return;
+    }
+
+    // For editing with password reset, password is required
+    if (editing && resetPassword && !form.password?.trim()) {
+      setModalErr("Neues Passwort ist erforderlich");
+      return;
+    }
+
+    setSubmitting(true);
+    setModalErr(null);
+
     try {
-      const payload = { ...form, specialty: form.specialty?.trim() || null };
-      if (editing) await updateEmployee(editing.id, { ...payload, isActive: formActive });
-      else         await createEmployee(payload);
-      await load(); onClose();
-    } catch (e: any) { setModalErr(e.message); }
-    finally { setSubmitting(false); }
+      const payload: any = {
+        name: form.name.trim(),
+        role: form.role.trim(),
+        specialty: form.specialty?.trim() || null,
+      };
+
+      // Add username for new employees or if changed
+      if (form.username?.trim()) {
+        payload.username = form.username.trim();
+      }
+
+      if (editing) {
+        // For edit, include isActive
+        payload.isActive = formActive;
+
+        // Include new password only if reset is requested
+        if (resetPassword && form.password?.trim()) {
+          payload.newPassword = form.password.trim();
+        }
+
+        await updateEmployee(editing.id, payload);
+      } else {
+        // For new employees, include password
+        if (form.password?.trim()) {
+          payload.password = form.password.trim();
+        }
+        await createEmployee(payload);
+      }
+
+      await load();
+      onClose();
+    } catch (e: any) {
+      setModalErr(e.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleDelete(emp: Employee) {
     const ok = await confirm({
       title: "Mitarbeiter entfernen",
       message: `„${emp.name}" wirklich entfernen? Die Person wird deaktiviert und erscheint nicht mehr in Buchungen.`,
-      confirmLabel: "Entfernen", variant: "danger",
+      confirmLabel: "Entfernen",
+      variant: "danger",
     });
     if (!ok) return;
     try { await deleteEmployee(emp.id); await load(); }
@@ -97,12 +176,17 @@ export default function EmployeesPage() {
     });
     if (!ok) return;
     try {
-      await updateEmployee(emp.id, { name: emp.name, role: emp.role, specialty: emp.specialty, isActive: !emp.isActive });
+      await updateEmployee(emp.id, {
+        name: emp.name,
+        role: emp.role,
+        specialty: emp.specialty,
+        isActive: !emp.isActive
+      });
       await load();
     } catch (e: any) { setError(e.message); }
   }
 
-  const activeCount   = employees.filter(e => e.isActive).length;
+  const activeCount = employees.filter(e => e.isActive).length;
   const inactiveCount = employees.length - activeCount;
 
   return (
@@ -115,9 +199,9 @@ export default function EmployeesPage() {
             <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">Mitarbeiter</h1>
             <p className="text-sm text-[#8A8A8A]">Fachkräfte verwalten und zuweisen</p>
           </div>
-          <Button 
+          <Button
             className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
-            startContent={<Plus size={18} />} 
+            startContent={<Plus size={18} />}
             onPress={openCreate}
           >
             Mitarbeiter hinzufügen
@@ -127,9 +211,9 @@ export default function EmployeesPage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
-            { label: "Gesamt",  value: employees.length, cls: "text-[#1E1E1E]" },
-            { label: "Aktiv",   value: activeCount,       cls: "text-[#017172]" },
-            { label: "Inaktiv", value: inactiveCount,     cls: "text-[#8A8A8A]" },
+            { label: "Gesamt", value: employees.length, cls: "text-[#1E1E1E]" },
+            { label: "Aktiv", value: activeCount, cls: "text-[#017172]" },
+            { label: "Inaktiv", value: inactiveCount, cls: "text-[#8A8A8A]" },
           ].map(({ label, value, cls }) => (
             <Card key={label} className="border border-[#E8C7C3]/30 shadow-md">
               <CardBody className="p-4">
@@ -142,7 +226,12 @@ export default function EmployeesPage() {
 
         {/* Toggle */}
         <div className="flex items-center gap-3 mb-5 p-3 bg-white border border-[#E8C7C3]/30 rounded-xl shadow-sm w-fit">
-          <Switch isSelected={showInactive} onValueChange={setShowInactive} size="sm" color="default" />
+          <Switch
+            isSelected={showInactive}
+            onValueChange={setShowInactive}
+            size="sm"
+            color="default"
+          />
           <span className="text-sm text-[#8A8A8A]">Inaktive anzeigen</span>
         </div>
 
@@ -164,9 +253,9 @@ export default function EmployeesPage() {
               <Users size={28} className="text-[#E8C7C3]" />
             </div>
             <p className="text-[#8A8A8A] font-medium">Noch keine Mitarbeiter vorhanden</p>
-            <Button 
+            <Button
               className="mt-4 bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold"
-              startContent={<Plus size={16} />} 
+              startContent={<Plus size={16} />}
               onPress={openCreate}
             >
               Ersten Mitarbeiter hinzufügen
@@ -194,38 +283,46 @@ export default function EmployeesPage() {
                       </div>
                       <p className="text-sm text-[#8A8A8A] font-medium">{emp.role}</p>
                       {emp.specialty && <p className="text-xs text-[#8A8A8A] mt-1 italic">{emp.specialty}</p>}
+                      {emp.username && (
+                        <p className="text-xs text-[#8A8A8A] mt-1 flex items-center gap-1">
+                          <Key size={10} /> {emp.username}
+                        </p>
+                      )}
+                      {!emp.hasPassword && emp.username && (
+                        <p className="text-xs text-amber-600 mt-1 font-medium">Kein Passwort gesetzt</p>
+                      )}
                     </div>
-                    {/* Actions - All as proper buttons */}
+                    {/* Actions */}
                     <div className="flex flex-col gap-1.5 shrink-0">
-                      <Button 
-                        isIconOnly 
-                        size="sm" 
+                      <Button
+                        isIconOnly
+                        size="sm"
                         variant="flat"
                         className="bg-[#F5EDEB] text-[#017172] hover:bg-[#017172]/10"
-                        onPress={() => openEdit(emp)} 
+                        onPress={() => openEdit(emp)}
                         title="Bearbeiten"
                       >
                         <Edit size={14} />
                       </Button>
-                      <Button 
-                        isIconOnly 
-                        size="sm" 
+                      <Button
+                        isIconOnly
+                        size="sm"
                         variant="flat"
                         className={emp.isActive ? "bg-amber-50 text-amber-600 hover:bg-amber-100" : "bg-[#017172]/10 text-[#017172] hover:bg-[#017172]/20"}
-                        onPress={() => handleToggle(emp)} 
+                        onPress={() => handleToggle(emp)}
                         title={emp.isActive ? "Deaktivieren" : "Aktivieren"}
                       >
                         {emp.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
                       </Button>
-                      <Button 
-                        isIconOnly 
-                        size="sm" 
+                      <Button
+                        isIconOnly
+                        size="sm"
                         variant="flat"
                         className="bg-red-50 text-red-500 hover:bg-red-100"
-                        startContent={<Trash2 size={14} />}
-                        onPress={() => handleDelete(emp)} 
+                        onPress={() => handleDelete(emp)}
                         title="Löschen"
                       >
+                        <Trash2 size={14} />
                       </Button>
                     </div>
                   </div>
@@ -264,35 +361,137 @@ export default function EmployeesPage() {
                       <AlertCircle size={14} />{modalErr}
                     </div>
                   )}
-                  <Input 
-                    label="Name" 
-                    placeholder="z.B. Anna Meier" 
-                    value={form.name} 
-                    isRequired 
+
+                  <Input
+                    label="Name"
+                    placeholder="z.B. Anna Meier"
+                    value={form.name}
+                    isRequired={true}
                     isDisabled={submitting}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })} 
-                    classNames={INPUT_CLS} 
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    classNames={INPUT_CLS}
                   />
-                  <Input 
-                    label="Rolle" 
-                    placeholder="z.B. Ästhetik-Expertin" 
-                    value={form.role} 
-                    isRequired 
+
+                  <Input
+                    label="Rolle"
+                    placeholder="z.B. Ästhetik-Expertin"
+                    value={form.role}
+                    isRequired={true}
                     isDisabled={submitting}
-                    onChange={(e) => setForm({ ...form, role: e.target.value })} 
-                    classNames={INPUT_CLS} 
+                    onChange={(e) => setForm({ ...form, role: e.target.value })}
+                    classNames={INPUT_CLS}
                   />
-                  <Input 
-                    label="Spezialgebiet (optional)" 
+
+                  <Input
+                    label="Spezialgebiet (optional)"
                     placeholder="z.B. Wimpern, Botox, Filler"
-                    value={form.specialty ?? ""} 
+                    value={form.specialty ?? ""}
                     isDisabled={submitting}
-                    onChange={(e) => setForm({ ...form, specialty: e.target.value })} 
-                    classNames={INPUT_CLS} 
+                    onChange={(e) => setForm({ ...form, specialty: e.target.value })}
+                    classNames={INPUT_CLS}
                   />
+
+                  {/* Username Field */}
+                  <Input
+                    label="Benutzername (für Login)"
+                    placeholder="z.B. anna.meier"
+                    value={form.username ?? ""}
+                    isRequired={!editing ? true : false}
+                    isDisabled={submitting || (!!editing && !resetPassword)}
+                    onChange={(e) => setForm({ ...form, username: e.target.value })}
+                    classNames={INPUT_CLS}
+                    startContent={<Key size={16} className="text-[#8A8A8A]" />}
+                  />
+
+                  {/* Password Field - for new employees */}
+                  {!editing && (
+                    <Input
+                      label="Passwort"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Mindestens 8 Zeichen"
+                      value={form.password ?? ""}
+                      isRequired={true}
+                      isDisabled={submitting}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      classNames={INPUT_CLS}
+                      startContent={<Lock size={16} className="text-[#8A8A8A]" />}
+                      endContent={
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="text-[#8A8A8A] hover:text-[#017172] transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      }
+                    />
+                  )}
+
+                  {/* Password Reset for existing employees */}
+                  {editing && (
+                    <>
+                      {!resetPassword ? (
+                        <div className="p-3 bg-[#F5EDEB] rounded-xl border border-[#E8C7C3]/30">
+                          <p className="text-sm text-[#8A8A8A] mb-2">Passwort ändern?</p>
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            className="bg-[#017172]/10 text-[#017172] font-semibold"
+                            startContent={<Lock size={14} />}
+                            onPress={() => setResetPassword(true)}
+                          >
+                            Neues Passwort setzen
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <Input
+                            label="Neues Passwort"
+                            type={showNewPassword ? "text" : "password"}
+                            placeholder="Mindestens 8 Zeichen"
+                            value={form.password ?? ""}
+                            isRequired={true}
+                            isDisabled={submitting}
+                            onChange={(e) => setForm({ ...form, password: e.target.value })}
+                            classNames={INPUT_CLS}
+                            startContent={<Lock size={16} className="text-[#8A8A8A]" />}
+                            endContent={
+                              <button
+                                type="button"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                className="text-[#8A8A8A] hover:text-[#017172] transition-colors"
+                                tabIndex={-1}
+                              >
+                                {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                              </button>
+                            }
+                          />
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            className="bg-red-50 text-red-500"
+                            onPress={() => {
+                              setResetPassword(false);
+                              setForm({ ...form, password: "" });
+                            }}
+                          >
+                            Abbrechen
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+
                   {editing && (
                     <div className="flex items-center gap-3 p-3 bg-[#F5EDEB] rounded-xl border border-[#E8C7C3]/30">
-                      <Switch isSelected={formActive} onValueChange={setFormActive} size="sm" color="primary" isDisabled={submitting} />
+                      <Switch
+                        isSelected={formActive}
+                        onValueChange={setFormActive}
+                        size="sm"
+                        color="primary"
+                        isDisabled={submitting}
+                      />
                       <div>
                         <p className="text-sm font-semibold text-[#1E1E1E]">{formActive ? "Aktiv" : "Inaktiv"}</p>
                         <p className="text-xs text-[#8A8A8A]">
@@ -304,20 +503,25 @@ export default function EmployeesPage() {
                 </div>
               </ModalBody>
               <ModalFooter className="gap-2">
-                <Button 
-                  variant="flat" 
+                <Button
+                  variant="flat"
                   className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
-                  onPress={close} 
-                  isDisabled={submitting} 
+                  onPress={close}
+                  isDisabled={submitting}
                   startContent={<X size={14} />}
                 >
                   Abbrechen
                 </Button>
-                <Button 
+                <Button
                   className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
-                  onPress={handleSubmit} 
+                  onPress={handleSubmit}
                   isLoading={submitting}
-                  isDisabled={!form.name.trim() || !form.role.trim()}
+                  isDisabled={
+                    !form.name.trim() ||
+                    !form.role.trim() ||
+                    (!Boolean(editing) && (!form.username?.trim() || !form.password?.trim())) ||
+                    (Boolean(editing) && resetPassword && !form.password?.trim())
+                  }
                   startContent={!submitting && <Save size={14} />}
                 >
                   {editing ? "Speichern" : "Hinzufügen"}

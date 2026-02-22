@@ -1,9 +1,5 @@
 // lib/api/employees.ts
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://localhost:7020/api";
-
-const ADMIN_SECRET =
-  process.env.NEXT_PUBLIC_ADMIN_SECRET || "skinbloom-admin-bootstrap-2026";
+import api from './client';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -26,7 +22,7 @@ export interface CreateEmployeeDto {
   specialty?: string | null;
   /** Set username at creation time (optional) */
   username?: string | null;
-  /** Set initial password at creation time (optional) */
+  /** Set initial password at creation time (required for new employees) */
   password?: string | null;
 }
 
@@ -37,22 +33,8 @@ export interface UpdateEmployeeDto {
   isActive: boolean;
   /**
    * Pass newPassword here to reset this employee's password.
-   * Requires X-Admin-Secret header — this function adds it automatically.
    */
   newPassword?: string | null;
-}
-
-// ── Shared header helpers ─────────────────────────────────────────────────────
-
-function jsonHeaders(): HeadersInit {
-  return { "Content-Type": "application/json" };
-}
-
-function adminJsonHeaders(): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-    "X-Admin-Secret": ADMIN_SECRET,
-  };
 }
 
 // ── Functions ─────────────────────────────────────────────────────────────────
@@ -62,88 +44,62 @@ function adminJsonHeaders(): HeadersInit {
  * activeOnly = false returns inactive employees too (admin use).
  */
 export async function getEmployees(activeOnly = true): Promise<Employee[]> {
-  const res = await fetch(
-    `${API_BASE_URL}/employees?activeOnly=${activeOnly}`,
-    { credentials: "include" }
-  );
-  if (!res.ok) throw new Error("Fehler beim Laden der Mitarbeiter");
-  return res.json();
+  const response = await api.get(`/employees`, {
+    params: { activeOnly }
+  });
+  return response.data;
 }
 
 /**
  * Create a new employee.
- * Optionally set username + initial password in one call.
+ * Username and password are required for new employees.
  */
 export async function createEmployee(
   data: CreateEmployeeDto
 ): Promise<Employee> {
-  const res = await fetch(`${API_BASE_URL}/employees`, {
-    method: "POST",
-    credentials: "include",
-    headers: jsonHeaders(),
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.message || "Fehler beim Erstellen");
-  }
-  return res.json();
+  const response = await api.post('/employees', data);
+  return response.data;
 }
 
 /**
  * Update an employee.
- * If data.newPassword is set the request is sent with X-Admin-Secret
- * so the backend allows the password reset.
+ * If newPassword is provided, it will update the password.
  */
 export async function updateEmployee(
   id: string,
   data: UpdateEmployeeDto
 ): Promise<Employee> {
-  const needsAdminSecret = !!data.newPassword;
-  const res = await fetch(`${API_BASE_URL}/employees/${id}`, {
-    method: "PUT",
-    credentials: "include",
-    headers: needsAdminSecret ? adminJsonHeaders() : jsonHeaders(),
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.message || "Fehler beim Aktualisieren");
-  }
-  return res.json();
+  const response = await api.put(`/employees/${id}`, data);
+  return response.data;
 }
 
 /**
- * Delete (or soft-delete) an employee.
+ * Delete an employee.
  * The backend will reject if the employee has active bookings.
  */
 export async function deleteEmployee(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/employees/${id}`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: jsonHeaders(),
-  });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.message || "Fehler beim Löschen");
-  }
+  await api.delete(`/employees/${id}`);
+}
+
+/**
+ * Toggle employee active status.
+ */
+export async function toggleEmployeeActive(id: string): Promise<{ id: string; isActive: boolean }> {
+  const response = await api.patch(`/employees/${id}/toggle-active`);
+  return response.data;
 }
 
 /**
  * Bootstrap: set an initial password for an employee by username.
- * Uses X-Admin-Secret — intended for first-time setup or admin password reset.
+ * This endpoint still uses the admin secret for bootstrap purposes.
  */
 export async function setEmployeePassword(
   username: string,
   password: string
 ): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/employee-auth/set-password`, {
-    method: "POST",
-    headers: adminJsonHeaders(),
-    body: JSON.stringify({ username, password }),
-  });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.message || "Fehler beim Setzen des Passworts");
-  }
+  const response = await api.post('/employee-auth/set-password', { 
+    username, 
+    password 
+  },);
+  return response.data;
 }
