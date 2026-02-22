@@ -53,29 +53,29 @@ export default function BookingPage() {
       .catch(() => setError("Fehler beim Laden der Services"));
   }, []);
 
-const handleLoadSlots = async (date: string, employeeId?: string) => {
-  if (!selectedService) return;
-  
-  // Use the provided employeeId or fall back to selectedEmployee
-  const empId = employeeId || selectedEmployee?.id;
-  
-  if (!empId) {
-    setError("Bitte wählen Sie zuerst eine Fachkraft aus");
-    return;
-  }
-  
-  setLoadingSlots(true);
-  setSelectedTime(null);
-  try {
-    const data = await getAvailability(selectedService.id, date, empId);
-    setAvailableSlots(data.availableSlots);
-    BookingEvents.dateSelected(date);
-  } catch {
-    setError("Fehler beim Laden der Verfügbarkeit");
-  } finally {
-    setLoadingSlots(false);
-  }
-};
+  const handleLoadSlots = async (date: string, employeeId?: string) => {
+    if (!selectedService) return;
+
+    // Use the provided employeeId or fall back to selectedEmployee
+    const empId = employeeId || selectedEmployee?.id;
+
+    if (!empId) {
+      setError("Bitte wählen Sie zuerst eine Fachkraft aus");
+      return;
+    }
+
+    setLoadingSlots(true);
+    setSelectedTime(null);
+    try {
+      const data = await getAvailability(selectedService.id, date, empId);
+      setAvailableSlots(data.availableSlots);
+      BookingEvents.dateSelected(date);
+    } catch {
+      setError("Fehler beim Laden der Verfügbarkeit");
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
 
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
@@ -166,9 +166,8 @@ const handleLoadSlots = async (date: string, employeeId?: string) => {
                 </div>
                 {step < TOTAL_STEPS && (
                   <div
-                    className={`w-12 h-1 mx-2 rounded transition-all ${
-                      currentStep > step ? "bg-[#E8C7C3]" : "bg-[#F0E6E4]"
-                    }`}
+                    className={`w-12 h-1 mx-2 rounded transition-all ${currentStep > step ? "bg-[#E8C7C3]" : "bg-[#F0E6E4]"
+                      }`}
                   />
                 )}
               </div>
@@ -212,21 +211,21 @@ const handleLoadSlots = async (date: string, employeeId?: string) => {
               </motion.div>
             )}
 
-{currentStep === 3 && selectedService && (
-  <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-    <DateTimePicker
-      service={selectedService}
-      selectedEmployee={selectedEmployee}  // Add this
-      selectedDate={selectedDate}
-      selectedTime={selectedTime}
-      availableSlots={availableSlots}
-      onDateSelect={setSelectedDate}
-      onTimeSelect={handleTimeSelect}
-      onLoadSlots={handleLoadSlots}
-      loading={loadingSlots}
-    />
-  </motion.div>
-)}
+            {currentStep === 3 && selectedService && (
+              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <DateTimePicker
+                  service={selectedService}
+                  selectedEmployee={selectedEmployee}  // Add this
+                  selectedDate={selectedDate}
+                  selectedTime={selectedTime}
+                  availableSlots={availableSlots}
+                  onDateSelect={setSelectedDate}
+                  onTimeSelect={handleTimeSelect}
+                  onLoadSlots={handleLoadSlots}
+                  loading={loadingSlots}
+                />
+              </motion.div>
+            )}
 
             {/* Step 4 – Contact */}
             {currentStep === 4 && selectedService && selectedDate && selectedTime && (
@@ -239,6 +238,8 @@ const handleLoadSlots = async (date: string, employeeId?: string) => {
                   onCustomerInfoChange={setCustomerInfo}
                   privacyAccepted={privacyAccepted}
                   onPrivacyChange={setPrivacyAccepted}
+                  selectedEmployee={selectedEmployee}
+
                 />
               </motion.div>
             )}
