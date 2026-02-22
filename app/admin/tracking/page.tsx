@@ -1,4 +1,3 @@
-// app/admin/tracking/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import { Card, CardBody, CardHeader } from "@nextui-org/card";
 import {
   TrendingUp, Users, BarChart3, MousePointerClick,
   Calendar, Instagram, MapPin, MessageCircle, FileText, Shield,
+  Clock, Eye, DollarSign
 } from "lucide-react";
 import {
   getTrackingStatistics, getRevenueStatistics,
@@ -94,21 +94,20 @@ export default function TrackingPage() {
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">Statistiken</h1>
-          <p className="text-sm text-[#8A8A8A]">Letzte 30 Tage – Übersicht deiner Kennzahlen</p>
+          <p className="text-sm text-[#8A8A8A]">Gesamtübersicht aller Zeiten</p>
         </div>
 
-        {/* ── Overview Cards ─────────────────────────────────────────────── */}
+        {/* ── Overview Cards (All Time) ──────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-
           <Card className="border border-[#E8C7C3]/30 shadow-xl">
             <CardBody className="p-4 sm:p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Seitenaufrufe</div>
+                  <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Seitenaufrufe (gesamt)</div>
                   <div className="text-2xl sm:text-3xl font-bold text-[#1E1E1E]">{stats.totalPageViews}</div>
                 </div>
                 <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-xl">
-                  <Users className="text-[#017172]" size={20} />
+                  <Eye className="text-[#017172]" size={20} />
                 </div>
               </div>
             </CardBody>
@@ -118,7 +117,7 @@ export default function TrackingPage() {
             <CardBody className="p-4 sm:p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Total Klicks</div>
+                  <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Total Klicks (gesamt)</div>
                   <div className="text-2xl sm:text-3xl font-bold text-[#017172]">{stats.totalLinkClicks}</div>
                 </div>
                 <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-xl">
@@ -132,7 +131,7 @@ export default function TrackingPage() {
             <CardBody className="p-4 sm:p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Buchungen</div>
+                  <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Buchungen (gesamt)</div>
                   <div className="text-2xl sm:text-3xl font-bold text-[#017172]">{stats.totalBookings}</div>
                 </div>
                 <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-xl">
@@ -159,16 +158,39 @@ export default function TrackingPage() {
           </Card>
         </div>
 
-        {/* ── Revenue Cards ──────────────────────────────────────────────── */}
+        {/* ── All Time Revenue Card ──────────────────────────────────────── */}
+        <Card className="mb-6 border border-[#E8C7C3]/30 shadow-xl bg-gradient-to-br from-[#017172]/5 to-transparent">
+          <CardBody className="p-6">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-[#017172] rounded-xl">
+                  <DollarSign className="text-white" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[#1E1E1E]">Gesamtumsatz aller Zeiten</h3>
+                  <p className="text-sm text-[#8A8A8A]">{revenue.allTimeBookings} Buchungen insgesamt</p>
+                </div>
+              </div>
+              <div className="text-3xl sm:text-4xl font-bold text-[#017172]">
+                {revenue.allTimeRevenue.toFixed(2)} CHF
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* ── Revenue Cards (Time Periods) ───────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {[
-            { label: "Heute", bookings: revenue.todayBookings, rev: revenue.todayRevenue },
-            { label: "Letzte 7 Tage", bookings: revenue.weekBookings, rev: revenue.weekRevenue },
-            { label: "Letzte 30 Tage", bookings: revenue.monthBookings, rev: revenue.monthRevenue },
-          ].map(({ label, bookings, rev }) => (
+            { label: "Heute", bookings: revenue.todayBookings, rev: revenue.todayRevenue, icon: Clock },
+            { label: "Letzte 7 Tage", bookings: revenue.weekBookings, rev: revenue.weekRevenue, icon: Calendar },
+            { label: "Letzte 30 Tage", bookings: revenue.monthBookings, rev: revenue.monthRevenue, icon: Calendar },
+          ].map(({ label, bookings, rev, icon: Icon }) => (
             <Card key={label} className="border border-[#E8C7C3]/30 shadow-xl">
               <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0">
-                <h3 className="text-base font-semibold text-[#1E1E1E]">{label}</h3>
+                <div className="flex items-center gap-2">
+                  <Icon size={18} className="text-[#017172]" />
+                  <h3 className="text-base font-semibold text-[#1E1E1E]">{label}</h3>
+                </div>
               </CardHeader>
               <CardBody className="p-4 sm:p-6 pt-2">
                 <div className="text-2xl sm:text-3xl font-bold text-[#017172] mb-1">
@@ -185,7 +207,7 @@ export default function TrackingPage() {
           <CardHeader className="px-4 sm:px-6 py-4 border-b border-[#E8C7C3]/20">
             <h2 className="text-xl sm:text-2xl font-bold text-[#1E1E1E] flex items-center gap-2">
               <MousePointerClick size={22} className="text-[#017172]" />
-              Klicks nach Link
+              Klicks nach Link (gesamt)
             </h2>
           </CardHeader>
           <CardBody className="p-4 sm:p-6">

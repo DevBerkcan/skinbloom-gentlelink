@@ -220,6 +220,8 @@ export interface RevenueStatistics {
   todayBookings: number;
   weekBookings: number;
   monthBookings: number;
+  allTimeRevenue: number;
+  allTimeBookings: number;
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
