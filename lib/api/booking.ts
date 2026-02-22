@@ -64,6 +64,7 @@ export interface Employee {
   role: string;
   specialty: string | null;
   isActive: boolean;
+  location?: string | null;
 }
 
 export interface CreateBookingRequest {

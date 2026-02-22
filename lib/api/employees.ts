@@ -8,11 +8,10 @@ export interface Employee {
   name: string;
   role: string;
   specialty?: string | null;
+  location?: string | null;
   isActive: boolean;
   createdAt: string;
-  /** Username for JWT login — may be null for employees not yet set up */
   username?: string | null;
-  /** Whether this employee already has a password set */
   hasPassword: boolean;
 }
 
@@ -20,9 +19,8 @@ export interface CreateEmployeeDto {
   name: string;
   role: string;
   specialty?: string | null;
-  /** Set username at creation time (optional) */
+  location?: string | null;
   username?: string | null;
-  /** Set initial password at creation time (required for new employees) */
   password?: string | null;
 }
 
@@ -30,10 +28,9 @@ export interface UpdateEmployeeDto {
   name: string;
   role: string;
   specialty?: string | null;
+  location?: string | null;
   isActive: boolean;
-  /**
-   * Pass newPassword here to reset this employee's password.
-   */
+
   newPassword?: string | null;
 }
 

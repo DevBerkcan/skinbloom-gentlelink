@@ -9,7 +9,7 @@ import { Chip } from "@nextui-org/chip";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@nextui-org/modal";
 import {
   Plus, Edit, Trash2, Users, AlertCircle, X, Save, UserCheck, UserX,
-  Lock, Eye, EyeOff, Key
+  Lock, Eye, EyeOff, Key, MapPin
 } from "lucide-react";
 import { getEmployees, createEmployee, updateEmployee, deleteEmployee, type Employee, type CreateEmployeeDto } from "@/lib/api/employees";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -38,7 +38,8 @@ const EMPTY: CreateEmployeeDto = {
   role: "",
   specialty: "",
   username: "",
-  password: ""
+  password: "",
+  location: ""  // Added location
 };
 
 export default function EmployeesPage() {
@@ -86,7 +87,8 @@ export default function EmployeesPage() {
       name: emp.name,
       role: emp.role,
       specialty: emp.specialty ?? "",
-      username: emp.username ?? ""
+      username: emp.username ?? "",
+      location: emp.location ?? ""  // Added location
     });
     setFormActive(emp.isActive);
     setModalErr(null);
@@ -121,6 +123,7 @@ export default function EmployeesPage() {
         name: form.name.trim(),
         role: form.role.trim(),
         specialty: form.specialty?.trim() || null,
+        location: form.location?.trim() || null  // Added location
       };
 
       // Add username for new employees or if changed
@@ -282,6 +285,11 @@ export default function EmployeesPage() {
                         </Chip>
                       </div>
                       <p className="text-sm text-[#8A8A8A] font-medium">{emp.role}</p>
+                      {emp.location && (
+                        <p className="text-xs text-[#8A8A8A] mt-1 flex items-center gap-1">
+                          <MapPin size={10} /> {emp.location}
+                        </p>
+                      )}
                       {emp.specialty && <p className="text-xs text-[#8A8A8A] mt-1 italic">{emp.specialty}</p>}
                       {emp.username && (
                         <p className="text-xs text-[#8A8A8A] mt-1 flex items-center gap-1">
@@ -389,6 +397,17 @@ export default function EmployeesPage() {
                     isDisabled={submitting}
                     onChange={(e) => setForm({ ...form, specialty: e.target.value })}
                     classNames={INPUT_CLS}
+                  />
+
+                  {/* Location Field - New */}
+                  <Input
+                    label="Standort (optional)"
+                    placeholder="z.B. Basel, Zürich, Bern"
+                    value={form.location ?? ""}
+                    isDisabled={submitting}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                    classNames={INPUT_CLS}
+                    startContent={<MapPin size={16} className="text-[#8A8A8A]" />}
                   />
 
                   {/* Username Field */}

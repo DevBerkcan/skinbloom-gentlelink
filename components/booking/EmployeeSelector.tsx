@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardBody } from "@nextui-org/card";
-import { User, Star, Loader2 } from "lucide-react";
+import { User, Star, Loader2, MapPin, Navigation } from "lucide-react";
 import { getEmployees, type Employee } from "@/lib/api/booking";
 
 interface EmployeeSelectorProps {
@@ -78,6 +78,34 @@ export function EmployeeSelector({ selectedEmployee, onSelect }: EmployeeSelecto
                         <p className="text-xs sm:text-sm text-[#8A8A8A] mt-1 break-words">
                           {emp.role}
                         </p>
+                        
+                        {/* Location display - Made more prominent */}
+                        {emp.location ? (
+                          <div className="mt-3 mb-2">
+                            <div className="flex items-center gap-2 bg-[#F5EDEB] rounded-lg px-3 py-2 border border-[#E8C7C3]/30">
+                              <div className="bg-[#000000] p-1.5 rounded-lg">
+                                <MapPin size={14} className="text-white" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-xs font-medium text-[#8A8A8A]">Standort</p>
+                                <p className="text-sm font-bold text-[#00000]">{emp.location}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-3 mb-2">
+                            <div className="flex items-center gap-2 bg-[#F5EDEB]/50 rounded-lg px-3 py-2 border border-[#E8C7C3]/20">
+                              <div className="bg-[#6b7280] p-1.5 rounded-lg">
+                                <MapPin size={14} className="text-white" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-[#8A8A8A]">Standort</p>
+                                <p className="text-sm text-[#8A8A8A]">Auf Anfrage</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
                         {emp.specialty && (
                           <div className="flex items-center gap-2 mt-2">
                             <div
