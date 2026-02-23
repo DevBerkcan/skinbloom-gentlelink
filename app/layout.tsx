@@ -10,7 +10,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Skinbloom Aesthetics – Link in Bio",
+  title: "Skinbloom Aesthetics",
   description:
     "Skinbloom Aesthetics in Basel – Hautpflege bei Skinbloom Aesthetics. Jetzt online Termin buchen!",
   keywords: [
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Skinbloom Aesthetics – Premium Skinbloom Aesthetics Basel",
     description:
-      "Skinbloom Aesthetics in Basel – moderne Cuts, Fades & Bartpflege. Online buchen!",
+      "Skinbloom Aesthetics in Basel - Online buchen!",
   },
   viewport: {
     width: "device-width",
