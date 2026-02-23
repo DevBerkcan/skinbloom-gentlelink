@@ -20,7 +20,7 @@ export default function DatenschutzPage() {
         </Link>
 
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 border-2 border-[#E8C7C3]/20">
-          <h1 className="text-4xl font-bold text-[#1E1E1E] mb-8">Datenschutzerklärung</h1>
+          <h1 className="text-4xl font-bold text-[#1E1E1E] mb-8">Datenschutz</h1>
 
           <div className="space-y-8 text-[#8A8A8A]">
             <section>
