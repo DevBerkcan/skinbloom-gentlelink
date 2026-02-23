@@ -62,7 +62,7 @@ const EMPTY_RANGE: CreateBlockedDateRangeDto = {
 export default function BlockedSlotsPage() {
   const { hasRole } = useAuth();
   const isAdmin = hasRole(['Admin', 'Owner']);
-  
+
   const [slots, setSlots] = useState<BlockedTimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +83,9 @@ export default function BlockedSlotsPage() {
   const [calMonth, setCalMonth] = useState(today.getMonth());
   const [selDate, setSelDate] = useState<string | null>(null);
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-
+  const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
+  const [deleting, setDeleting] = useState(false);
+  const [selectedSlotForDelete, setSelectedSlotForDelete] = useState<BlockedTimeSlot | null>(null);
   const { confirm, dialog: confirmDialog } = useConfirm();
 
   useEffect(() => { load(); }, []);
@@ -97,7 +99,7 @@ export default function BlockedSlotsPage() {
       startDate.setMonth(startDate.getMonth() - 1);
       const endDate = new Date();
       endDate.setMonth(endDate.getMonth() + 3);
-      
+
       // Admin sees all slots with all=true
       const data = await blockedTimeSlotsApi.getAll(startDate, endDate, isAdmin);
       setSlots(data);
@@ -163,7 +165,7 @@ export default function BlockedSlotsPage() {
           endTime: singleForm.endTime,
           reason: singleForm.reason || undefined,
         });
-        
+
         if (result.success && result.data) {
           setSlots((prev) => prev.map((s) => (s.id === editingSlot.id ? result.data : s)));
           handleClose();
@@ -180,7 +182,7 @@ export default function BlockedSlotsPage() {
           setSubmitting(false);
           return;
         }
-        
+
         const result = await blockedTimeSlotsApi.createRange(rangeForm);
         if (result.success) {
           await load();
@@ -194,7 +196,7 @@ export default function BlockedSlotsPage() {
           setSubmitting(false);
           return;
         }
-        
+
         const result = await blockedTimeSlotsApi.create(singleForm);
         if (result.success) {
           await load();
@@ -212,26 +214,28 @@ export default function BlockedSlotsPage() {
 
   // ── Delete ────────────────────────────────────────────────────────────────
 
-  async function handleDelete(slot: BlockedTimeSlot) {
-    const ok = await confirm({
-      title: "Zeitslot löschen",
-      message: `${new Date(slot.blockDate + "T00:00").toLocaleDateString("de-DE", {
-        weekday: "long", day: "2-digit", month: "long",
-      })} · ${slot.startTime.slice(0, 5)}–${slot.endTime.slice(0, 5)} Uhr wirklich löschen?`,
-      confirmLabel: "Löschen",
-      variant: "danger",
-    });
-    if (!ok) return;
-    
+  function handleDelete(slot: BlockedTimeSlot) {
+    setSelectedSlotForDelete(slot);
+    onDeleteModalOpen();
+  }
+
+  async function handleDeleteConfirm() {
+    if (!selectedSlotForDelete) return;
+
+    setDeleting(true);
     try {
-      const result = await blockedTimeSlotsApi.delete(slot.id);
+      const result = await blockedTimeSlotsApi.delete(selectedSlotForDelete.id);
       if (result.success) {
-        setSlots((prev) => prev.filter((s) => s.id !== slot.id));
+        setSlots((prev) => prev.filter((s) => s.id !== selectedSlotForDelete.id));
+        onDeleteModalClose();
       } else {
         setError(result.message || "Fehler beim Löschen");
       }
     } catch (e: any) {
       setError(e.message || "Fehler beim Löschen");
+    } finally {
+      setDeleting(false);
+      setSelectedSlotForDelete(null);
     }
   }
 
@@ -296,6 +300,107 @@ export default function BlockedSlotsPage() {
           </Button>
         </div>
 
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            onDeleteModalClose();
+            setSelectedSlotForDelete(null);
+          }}
+          size="md"
+          placement="center"
+          classNames={MODAL_CLS}
+        >
+          <ModalContent>
+            {(onModalClose) => (
+              <>
+                <ModalHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center">
+                      <AlertCircle size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-[#1E1E1E]">Zeitslot löschen</h2>
+                      <p className="text-xs text-[#8A8A8A]">
+                        {selectedSlotForDelete && new Date(selectedSlotForDelete.blockDate + "T00:00").toLocaleDateString("de-DE", {
+                          day: "2-digit", month: "long",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </ModalHeader>
+
+                <ModalBody>
+                  {selectedSlotForDelete && (
+                    <div className="space-y-4">
+                      {/* Warning Message */}
+                      <div className="bg-red-50 p-4 rounded-xl border border-red-200">
+                        <p className="text-sm text-red-700 flex items-start gap-2">
+                          <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                          <span>
+                            <strong>Achtung:</strong> Dieser Zeitslot wird endgültig gelöscht.
+                          </span>
+                        </p>
+                      </div>
+
+                      {/* Slot Info */}
+                      <div className="bg-[#F5EDEB] p-4 rounded-xl border border-[#E8C7C3]/30">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#6b7280]/10 flex items-center justify-center">
+                            <Ban size={18} className="text-[#6b7280]" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-[#1E1E1E]">
+                              {new Date(selectedSlotForDelete.blockDate + "T00:00").toLocaleDateString("de-DE", {
+                                weekday: "long", day: "2-digit", month: "long", year: "numeric",
+                              })}
+                            </p>
+                            <div className="flex items-center gap-1.5 mt-1 text-sm text-[#8A8A8A]">
+                              <Clock size={13} />
+                              <span>
+                                {selectedSlotForDelete.startTime.slice(0, 5)} –{" "}
+                                {selectedSlotForDelete.endTime.slice(0, 5)} Uhr
+                              </span>
+                            </div>
+                            {selectedSlotForDelete.reason && (
+                              <p className="text-sm text-[#8A8A8A] mt-1 italic">
+                                „{selectedSlotForDelete.reason}"
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </ModalBody>
+
+                <ModalFooter className="gap-2">
+                  <Button
+                    variant="flat"
+                    className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                    onPress={() => {
+                      onModalClose();
+                      setSelectedSlotForDelete(null);
+                    }}
+                    isDisabled={deleting}
+                    startContent={<X size={14} />}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    className="bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold shadow-lg shadow-red-500/20"
+                    onPress={handleDeleteConfirm}
+                    isLoading={deleting}
+                    startContent={!deleting && <Trash2 size={14} />}
+                  >
+                    Endgültig löschen
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
+
         {/* Mini-Calendar */}
         <Card className="mb-6 border border-[#E8C7C3]/20 shadow-xl">
           <div className="flex items-center justify-between w-full px-4 py-3 bg-gradient-to-r from-[#F5EDEB] to-white border-b border-[#E8C7C3]/20 rounded-t-xl">
@@ -337,10 +442,10 @@ export default function BlockedSlotsPage() {
                       ${isSel
                         ? "bg-[#017172] text-white shadow-md"
                         : isToday
-                        ? "ring-2 ring-[#017172] text-[#017172]"
-                        : isBlocked
-                        ? "bg-[#017172]/10 text-[#017172] hover:bg-[#017172]/20"
-                        : "text-[#1E1E1E] hover:bg-[#F5EDEB]"
+                          ? "ring-2 ring-[#017172] text-[#017172]"
+                          : isBlocked
+                            ? "bg-[#017172]/10 text-[#017172] hover:bg-[#017172]/20"
+                            : "text-[#1E1E1E] hover:bg-[#F5EDEB]"
                       }`}
                   >
                     {day}
@@ -379,8 +484,8 @@ export default function BlockedSlotsPage() {
           <h3 className="font-semibold text-[#1E1E1E]">
             {selDate
               ? `Blockierungen am ${new Date(selDate + "T00:00").toLocaleDateString("de-DE", {
-                  day: "2-digit", month: "long",
-                })} (${filteredSlots.length})`
+                day: "2-digit", month: "long",
+              })} (${filteredSlots.length})`
               : `Alle Blockierungen (${slots.length})`}
           </h3>
           {totalPages > 1 && (
@@ -494,11 +599,10 @@ export default function BlockedSlotsPage() {
                   return (
                     <Button
                       key={p} size="sm" variant="flat"
-                      className={`min-w-9 h-9 font-semibold ${
-                        p === safePage
+                      className={`min-w-9 h-9 font-semibold ${p === safePage
                           ? "bg-[#017172] text-white"
                           : "bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] hover:bg-[#F5EDEB]"
-                      }`}
+                        }`}
                       onPress={() => setPage(p)}
                     >
                       {p}
