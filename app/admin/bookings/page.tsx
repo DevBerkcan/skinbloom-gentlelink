@@ -911,13 +911,6 @@ export default function AdminBookingsPage() {
                       </div>
                     </div>
 
-                    <Input
-                      label="Löschgrund (optional)"
-                      placeholder="z.B. Doppelte Buchung..."
-                      value={deleteReason}
-                      onChange={(e) => setDeleteReason(e.target.value)}
-                      classNames={inputClassNames}
-                    />
                   </div>
                 )}
               </ModalBody>
