@@ -59,7 +59,13 @@ export default function EmployeesPage() {
   const [formActive, setFormActive] = useState<boolean>(true);
   const [modalErr, setModalErr] = useState<string | null>(null);
   const [resetPassword, setResetPassword] = useState<boolean>(false);
-
+  const [deleteReason, setDeleteReason] = useState("");
+  const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
+  const [deleting, setDeleting] = useState(false);
+  const [selectedEmployeeForDelete, setSelectedEmployeeForDelete] = useState<Employee | null>(null);
+  const { isOpen: isToggleModalOpen, onOpen: onToggleModalOpen, onClose: onToggleModalClose } = useDisclosure();
+  const [toggling, setToggling] = useState(false);
+  const [selectedEmployeeForToggle, setSelectedEmployeeForToggle] = useState<Employee | null>(null);
   const { confirm, dialog } = useConfirm();
 
   useEffect(() => { load(); }, [showInactive]);
@@ -159,34 +165,51 @@ export default function EmployeesPage() {
   }
 
   async function handleDelete(emp: Employee) {
-    const ok = await confirm({
-      title: "Mitarbeiter entfernen",
-      message: `„${emp.name}" wirklich entfernen? Die Person wird deaktiviert und erscheint nicht mehr in Buchungen.`,
-      confirmLabel: "Entfernen",
-      variant: "danger",
-    });
-    if (!ok) return;
-    try { await deleteEmployee(emp.id); await load(); }
-    catch (e: any) { setError(e.message); }
+    setSelectedEmployeeForDelete(emp);
+    onDeleteModalOpen();
   }
 
-  async function handleToggle(emp: Employee) {
-    const ok = await confirm({
-      title: emp.isActive ? "Mitarbeiter deaktivieren" : "Mitarbeiter aktivieren",
-      message: `„${emp.name}" ${emp.isActive ? "deaktivieren" : "aktivieren"}?`,
-      confirmLabel: emp.isActive ? "Deaktivieren" : "Aktivieren",
-      variant: emp.isActive ? "warning" : "info",
-    });
-    if (!ok) return;
+  async function handleDeleteConfirm() {
+    if (!selectedEmployeeForDelete) return;
+
+    setDeleting(true);
     try {
-      await updateEmployee(emp.id, {
-        name: emp.name,
-        role: emp.role,
-        specialty: emp.specialty,
-        isActive: !emp.isActive
+      await deleteEmployee(selectedEmployeeForDelete.id);
+      await load();
+      onDeleteModalClose();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setDeleting(false);
+      setSelectedEmployeeForDelete(null);
+    }
+  }
+
+
+  function handleToggle(emp: Employee) {
+    setSelectedEmployeeForToggle(emp);
+    onToggleModalOpen();
+  }
+
+  async function handleToggleConfirm() {
+    if (!selectedEmployeeForToggle) return;
+
+    setToggling(true);
+    try {
+      await updateEmployee(selectedEmployeeForToggle.id, {
+        name: selectedEmployeeForToggle.name,
+        role: selectedEmployeeForToggle.role,
+        specialty: selectedEmployeeForToggle.specialty,
+        isActive: !selectedEmployeeForToggle.isActive
       });
       await load();
-    } catch (e: any) { setError(e.message); }
+      onToggleModalClose();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setToggling(false);
+      setSelectedEmployeeForToggle(null);
+    }
   }
 
   const activeCount = employees.filter(e => e.isActive).length;
@@ -210,6 +233,261 @@ export default function EmployeesPage() {
             Mitarbeiter hinzufügen
           </Button>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            onDeleteModalClose();
+            setSelectedEmployeeForDelete(null);
+          }}
+          size="lg"
+          placement="center"
+          classNames={MODAL_CLS}
+        >
+          <ModalContent>
+            {(onModalClose) => (
+              <>
+                <ModalHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center">
+                      <AlertCircle size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-[#1E1E1E]">Mitarbeiter löschen</h2>
+                      <p className="text-xs text-[#8A8A8A]">
+                        {selectedEmployeeForDelete?.name}
+                      </p>
+                    </div>
+                  </div>
+                </ModalHeader>
+
+                <ModalBody>
+                  {selectedEmployeeForDelete && (
+                    <div className="space-y-4">
+                      {/* Warning Message */}
+                      <div className="bg-red-50 p-4 rounded-xl border border-red-200">
+                        <p className="text-sm text-red-700 flex items-start gap-2">
+                          <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                          <span>
+                            <strong>Achtung:</strong> Das Löschen eines Mitarbeiters ist endgültig und kann nicht rückgängig gemacht werden.
+                          </span>
+                        </p>
+                      </div>
+
+                      {/* Employee Info */}
+                      <div className="bg-[#F5EDEB] p-4 rounded-xl border border-[#E8C7C3]/30">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 ${avatarBg(selectedEmployeeForDelete.name)}`}>
+                            {initials(selectedEmployeeForDelete.name)}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-[#1E1E1E]">{selectedEmployeeForDelete.name}</p>
+                            <p className="text-sm text-[#8A8A8A]">{selectedEmployeeForDelete.role}</p>
+                            {selectedEmployeeForDelete.location && (
+                              <p className="text-xs text-[#8A8A8A] mt-1 flex items-center gap-1">
+                                <MapPin size={10} /> {selectedEmployeeForDelete.location}
+                              </p>
+                            )}
+                          </div>
+                          <Chip
+                            size="sm"
+                            variant="flat"
+                            className={selectedEmployeeForDelete.isActive ? "bg-[#017172]/10 text-[#017172]" : "bg-[#6b7280]/10 text-[#6b7280]"}
+                          >
+                            {selectedEmployeeForDelete.isActive ? "Aktiv" : "Inaktiv"}
+                          </Chip>
+                        </div>
+                      </div>
+
+                      {/* Impact Warning */}
+                      <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                        <p className="text-sm text-amber-700 flex items-start gap-2">
+                          <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                          <span>
+                            <strong>Auswirkung:</strong> Beim Löschen eines Mitarbeiters werden alle zukünftigen Buchungen ungültig.
+                            Bereits abgeschlossene Buchungen bleiben erhalten, können aber nicht mehr dem Mitarbeiter zugeordnet werden.
+                          </span>
+                        </p>
+                      </div>
+
+                      {/* Alternative Suggestion */}
+                      <div className="bg-[#017172]/5 p-4 rounded-xl border border-[#017172]/20">
+                        <p className="text-sm text-[#017172] flex items-start gap-2">
+                          <UserX size={16} className="shrink-0 mt-0.5" />
+                          <span>
+                            <strong>Alternative:</strong> Statt zu löschen, können Sie den Mitarbeiter auch <strong>deaktivieren</strong>.
+                            Deaktivierte Mitarbeiter erscheinen nicht in Buchungen, aber alle historischen Daten bleiben erhalten.
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </ModalBody>
+
+                <ModalFooter className="gap-2">
+                  <Button
+                    variant="flat"
+                    className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                    onPress={() => {
+                      onModalClose();
+                      setSelectedEmployeeForDelete(null);
+                    }}
+                    isDisabled={deleting}
+                    startContent={<X size={14} />}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    className="bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold shadow-lg shadow-red-500/20"
+                    onPress={handleDeleteConfirm}
+                    isLoading={deleting}
+                    startContent={!deleting && <Trash2 size={14} />}
+                  >
+                    Endgültig löschen
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
+
+        {/* Toggle Active/Inactive Modal */}
+        <Modal
+          isOpen={isToggleModalOpen}
+          onClose={() => {
+            onToggleModalClose();
+            setSelectedEmployeeForToggle(null);
+          }}
+          size="lg"
+          placement="center"
+          classNames={MODAL_CLS}
+        >
+          <ModalContent>
+            {(onModalClose) => (
+              <>
+                <ModalHeader>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedEmployeeForToggle?.isActive
+                        ? "bg-amber-500"
+                        : "bg-[#017172]"
+                      }`}>
+                      {selectedEmployeeForToggle?.isActive
+                        ? <UserX size={20} className="text-white" />
+                        : <UserCheck size={20} className="text-white" />
+                      }
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-[#1E1E1E]">
+                        {selectedEmployeeForToggle?.isActive ? "Mitarbeiter deaktivieren" : "Mitarbeiter aktivieren"}
+                      </h2>
+                      <p className="text-xs text-[#8A8A8A]">
+                        {selectedEmployeeForToggle?.name}
+                      </p>
+                    </div>
+                  </div>
+                </ModalHeader>
+
+                <ModalBody>
+                  {selectedEmployeeForToggle && (
+                    <div className="space-y-4">
+                      {/* Info Message */}
+                      <div className={`p-4 rounded-xl border ${selectedEmployeeForToggle.isActive
+                          ? "bg-amber-50 border-amber-200"
+                          : "bg-[#017172]/5 border-[#017172]/20"
+                        }`}>
+                        <p className={`text-sm flex items-start gap-2 ${selectedEmployeeForToggle.isActive
+                            ? "text-amber-700"
+                            : "text-[#017172]"
+                          }`}>
+                          {selectedEmployeeForToggle.isActive
+                            ? <UserX size={16} className="shrink-0 mt-0.5" />
+                            : <UserCheck size={16} className="shrink-0 mt-0.5" />
+                          }
+                          <span>
+                            <strong>
+                              {selectedEmployeeForToggle.isActive
+                                ? "Möchten Sie diesen Mitarbeiter wirklich deaktivieren?"
+                                : "Möchten Sie diesen Mitarbeiter wirklich aktivieren?"}
+                            </strong>
+                            <br />
+                            {selectedEmployeeForToggle.isActive
+                              ? "Deaktivierte Mitarbeiter erscheinen nicht mehr in Buchungsformularen."
+                              : "Aktivierte Mitarbeiter sind wieder für Buchungen verfügbar."}
+                          </span>
+                        </p>
+                      </div>
+
+                      {/* Employee Info */}
+                      <div className="bg-[#F5EDEB] p-4 rounded-xl border border-[#E8C7C3]/30">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 ${avatarBg(selectedEmployeeForToggle.name)}`}>
+                            {initials(selectedEmployeeForToggle.name)}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-[#1E1E1E]">{selectedEmployeeForToggle.name}</p>
+                            <p className="text-sm text-[#8A8A8A]">{selectedEmployeeForToggle.role}</p>
+                            {selectedEmployeeForToggle.location && (
+                              <p className="text-xs text-[#8A8A8A] mt-1 flex items-center gap-1">
+                                <MapPin size={10} /> {selectedEmployeeForToggle.location}
+                              </p>
+                            )}
+                          </div>
+                          <Chip
+                            size="sm"
+                            variant="flat"
+                            className={selectedEmployeeForToggle.isActive ? "bg-[#017172]/10 text-[#017172]" : "bg-[#6b7280]/10 text-[#6b7280]"}
+                          >
+                            {selectedEmployeeForToggle.isActive ? "Aktiv" : "Inaktiv"}
+                          </Chip>
+                        </div>
+                      </div>
+
+                      {/* Impact Warning for deactivation */}
+                      {selectedEmployeeForToggle.isActive && (
+                        <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                          <p className="text-sm text-amber-700 flex items-start gap-2">
+                            <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                            <span>
+                              <strong>Auswirkung:</strong> Der Mitarbeiter wird in zukünftigen Buchungsformularen nicht mehr angezeigt.
+                              Bereits gebuchte Termine bleiben bestehen.
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </ModalBody>
+
+                <ModalFooter className="gap-2">
+                  <Button
+                    variant="flat"
+                    className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                    onPress={() => {
+                      onModalClose();
+                      setSelectedEmployeeForToggle(null);
+                    }}
+                    isDisabled={toggling}
+                    startContent={<X size={14} />}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    className={selectedEmployeeForToggle?.isActive
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold shadow-lg shadow-amber-500/20"
+                      : "bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
+                    }
+                    onPress={handleToggleConfirm}
+                    isLoading={toggling}
+                    startContent={!toggling && (selectedEmployeeForToggle?.isActive ? <UserX size={14} /> : <UserCheck size={14} />)}
+                  >
+                    {selectedEmployeeForToggle?.isActive ? "Deaktivieren" : "Aktivieren"}
+                  </Button>
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
