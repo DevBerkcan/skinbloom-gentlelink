@@ -16,6 +16,7 @@ const API_BASE_URL =
   createBooking,
   getBookingsByEmail,
   cancelBooking,
+  getEmployeesByService,
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -100,6 +101,20 @@ export interface BookingResponse {
     role: string;
     specialty: string | null;
   } | null;
+}
+
+/**
+ * Get employees by service ID - only returns employees that can perform this service
+ */
+export async function getEmployeesByService(serviceId: string): Promise<Employee[]> {
+  const res = await fetch(`${API_BASE_URL}/employees/by-service/${serviceId}?activeOnly=true`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || "Fehler beim Laden der Mitarbeiter für diesen Service");
+  }
+  return res.json();
 }
 
 // ── Employees ─────────────────────────────────────────────────────────────────

@@ -202,8 +202,8 @@ export default function BookingPage() {
                   selectedEmployee={selectedEmployee}
                   onSelect={handleEmployeeSelect}
                   onNext={next}
-                  onBack={back}
-                />
+                  onBack={back} 
+                  selectedService={selectedService}                />
               </motion.div>
             )}
 

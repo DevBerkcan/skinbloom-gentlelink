@@ -1,33 +1,124 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardBody } from "@nextui-org/card";
 import { User, Star, Loader2, MapPin, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
-import { getEmployees, type Employee } from "@/lib/api/booking";
+import { getEmployeesByService, type Employee, type Service } from "@/lib/api/booking";
 
 interface EmployeeSelectorProps {
+  selectedService: Service | null;
   selectedEmployee: Employee | null;
   onSelect: (employee: Employee) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-export function EmployeeSelector({ selectedEmployee, onSelect, onNext, onBack }: EmployeeSelectorProps) {
+export function EmployeeSelector({ 
+  selectedService,
+  selectedEmployee, 
+  onSelect, 
+  onNext, 
+  onBack 
+}: EmployeeSelectorProps) {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
+
+  // Use useCallback to memoize onSelect to prevent unnecessary re-renders
+  const handleSelect = useCallback((employee: Employee) => {
+    onSelect(employee);
+  }, [onSelect]);
 
   useEffect(() => {
-    getEmployees()
-      .then(setEmployees)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    let isMounted = true;
+
+    async function loadEmployees() {
+      if (!selectedService?.id) {
+        if (isMounted) {
+          setError("Kein Service ausgewählt");
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (isMounted) {
+        setLoading(true);
+        setError(null);
+      }
+      
+      try {
+        const data = await getEmployeesByService(selectedService.id);
+        
+        if (isMounted) {
+          setEmployees(data);
+          
+          // Auto-select if only one employee and not already auto-selected
+          if (data.length === 1 && !hasAutoSelected && !selectedEmployee) {
+            setHasAutoSelected(true);
+            handleSelect(data[0]);
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError("Fehler beim Laden der Mitarbeiter");
+          console.error(err);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+    
+    loadEmployees();
+
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedService?.id, handleSelect, hasAutoSelected, selectedEmployee]);
+
+  // Reset auto-select flag when service changes
+  useEffect(() => {
+    setHasAutoSelected(false);
+  }, [selectedService?.id]);
 
   if (loading) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="animate-spin text-[#E8C7C3]" size={32} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-red-500">
+        <p>{error}</p>
+        <button
+          onClick={onBack}
+          className="mt-4 text-[#E8C7C3] hover:text-[#D8B0AC] transition-colors"
+        >
+          Zurück zur Serviceauswahl
+        </button>
+      </div>
+    );
+  }
+
+  if (employees.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-[#8A8A8A] mb-4">
+          Für diesen Service sind aktuell keine Mitarbeiter verfügbar.
+        </p>
+        <button
+          onClick={onBack}
+          className="text-[#E8C7C3] hover:text-[#D8B0AC] transition-colors underline"
+        >
+          Anderen Service wählen
+        </button>
       </div>
     );
   }
@@ -42,6 +133,11 @@ export function EmployeeSelector({ selectedEmployee, onSelect, onNext, onBack }:
           <p className="text-sm sm:text-base text-[#8A8A8A]">
             Schritt 2 von 4 – Wer soll Ihre Behandlung durchführen?
           </p>
+          {selectedService && (
+            <p className="text-xs text-[#E8C7C3] mt-1">
+              für: {selectedService.name}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-2 sm:gap-3">
@@ -52,7 +148,7 @@ export function EmployeeSelector({ selectedEmployee, onSelect, onNext, onBack }:
               <Card
                 key={emp.id}
                 isPressable
-                onPress={() => onSelect(emp)}
+                onPress={() => handleSelect(emp)}
                 className={`w-full transition-all ${
                   isSelected
                     ? "ring-2 ring-[#E8C7C3] ring-offset-2"
@@ -129,6 +225,22 @@ export function EmployeeSelector({ selectedEmployee, onSelect, onNext, onBack }:
             );
           })}
         </div>
+
+        {/* Option to skip employee selection - select first available */}
+        {employees.length > 1 && !selectedEmployee && (
+          <div className="text-center pt-4">
+            <button
+              onClick={() => {
+                if (employees.length > 0) {
+                  handleSelect(employees[0]);
+                }
+              }}
+              className="text-sm text-[#8A8A8A] hover:text-[#E8C7C3] transition-colors underline"
+            >
+              Keine Präferenz - ersten verfügbaren wählen
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Sticky bottom bar */}

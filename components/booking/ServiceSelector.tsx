@@ -4,7 +4,10 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardBody } from "@nextui-org/card";
 import { Input } from "@nextui-org/input";
-import { Sparkles, Clock, ChevronDown, ChevronUp, Loader2, Search, X, CheckCircle, ArrowRight } from "lucide-react";
+import { 
+  Sparkles, Clock, ChevronDown, ChevronUp, Loader2, 
+  Search, X, CheckCircle, ArrowRight
+} from "lucide-react";
 import type { Service, ServiceCategory } from "@/lib/api/booking";
 import { getServiceCategories, getServicesByCategory } from "@/lib/api/booking";
 
@@ -67,8 +70,10 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
     setExpandedId(categoryId);
     setShowSearchResults(false);
     setSearchTerm("");
+    
     const category = categories.find((c) => c.id === categoryId);
     if (category && category.services.length > 0) return;
+    
     setLoadingServices((prev) => ({ ...prev, [categoryId]: true }));
     try {
       const services = await getServicesByCategory(categoryId);
@@ -105,11 +110,10 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
 
   return (
     <>
-      {/* Extra bottom padding so content isn't hidden behind sticky bar */}
       <div className={`space-y-6 px-4 sm:px-0 ${selectedService ? "pb-28" : "pb-4"}`}>
         <div className="text-center">
           <h2 className="text-xl sm:text-2xl font-bold text-[#1E1E1E] mb-2">
-            Wähle deine Leistung
+            Wähle deine Behandlung
           </h2>
           <p className="text-sm sm:text-base text-[#8A8A8A]">Schritt 1 von 4</p>
         </div>
@@ -117,7 +121,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
         {/* Search Bar */}
         <div className="relative">
           <Input
-            placeholder="Services suchen..."
+            placeholder="Behandlungen suchen..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -151,7 +155,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
               {searchResults.length > 0 ? (
                 <>
                   <p className="text-sm text-[#8A8A8A]">
-                    {searchResults.length} Service{searchResults.length !== 1 ? "s" : ""} gefunden
+                    {searchResults.length} {searchResults.length === 1 ? 'Behandlung' : 'Behandlungen'} gefunden
                   </p>
                   <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                     {searchResults.map((service) => (
@@ -204,7 +208,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
               ) : (
                 <div className="text-center py-8 bg-[#F5EDEB] rounded-xl">
                   <p className="text-sm text-[#8A8A8A]">
-                    Keine Services gefunden für &quot;{searchTerm}&quot;
+                    Keine Behandlungen gefunden für &quot;{searchTerm}&quot;
                   </p>
                 </div>
               )}
@@ -243,11 +247,11 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
                       {isLoading ? (
                         <div className="flex items-center justify-center py-8">
                           <Loader2 className="w-6 h-6 text-[#E8C7C3] animate-spin" />
-                          <span className="ml-2 text-sm text-[#8A8A8A]">Services werden geladen...</span>
+                          <span className="ml-2 text-sm text-[#8A8A8A]">Behandlungen werden geladen...</span>
                         </div>
                       ) : category.services.length === 0 ? (
                         <p className="text-center py-4 text-sm text-[#8A8A8A]">
-                          Keine Services in dieser Kategorie
+                          Keine Behandlungen in dieser Kategorie
                         </p>
                       ) : (
                         <div className="flex flex-col gap-2 sm:gap-3">
@@ -313,7 +317,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
         )}
       </div>
 
-      {/* Sticky bottom bar - appears when service is selected */}
+      {/* Sticky bottom bar - Matches EmployeeSelector and DateTimePicker */}
       <AnimatePresence>
         {selectedService && (
           <motion.div
@@ -323,14 +327,14 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/95 backdrop-blur-sm border-t-2 border-[#E8C7C3]/30 shadow-2xl"
           >
-            <div className="max-w-3xl mx-auto flex items-center gap-4">
-              {/* Selected service summary */}
+            <div className="max-w-3xl mx-auto flex items-center gap-3">
+              {/* Selected service summary - matches EmployeeSelector style */}
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="bg-[#E8C7C3] p-2 rounded-lg flex-shrink-0">
                   <CheckCircle className="text-white" size={18} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs text-[#8A8A8A]">Ausgewählt</p>
+                  <p className="text-xs text-[#8A8A8A]">Ausgewählte Behandlung</p>
                   <p className="font-bold text-[#1E1E1E] text-sm truncate">{selectedService.name}</p>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-[#8A8A8A]">
@@ -344,7 +348,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
                 </div>
               </div>
 
-              {/* Weiter button */}
+              {/* Weiter button - matches EmployeeSelector style */}
               <button
                 onClick={onNext}
                 className="flex-shrink-0 flex items-center gap-2 bg-gradient-to-r from-[#E8C7C3] to-[#D8B0AC] hover:from-[#D8B0AC] hover:to-[#c49590] active:scale-95 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg"
