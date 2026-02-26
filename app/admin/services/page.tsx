@@ -114,16 +114,17 @@ export default function AdminServicesPage() {
     const [selectedEmployee, setSelectedEmployee] = useState<EmployeeForAssignment | null>(null);
     const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
 
-    // Form state for service
-    const [serviceForm, setServiceForm] = useState<Partial<CreateServiceData>>({
-        name: "",
-        description: "",
-        durationMinutes: 30,
-        price: 0,
-        displayOrder: 0,
-        categoryId: "",
-        employeeId: null,
-    });
+
+// Form state for service - change from employeeId to employeeIds array
+const [serviceForm, setServiceForm] = useState<Partial<CreateServiceData>>({
+    name: "",
+    description: "",
+    durationMinutes: 30,
+    price: 0,
+    displayOrder: 0,
+    categoryId: "",
+    employeeIds: [], 
+});
 
     // Form state for category
     const [categoryForm, setCategoryForm] = useState<Partial<CreateCategoryData>>({
@@ -151,12 +152,12 @@ export default function AdminServicesPage() {
             let filteredCategories = categoriesData;
 
             if (searchTerm) {
-                const term = searchTerm.toLowerCase();
-                filteredServices = servicesData.filter(s =>
-                    s.name.toLowerCase().includes(term) ||
-                    s.categoryName.toLowerCase().includes(term) ||
-                    (s.employeeName?.toLowerCase().includes(term))
-                );
+    const term = searchTerm.toLowerCase();
+    filteredServices = servicesData.filter(s =>
+        s.name.toLowerCase().includes(term) ||
+        s.categoryName.toLowerCase().includes(term) ||
+        s.assignedEmployees?.some(emp => emp.name.toLowerCase().includes(term)) // Updated to check multiple employees
+    );
 
                 filteredCategories = categoriesData.filter(c =>
                     c.name.toLowerCase().includes(term) ||
@@ -199,47 +200,55 @@ export default function AdminServicesPage() {
         }
     };
 
-    const handleCreateService = async () => {
-        try {
-            if (!serviceForm.name || !serviceForm.categoryId) {
-                setModalError("Bitte füllen Sie alle Pflichtfelder aus");
-                return;
-            }
-            setSubmitting(true);
-            setModalError(null);
-            const newService = await createAdminService(serviceForm as CreateServiceData);
-            setServices(prev => [newService, ...prev]);
-            handleClose();
-        } catch (err: any) {
-            setModalError(err.message);
-        } finally {
-            setSubmitting(false);
+const handleCreateService = async () => {
+    try {
+        if (!serviceForm.name || !serviceForm.categoryId) {
+            setModalError("Bitte füllen Sie alle Pflichtfelder aus");
+            return;
         }
-    };
+        setSubmitting(true);
+        setModalError(null);
+        const newService = await createAdminService({
+            name: serviceForm.name,
+            description: serviceForm.description || null,
+            durationMinutes: serviceForm.durationMinutes!,
+            price: serviceForm.price!,
+            displayOrder: serviceForm.displayOrder!,
+            categoryId: serviceForm.categoryId,
+            employeeIds: serviceForm.employeeIds || [], // Pass array instead of single ID
+        });
+        setServices(prev => [newService, ...prev]);
+        handleClose();
+    } catch (err: any) {
+        setModalError(err.message);
+    } finally {
+        setSubmitting(false);
+    }
+};
 
-    const handleUpdateService = async () => {
-        try {
-            if (!selectedItem || !('categoryId' in selectedItem)) return;
-            setSubmitting(true);
-            setModalError(null);
-            const updated = await updateAdminService(selectedItem.id, {
-                name: serviceForm.name!,
-                description: serviceForm.description || null,
-                durationMinutes: serviceForm.durationMinutes!,
-                price: serviceForm.price!,
-                displayOrder: serviceForm.displayOrder!,
-                categoryId: serviceForm.categoryId!,
-                employeeId: serviceForm.employeeId || null,
-                isActive: selectedItem.isActive,
-            });
-            setServices(services.map(s => s.id === updated.id ? updated : s));
-            handleClose();
-        } catch (err: any) {
-            setModalError(err.message);
-        } finally {
-            setSubmitting(false);
-        }
-    };
+const handleUpdateService = async () => {
+    try {
+        if (!selectedItem || !('categoryId' in selectedItem)) return;
+        setSubmitting(true);
+        setModalError(null);
+        const updated = await updateAdminService(selectedItem.id, {
+            name: serviceForm.name!,
+            description: serviceForm.description || null,
+            durationMinutes: serviceForm.durationMinutes!,
+            price: serviceForm.price!,
+            displayOrder: serviceForm.displayOrder!,
+            categoryId: serviceForm.categoryId!,
+            employeeIds: serviceForm.employeeIds || [], // Pass array instead of single ID
+            isActive: selectedItem.isActive,
+        });
+        setServices(services.map(s => s.id === updated.id ? updated : s));
+        handleClose();
+    } catch (err: any) {
+        setModalError(err.message);
+    } finally {
+        setSubmitting(false);
+    }
+};
 
     const handleDeleteService = async () => {
         try {
@@ -336,48 +345,48 @@ export default function AdminServicesPage() {
         }
     };
 
-    const resetForms = () => {
-        setServiceForm({
-            name: "",
-            description: "",
-            durationMinutes: 30,
-            price: 0,
-            displayOrder: 0,
-            categoryId: "",
-            employeeId: null,
-        });
-        setCategoryForm({
-            name: "",
-            description: "",
-            displayOrder: 0,
-        });
-        setSelectedItem(null);
-        setModalError(null);
-    };
+const resetForms = () => {
+    setServiceForm({
+        name: "",
+        description: "",
+        durationMinutes: 30,
+        price: 0,
+        displayOrder: 0,
+        categoryId: "",
+        employeeIds: [], // Changed to empty array
+    });
+    setCategoryForm({
+        name: "",
+        description: "",
+        displayOrder: 0,
+    });
+    setSelectedItem(null);
+    setModalError(null);
+};
 
     const handleClose = () => {
         onClose();
         resetForms();
     };
 
-    const openServiceModal = (mode: "create" | "edit" | "view", service?: AdminService) => {
-        if (mode === "edit" && service) {
-            setSelectedItem(service);
-            setServiceForm({
-                name: service.name,
-                description: service.description,
-                durationMinutes: service.durationMinutes,
-                price: service.price,
-                displayOrder: service.displayOrder,
-                categoryId: service.categoryId,
-                employeeId: service.employeeId,
-            });
-        } else if (mode === "view" && service) {
-            setSelectedItem(service);
-        }
-        setModalMode(mode);
-        onOpen();
-    };
+const openServiceModal = (mode: "create" | "edit" | "view", service?: AdminService) => {
+    if (mode === "edit" && service) {
+        setSelectedItem(service);
+        setServiceForm({
+            name: service.name,
+            description: service.description,
+            durationMinutes: service.durationMinutes,
+            price: service.price,
+            displayOrder: service.displayOrder,
+            categoryId: service.categoryId,
+            employeeIds: service.assignedEmployees?.map(emp => emp.id) || [], // Map to array of IDs
+        });
+    } else if (mode === "view" && service) {
+        setSelectedItem(service);
+    }
+    setModalMode(mode);
+    onOpen();
+};
 
     const openCategoryModal = (mode: "create" | "edit" | "view", category?: AdminServiceCategory) => {
         if (mode === "edit" && category) {
@@ -604,8 +613,8 @@ export default function AdminServicesPage() {
                 <div className="flex gap-2 mb-6">
                     <Button
                         className={`flex-1 py-6 font-medium transition-all ${viewMode === "services"
-                                ? "bg-gradient-to-r from-[#017172] to-[#015f60] text-white shadow-lg shadow-[#017172]/20"
-                                : "bg-white text-[#8A8A8A] border border-[#E8C7C3]/30 hover:bg-[#F5EDEB]"
+                            ? "bg-gradient-to-r from-[#017172] to-[#015f60] text-white shadow-lg shadow-[#017172]/20"
+                            : "bg-white text-[#8A8A8A] border border-[#E8C7C3]/30 hover:bg-[#F5EDEB]"
                             }`}
                         onPress={() => {
                             setViewMode("services");
@@ -617,8 +626,8 @@ export default function AdminServicesPage() {
                     </Button>
                     <Button
                         className={`flex-1 py-6 font-medium transition-all ${viewMode === "categories"
-                                ? "bg-gradient-to-r from-[#017172] to-[#015f60] text-white shadow-lg shadow-[#017172]/20"
-                                : "bg-white text-[#8A8A8A] border border-[#E8C7C3]/30 hover:bg-[#F5EDEB]"
+                            ? "bg-gradient-to-r from-[#017172] to-[#015f60] text-white shadow-lg shadow-[#017172]/20"
+                            : "bg-white text-[#8A8A8A] border border-[#E8C7C3]/30 hover:bg-[#F5EDEB]"
                             }`}
                         onPress={() => {
                             setViewMode("categories");
@@ -630,8 +639,8 @@ export default function AdminServicesPage() {
                     </Button>
                     <Button
                         className={`flex-1 py-6 font-medium transition-all ${viewMode === "assignments"
-                                ? "bg-gradient-to-r from-[#017172] to-[#015f60] text-white shadow-lg shadow-[#017172]/20"
-                                : "bg-white text-[#8A8A8A] border border-[#E8C7C3]/30 hover:bg-[#F5EDEB]"
+                            ? "bg-gradient-to-r from-[#017172] to-[#015f60] text-white shadow-lg shadow-[#017172]/20"
+                            : "bg-white text-[#8A8A8A] border border-[#E8C7C3]/30 hover:bg-[#F5EDEB]"
                             }`}
                         onPress={() => {
                             setViewMode("assignments");
@@ -814,8 +823,8 @@ export default function AdminServicesPage() {
                                                                     isIconOnly
                                                                     variant="flat"
                                                                     className={`${service.isActive
-                                                                            ? "bg-amber-50 text-amber-600 hover:bg-amber-100"
-                                                                            : "bg-green-50 text-green-600 hover:bg-green-100"
+                                                                        ? "bg-amber-50 text-amber-600 hover:bg-amber-100"
+                                                                        : "bg-green-50 text-green-600 hover:bg-green-100"
                                                                         }`}
                                                                     onPress={() => handleToggleActive(service)}
                                                                 >
@@ -1184,6 +1193,7 @@ export default function AdminServicesPage() {
     );
 }
 
+
 // Service Modal Component
 function ServiceModals({
     isOpen,
@@ -1211,7 +1221,12 @@ function ServiceModals({
     onClose: () => void;
 }) {
     const isCreateOrEdit = modalMode === "create" || modalMode === "edit";
-
+    console.log("Rendering Mitarbeiter Select with employees:", employees);
+    console.log("Employees mapped to options:", employees.map(emp => ({
+        key: emp.id,
+        label: `${emp.name} - ${emp.role}`,
+        value: emp.id
+    })));
     return (
         <Modal
             isOpen={isOpen && (modalMode === "create" || modalMode === "edit")}
@@ -1309,34 +1324,59 @@ function ServiceModals({
                                     classNames={inputClassNames}
                                 />
 
+                                {/* Kategorie Select */}
                                 <Select
                                     label="Kategorie *"
                                     placeholder="Kategorie auswählen"
                                     selectedKeys={serviceForm.categoryId ? [serviceForm.categoryId] : []}
-                                    onChange={(e) => setServiceForm({ ...serviceForm, categoryId: e.target.value })}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value) {
+                                            setServiceForm({ ...serviceForm, categoryId: value });
+                                        }
+                                    }}
                                     isRequired
                                     isDisabled={submitting}
                                     classNames={{
                                         trigger: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]",
                                         label: "text-[#8A8A8A]",
                                         value: "text-[#1E1E1E]",
-                                    }} children={null}>
-
+                                    }}
+                                >
+                                    {categories.filter(cat => cat.isActive).map((cat) => (
+                                        <SelectItem key={cat.id} value={cat.id}>
+                                            {cat.name}
+                                        </SelectItem>
+                                    ))}
                                 </Select>
 
-                                <Select
-                                    label="Mitarbeiter (optional)"
-                                    placeholder="Mitarbeiter auswählen"
-                                    selectedKeys={serviceForm.employeeId ? [serviceForm.employeeId] : []}
-                                    onChange={(e) => setServiceForm({ ...form, employeeId: e.target.value || null })}
-                                    isDisabled={submitting}
-                                    classNames={{
-                                        trigger: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]",
-                                        label: "text-[#8A8A8A]",
-                                        value: "text-[#1E1E1E]",
-                                    }} children={null}>
-                                    {/* options */}
-                                </Select>
+{/* Mitarbeiter Multi-Select */}
+<Select
+    label="Mitarbeiter (optional)"
+    placeholder="Mitarbeiter auswählen"
+    selectionMode="multiple" // Add this for multi-select
+    selectedKeys={serviceForm.employeeIds || []}
+    onSelectionChange={(keys) => {
+        const selectedKeys = Array.from(keys) as string[];
+        console.log("Selected keys:", selectedKeys);
+        setServiceForm({
+            ...serviceForm,
+            employeeIds: selectedKeys.filter(key => key !== "none")
+        });
+    }}
+    isDisabled={submitting}
+    classNames={{
+        trigger: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]",
+        label: "text-[#8A8A8A]",
+        value: "text-[#1E1E1E]",
+    }}
+>
+    {employees.map((emp) => (
+        <SelectItem key={emp.id}>
+            {emp.name} - {emp.role}
+        </SelectItem>
+    ))}
+</Select>
                             </div>
                         </ModalBody>
 
@@ -1602,7 +1642,6 @@ function ViewModals({
 // Service View Content
 function ServiceViewContent({ service, categories, employees }: { service: AdminService; categories: AdminServiceCategory[]; employees: EmployeeForAssignment[] }) {
     const category = categories.find(c => c.id === service.categoryId);
-    const employee = employees.find(e => e.id === service.employeeId);
 
     return (
         <div className="space-y-4">
@@ -1654,7 +1693,6 @@ function ServiceViewContent({ service, categories, employees }: { service: Admin
                 </div>
             </div>
 
-            {/* Category & Employee */}
             <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
                 <h3 className="font-semibold text-[#1E1E1E] text-sm mb-3">Zuordnung</h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -1664,7 +1702,17 @@ function ServiceViewContent({ service, categories, employees }: { service: Admin
                     </div>
                     <div className="bg-white p-3 rounded-lg">
                         <p className="text-xs text-[#8A8A8A]">Mitarbeiter</p>
-                        <p className="text-sm font-semibold text-[#1E1E1E]">{employee?.name || "—"}</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                            {service.assignedEmployees && service.assignedEmployees.length > 0 ? (
+                                service.assignedEmployees.map(emp => (
+                                    <Chip key={emp.id} size="sm" variant="flat" className="bg-[#017172]/10 text-[#017172]">
+                                        {emp.name}
+                                    </Chip>
+                                ))
+                            ) : (
+                                <p className="text-sm font-semibold text-[#1E1E1E]">—</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1846,15 +1894,15 @@ function AssignmentModalContent({
                         isPressable
                         onPress={() => toggleService(service.id)}
                         className={`w-full transition-all cursor-pointer ${selectedServices.has(service.id)
-                                ? "ring-2 ring-[#017172] ring-offset-2"
-                                : "hover:ring-2 hover:ring-[#017172]/30 hover:ring-offset-1"
+                            ? "ring-2 ring-[#017172] ring-offset-2"
+                            : "hover:ring-2 hover:ring-[#017172]/30 hover:ring-offset-1"
                             }`}
                     >
                         <CardBody className="p-3">
                             <div className="flex items-center gap-3">
                                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${selectedServices.has(service.id)
-                                        ? "bg-[#017172] border-[#017172]"
-                                        : "border-[#8A8A8A]"
+                                    ? "bg-[#017172] border-[#017172]"
+                                    : "border-[#8A8A8A]"
                                     }`}>
                                     {selectedServices.has(service.id) && (
                                         <Check size={14} className="text-white" />

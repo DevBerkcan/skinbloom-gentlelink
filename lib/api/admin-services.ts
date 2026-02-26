@@ -1,6 +1,15 @@
 // lib/api/admin-services.ts
 import api, { extractData } from './client';
 
+// Employee basic info for assignments
+export interface EmployeeBasicDto {
+  id: string;
+  name: string;
+  role: string;
+  specialty: string | null;
+}
+
+// Updated AdminService with array of employees AND backward compatibility fields
 export interface AdminService {
   id: string;
   name: string;
@@ -10,8 +19,10 @@ export interface AdminService {
   displayOrder: number;
   categoryId: string;
   categoryName: string;
-  employeeId: string | null;
-  employeeName: string | null;
+  assignedEmployees: EmployeeBasicDto[];  // Array for multiple employees
+  // Backward compatibility fields - derived from first employee in array
+  employeeId?: string | null;
+  employeeName?: string | null;
   isActive: boolean;
 }
 
@@ -24,6 +35,7 @@ export interface AdminServiceCategory {
   services: AdminService[];
 }
 
+// Updated to use array of employee IDs with backward compatibility
 export interface CreateServiceData {
   name: string;
   description?: string | null;
@@ -31,9 +43,11 @@ export interface CreateServiceData {
   price: number;
   displayOrder: number;
   categoryId: string;
-  employeeId?: string | null;
+  employeeIds?: string[] | null;  // Primary - array of employee IDs
+  employeeId?: string | null;      // Backward compatibility - single employee ID
 }
 
+// Updated to use array of employee IDs with backward compatibility
 export interface UpdateServiceData {
   name: string;
   description?: string | null;
@@ -41,7 +55,8 @@ export interface UpdateServiceData {
   price: number;
   displayOrder: number;
   categoryId: string;
-  employeeId?: string | null;
+  employeeIds?: string[] | null;  // Primary - array of employee IDs
+  employeeId?: string | null;      // Backward compatibility - single employee ID
   isActive: boolean;
 }
 
@@ -66,28 +81,74 @@ export interface EmployeeForAssignment {
   serviceCount: number;
 }
 
+// Helper function to add backward compatibility fields
+function addBackwardCompatibility(service: AdminService): AdminService {
+  return {
+    ...service,
+    employeeId: service.assignedEmployees && service.assignedEmployees.length > 0 
+      ? service.assignedEmployees[0].id 
+      : null,
+    employeeName: service.assignedEmployees && service.assignedEmployees.length > 0 
+      ? service.assignedEmployees[0].name 
+      : null,
+  };
+}
+
+// Helper function to prepare payload for API
+function prepareServicePayload(data: CreateServiceData | UpdateServiceData): any {
+  const payload = { ...data };
+  
+  // If employeeIds is provided, use it
+  if (data.employeeIds !== undefined) {
+    payload.employeeIds = data.employeeIds;
+  } 
+  // Otherwise, if employeeId is provided (backward compatibility), convert to array
+  else if (data.employeeId !== undefined) {
+    payload.employeeIds = data.employeeId ? [data.employeeId] : [];
+  }
+  
+  // Remove backward compatibility field to avoid confusion
+  delete payload.employeeId;
+  
+  return payload;
+}
+
 // Get all services for admin
 export async function getAdminServices(): Promise<AdminService[]> {
   const response = await api.get('/admin/services');
-  return extractData<AdminService[]>(response, true);
+  const services = extractData<AdminService[]>(response, true);
+  
+  // Add backward compatibility fields to each service
+  return services.map(service => addBackwardCompatibility(service));
 }
 
 // Get service by ID
 export async function getAdminService(id: string): Promise<AdminService> {
   const response = await api.get(`/admin/services/${id}`);
-  return extractData<AdminService>(response, false);
+  const service = extractData<AdminService>(response, false);
+  
+  // Add backward compatibility fields
+  return addBackwardCompatibility(service);
 }
 
-// Create new service
+// Create new service - accepts both array and single employee ID
 export async function createAdminService(data: CreateServiceData): Promise<AdminService> {
-  const response = await api.post('/admin/services', data);
-  return extractData<AdminService>(response, false);
+  const payload = prepareServicePayload(data);
+  const response = await api.post('/admin/services', payload);
+  const service = extractData<AdminService>(response, false);
+  
+  // Add backward compatibility fields
+  return addBackwardCompatibility(service);
 }
 
-// Update service
+// Update service - accepts both array and single employee ID
 export async function updateAdminService(id: string, data: UpdateServiceData): Promise<AdminService> {
-  const response = await api.put(`/admin/services/${id}`, data);
-  return extractData<AdminService>(response, false);
+  const payload = prepareServicePayload(data);
+  const response = await api.put(`/admin/services/${id}`, payload);
+  const service = extractData<AdminService>(response, false);
+  
+  // Add backward compatibility fields
+  return addBackwardCompatibility(service);
 }
 
 // Delete service
@@ -104,25 +165,49 @@ export async function toggleServiceActive(id: string): Promise<{ isActive: boole
 // Get all categories for admin
 export async function getAdminCategories(): Promise<AdminServiceCategory[]> {
   const response = await api.get('/admin/services/categories');
-  return extractData<AdminServiceCategory[]>(response, true);
+  const categories = extractData<AdminServiceCategory[]>(response, true);
+  
+  // Add backward compatibility fields to all services in categories
+  return categories.map(category => ({
+    ...category,
+    services: category.services.map(service => addBackwardCompatibility(service))
+  }));
 }
 
 // Get category by ID
 export async function getAdminCategory(id: string): Promise<AdminServiceCategory> {
   const response = await api.get(`/admin/services/categories/${id}`);
-  return extractData<AdminServiceCategory>(response, false);
+  const category = extractData<AdminServiceCategory>(response, false);
+  
+  // Add backward compatibility fields to all services in category
+  return {
+    ...category,
+    services: category.services.map(service => addBackwardCompatibility(service))
+  };
 }
 
 // Create new category
 export async function createAdminCategory(data: CreateCategoryData): Promise<AdminServiceCategory> {
   const response = await api.post('/admin/services/categories', data);
-  return extractData<AdminServiceCategory>(response, false);
+  const category = extractData<AdminServiceCategory>(response, false);
+  
+  // Add backward compatibility fields to all services in category
+  return {
+    ...category,
+    services: category.services.map(service => addBackwardCompatibility(service))
+  };
 }
 
 // Update category
 export async function updateAdminCategory(id: string, data: UpdateCategoryData): Promise<AdminServiceCategory> {
   const response = await api.put(`/admin/services/categories/${id}`, data);
-  return extractData<AdminServiceCategory>(response, false);
+  const category = extractData<AdminServiceCategory>(response, false);
+  
+  // Add backward compatibility fields to all services in category
+  return {
+    ...category,
+    services: category.services.map(service => addBackwardCompatibility(service))
+  };
 }
 
 // Delete category
@@ -139,7 +224,10 @@ export async function getEmployeesForAssignment(): Promise<EmployeeForAssignment
 // Get services by employee
 export async function getServicesByEmployee(employeeId: string): Promise<AdminService[]> {
   const response = await api.get(`/admin/services/employees/${employeeId}/services`);
-  return extractData<AdminService[]>(response, true);
+  const services = extractData<AdminService[]>(response, true);
+  
+  // Add backward compatibility fields to each service
+  return services.map(service => addBackwardCompatibility(service));
 }
 
 // Bulk assign services to employee
