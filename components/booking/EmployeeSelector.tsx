@@ -226,21 +226,6 @@ export function EmployeeSelector({
           })}
         </div>
 
-        {/* Option to skip employee selection - select first available */}
-        {employees.length > 1 && !selectedEmployee && (
-          <div className="text-center pt-4">
-            <button
-              onClick={() => {
-                if (employees.length > 0) {
-                  handleSelect(employees[0]);
-                }
-              }}
-              className="text-sm text-[#8A8A8A] hover:text-[#E8C7C3] transition-colors underline"
-            >
-              Keine Präferenz - ersten verfügbaren wählen
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Sticky bottom bar */}
