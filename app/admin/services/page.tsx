@@ -1868,6 +1868,7 @@ function AssignmentModalContent({
                 <Button
                     className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
                     onPress={onAssign}
+                    startContent={!submitting && <Save size={14} />}
                     isLoading={submitting}
                 >
                     Zuweisung speichern
