@@ -115,16 +115,16 @@ export default function AdminServicesPage() {
     const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set());
 
 
-// Form state for service - change from employeeId to employeeIds array
-const [serviceForm, setServiceForm] = useState<Partial<CreateServiceData>>({
-    name: "",
-    description: "",
-    durationMinutes: 30,
-    price: 0,
-    displayOrder: 0,
-    categoryId: "",
-    employeeIds: [], 
-});
+    // Form state for service - change from employeeId to employeeIds array
+    const [serviceForm, setServiceForm] = useState<Partial<CreateServiceData>>({
+        name: "",
+        description: "",
+        durationMinutes: 30,
+        price: 0,
+        displayOrder: 0,
+        categoryId: "",
+        employeeIds: [],
+    });
 
     // Form state for category
     const [categoryForm, setCategoryForm] = useState<Partial<CreateCategoryData>>({
@@ -152,12 +152,12 @@ const [serviceForm, setServiceForm] = useState<Partial<CreateServiceData>>({
             let filteredCategories = categoriesData;
 
             if (searchTerm) {
-    const term = searchTerm.toLowerCase();
-    filteredServices = servicesData.filter(s =>
-        s.name.toLowerCase().includes(term) ||
-        s.categoryName.toLowerCase().includes(term) ||
-        s.assignedEmployees?.some(emp => emp.name.toLowerCase().includes(term)) // Updated to check multiple employees
-    );
+                const term = searchTerm.toLowerCase();
+                filteredServices = servicesData.filter(s =>
+                    s.name.toLowerCase().includes(term) ||
+                    s.categoryName.toLowerCase().includes(term) ||
+                    s.assignedEmployees?.some(emp => emp.name.toLowerCase().includes(term)) // Updated to check multiple employees
+                );
 
                 filteredCategories = categoriesData.filter(c =>
                     c.name.toLowerCase().includes(term) ||
@@ -200,55 +200,55 @@ const [serviceForm, setServiceForm] = useState<Partial<CreateServiceData>>({
         }
     };
 
-const handleCreateService = async () => {
-    try {
-        if (!serviceForm.name || !serviceForm.categoryId) {
-            setModalError("Bitte füllen Sie alle Pflichtfelder aus");
-            return;
+    const handleCreateService = async () => {
+        try {
+            if (!serviceForm.name || !serviceForm.categoryId) {
+                setModalError("Bitte füllen Sie alle Pflichtfelder aus");
+                return;
+            }
+            setSubmitting(true);
+            setModalError(null);
+            const newService = await createAdminService({
+                name: serviceForm.name,
+                description: serviceForm.description || null,
+                durationMinutes: serviceForm.durationMinutes!,
+                price: serviceForm.price!,
+                displayOrder: serviceForm.displayOrder!,
+                categoryId: serviceForm.categoryId,
+                employeeIds: serviceForm.employeeIds || [], // Pass array instead of single ID
+            });
+            setServices(prev => [newService, ...prev]);
+            handleClose();
+        } catch (err: any) {
+            setModalError(err.message);
+        } finally {
+            setSubmitting(false);
         }
-        setSubmitting(true);
-        setModalError(null);
-        const newService = await createAdminService({
-            name: serviceForm.name,
-            description: serviceForm.description || null,
-            durationMinutes: serviceForm.durationMinutes!,
-            price: serviceForm.price!,
-            displayOrder: serviceForm.displayOrder!,
-            categoryId: serviceForm.categoryId,
-            employeeIds: serviceForm.employeeIds || [], // Pass array instead of single ID
-        });
-        setServices(prev => [newService, ...prev]);
-        handleClose();
-    } catch (err: any) {
-        setModalError(err.message);
-    } finally {
-        setSubmitting(false);
-    }
-};
+    };
 
-const handleUpdateService = async () => {
-    try {
-        if (!selectedItem || !('categoryId' in selectedItem)) return;
-        setSubmitting(true);
-        setModalError(null);
-        const updated = await updateAdminService(selectedItem.id, {
-            name: serviceForm.name!,
-            description: serviceForm.description || null,
-            durationMinutes: serviceForm.durationMinutes!,
-            price: serviceForm.price!,
-            displayOrder: serviceForm.displayOrder!,
-            categoryId: serviceForm.categoryId!,
-            employeeIds: serviceForm.employeeIds || [], // Pass array instead of single ID
-            isActive: selectedItem.isActive,
-        });
-        setServices(services.map(s => s.id === updated.id ? updated : s));
-        handleClose();
-    } catch (err: any) {
-        setModalError(err.message);
-    } finally {
-        setSubmitting(false);
-    }
-};
+    const handleUpdateService = async () => {
+        try {
+            if (!selectedItem || !('categoryId' in selectedItem)) return;
+            setSubmitting(true);
+            setModalError(null);
+            const updated = await updateAdminService(selectedItem.id, {
+                name: serviceForm.name!,
+                description: serviceForm.description || null,
+                durationMinutes: serviceForm.durationMinutes!,
+                price: serviceForm.price!,
+                displayOrder: serviceForm.displayOrder!,
+                categoryId: serviceForm.categoryId!,
+                employeeIds: serviceForm.employeeIds || [], // Pass array instead of single ID
+                isActive: selectedItem.isActive,
+            });
+            setServices(services.map(s => s.id === updated.id ? updated : s));
+            handleClose();
+        } catch (err: any) {
+            setModalError(err.message);
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     const handleDeleteService = async () => {
         try {
@@ -345,48 +345,48 @@ const handleUpdateService = async () => {
         }
     };
 
-const resetForms = () => {
-    setServiceForm({
-        name: "",
-        description: "",
-        durationMinutes: 30,
-        price: 0,
-        displayOrder: 0,
-        categoryId: "",
-        employeeIds: [], // Changed to empty array
-    });
-    setCategoryForm({
-        name: "",
-        description: "",
-        displayOrder: 0,
-    });
-    setSelectedItem(null);
-    setModalError(null);
-};
+    const resetForms = () => {
+        setServiceForm({
+            name: "",
+            description: "",
+            durationMinutes: 30,
+            price: 0,
+            displayOrder: 0,
+            categoryId: "",
+            employeeIds: [], // Changed to empty array
+        });
+        setCategoryForm({
+            name: "",
+            description: "",
+            displayOrder: 0,
+        });
+        setSelectedItem(null);
+        setModalError(null);
+    };
 
     const handleClose = () => {
         onClose();
         resetForms();
     };
 
-const openServiceModal = (mode: "create" | "edit" | "view", service?: AdminService) => {
-    if (mode === "edit" && service) {
-        setSelectedItem(service);
-        setServiceForm({
-            name: service.name,
-            description: service.description,
-            durationMinutes: service.durationMinutes,
-            price: service.price,
-            displayOrder: service.displayOrder,
-            categoryId: service.categoryId,
-            employeeIds: service.assignedEmployees?.map(emp => emp.id) || [], // Map to array of IDs
-        });
-    } else if (mode === "view" && service) {
-        setSelectedItem(service);
-    }
-    setModalMode(mode);
-    onOpen();
-};
+    const openServiceModal = (mode: "create" | "edit" | "view", service?: AdminService) => {
+        if (mode === "edit" && service) {
+            setSelectedItem(service);
+            setServiceForm({
+                name: service.name,
+                description: service.description,
+                durationMinutes: service.durationMinutes,
+                price: service.price,
+                displayOrder: service.displayOrder,
+                categoryId: service.categoryId,
+                employeeIds: service.assignedEmployees?.map(emp => emp.id) || [], // Map to array of IDs
+            });
+        } else if (mode === "view" && service) {
+            setSelectedItem(service);
+        }
+        setModalMode(mode);
+        onOpen();
+    };
 
     const openCategoryModal = (mode: "create" | "edit" | "view", category?: AdminServiceCategory) => {
         if (mode === "edit" && category) {
@@ -442,11 +442,21 @@ const openServiceModal = (mode: "create" | "edit" | "view", service?: AdminServi
                         <DollarSign size={12} className="text-[#017172]" />
                         {service.price.toFixed(2)} CHF
                     </span>
-                    {service.employeeName && (
-                        <span className="flex items-center gap-1 text-xs bg-[#F5EDEB] px-3 py-1.5 rounded-full">
-                            <Users size={12} className="text-[#017172]" />
-                            {service.employeeName}
-                        </span>
+                    {/* Replace the single employeeName with multiple employees */}
+                    {service.assignedEmployees && service.assignedEmployees.length > 0 && (
+                        <div className="flex flex-wrap gap-1 w-full mt-1">
+                            {service.assignedEmployees.slice(0, 2).map(emp => (
+                                <span key={emp.id} className="flex items-center gap-1 text-xs bg-[#F5EDEB] px-2 py-1 rounded-full">
+                                    <Users size={10} className="text-[#017172]" />
+                                    {emp.name.split(' ')[0]}
+                                </span>
+                            ))}
+                            {service.assignedEmployees.length > 2 && (
+                                <span className="text-xs bg-[#F5EDEB] px-2 py-1 rounded-full">
+                                    +{service.assignedEmployees.length - 2}
+                                </span>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
@@ -789,10 +799,18 @@ const openServiceModal = (mode: "create" | "edit" | "view", service?: AdminServi
                                                             </Chip>
                                                         </td>
                                                         <td className="px-5 py-4">
-                                                            {service.employeeName ? (
-                                                                <div className="flex items-center gap-1 text-xs text-[#8A8A8A]">
-                                                                    <Users size={12} className="shrink-0" />
-                                                                    <span>{service.employeeName}</span>
+                                                            {service.assignedEmployees && service.assignedEmployees.length > 0 ? (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {service.assignedEmployees.slice(0, 2).map(emp => (
+                                                                        <Chip key={emp.id} size="sm" variant="flat" className="bg-[#017172]/10 text-[#017172] text-xs">
+                                                                            {emp.name.split(' ')[0]}
+                                                                        </Chip>
+                                                                    ))}
+                                                                    {service.assignedEmployees.length > 2 && (
+                                                                        <Chip size="sm" variant="flat" className="bg-[#017172]/10 text-[#017172] text-xs">
+                                                                            +{service.assignedEmployees.length - 2}
+                                                                        </Chip>
+                                                                    )}
                                                                 </div>
                                                             ) : (
                                                                 <span className="text-xs text-[#8A8A8A]">—</span>
@@ -1005,7 +1023,7 @@ const openServiceModal = (mode: "create" | "edit" | "view", service?: AdminServi
                                                         <p className="text-xs text-[#8A8A8A] mb-2">Zugewiesene Services:</p>
                                                         <div className="flex flex-wrap gap-2">
                                                             {services
-                                                                .filter(s => s.employeeId === employee.id)
+                                                                .filter(s => s.assignedEmployees?.some(emp => emp.id === employee.id))
                                                                 .slice(0, 5)
                                                                 .map(s => (
                                                                     <Chip
@@ -1035,7 +1053,7 @@ const openServiceModal = (mode: "create" | "edit" | "view", service?: AdminServi
                                                             setSelectedEmployee(employee);
                                                             setSelectedServices(new Set(
                                                                 services
-                                                                    .filter(s => s.employeeId === employee.id)
+                                                                    .filter(s => s.assignedEmployees?.some(emp => emp.id === employee.id))
                                                                     .map(s => s.id)
                                                             ));
                                                         }}
@@ -1350,33 +1368,33 @@ function ServiceModals({
                                     ))}
                                 </Select>
 
-{/* Mitarbeiter Multi-Select */}
-<Select
-    label="Mitarbeiter (optional)"
-    placeholder="Mitarbeiter auswählen"
-    selectionMode="multiple" // Add this for multi-select
-    selectedKeys={serviceForm.employeeIds || []}
-    onSelectionChange={(keys) => {
-        const selectedKeys = Array.from(keys) as string[];
-        console.log("Selected keys:", selectedKeys);
-        setServiceForm({
-            ...serviceForm,
-            employeeIds: selectedKeys.filter(key => key !== "none")
-        });
-    }}
-    isDisabled={submitting}
-    classNames={{
-        trigger: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]",
-        label: "text-[#8A8A8A]",
-        value: "text-[#1E1E1E]",
-    }}
->
-    {employees.map((emp) => (
-        <SelectItem key={emp.id}>
-            {emp.name} - {emp.role}
-        </SelectItem>
-    ))}
-</Select>
+                                {/* Mitarbeiter Multi-Select */}
+                                <Select
+                                    label="Mitarbeiter (optional)"
+                                    placeholder="Mitarbeiter auswählen"
+                                    selectionMode="multiple" // Add this for multi-select
+                                    selectedKeys={serviceForm.employeeIds || []}
+                                    onSelectionChange={(keys) => {
+                                        const selectedKeys = Array.from(keys) as string[];
+                                        console.log("Selected keys:", selectedKeys);
+                                        setServiceForm({
+                                            ...serviceForm,
+                                            employeeIds: selectedKeys.filter(key => key !== "none")
+                                        });
+                                    }}
+                                    isDisabled={submitting}
+                                    classNames={{
+                                        trigger: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]",
+                                        label: "text-[#8A8A8A]",
+                                        value: "text-[#1E1E1E]",
+                                    }}
+                                >
+                                    {employees.map((emp) => (
+                                        <SelectItem key={emp.id}>
+                                            {emp.name} - {emp.role}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
                             </div>
                         </ModalBody>
 
