@@ -1514,16 +1514,30 @@ function ViewModals({
 
     if (!isView || !selectedItem) return null;
 
+    // Use a ref to track if this is the first render
+    const [hasClosed, setHasClosed] = useState(false);
+
+    const handleClose = () => {
+        setHasClosed(true);
+        // Call onClose after a tiny delay to ensure state updates
+        setTimeout(() => {
+            onClose();
+        }, 10);
+    };
+
+    // If we've closed, don't render anything
+    if (hasClosed) return null;
+
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={handleClose}
             size="2xl"
             scrollBehavior="inside"
             classNames={modalClassNames}
         >
             <ModalContent>
-                {(onClose) => (
+                {() => (
                     <>
                         <ModalHeader>
                             <div className="flex items-center gap-3">
@@ -1560,14 +1574,20 @@ function ViewModals({
                             <Button
                                 variant="flat"
                                 className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
-                                onPress={onClose}
+                                onPress={handleClose}
                                 startContent={<X size={14} />}
                             >
                                 Schließen
                             </Button>
                             <Button
                                 className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
-                                onPress={onEdit}
+                                onPress={() => {
+                                    setHasClosed(true);
+                                    setTimeout(() => {
+                                        onClose();
+                                        setTimeout(() => onEdit(), 50);
+                                    }, 10);
+                                }}
                                 startContent={<Edit size={14} />}
                             >
                                 Bearbeiten
@@ -1579,7 +1599,6 @@ function ViewModals({
         </Modal>
     );
 }
-
 // Service View Content
 function ServiceViewContent({ service, categories, employees }: { service: AdminService; categories: AdminServiceCategory[]; employees: EmployeeForAssignment[] }) {
     const category = categories.find(c => c.id === service.categoryId);
