@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7020/api';
-const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || 'skinbloom-admin-bootstrap-2026';
+
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -39,11 +39,6 @@ api.interceptors.response.use(
   }
 );
 
-// Helper to add admin secret header
-export const withAdminSecret = (headers: Record<string, string> = {}) => ({
-  ...headers,
-  'X-Admin-Secret': ADMIN_SECRET,
-});
 
 // Helper to extract data from response
 export const extractData = <T>(response: any, isList = true): T => {

@@ -3,7 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, Clock, BarChart3, Ban, LogOut, Menu, X, Users, User, ChevronDown } from "lucide-react";
+import { 
+  LayoutDashboard, Calendar, Clock, BarChart3, Ban, LogOut, 
+  Menu, X, Users, User, ChevronDown, Scissors, Package 
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import {
@@ -20,15 +23,16 @@ export function AdminNav() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { employee, logout, isAuthenticated } = useAuth();
 
-const navItems = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/calendar", label: "Kalender", icon: Calendar },
-  { href: "/admin/bookings", label: "Buchungen", icon: Calendar },
-  { href: "/admin/customers", label: "Kunden", icon: Users }, 
-  { href: "/admin/blocked-slots", label: "Abwesenheiten", icon: Ban },
-  { href: "/admin/employees", label: "Mitarbeiter", icon: Users },
-  { href: "/admin/tracking", label: "Tracking", icon: BarChart3 },
-];
+  const navItems = [
+    { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/calendar", label: "Kalender", icon: Calendar },
+    { href: "/admin/bookings", label: "Buchungen", icon: Calendar },
+    { href: "/admin/customers", label: "Kunden", icon: Users },
+    { href: "/admin/services", label: "Services", icon: Scissors }, // Added Services link
+    { href: "/admin/employees", label: "Mitarbeiter", icon: Users },
+    { href: "/admin/blocked-slots", label: "Abwesenheiten", icon: Ban },
+    { href: "/admin/tracking", label: "Tracking", icon: BarChart3 },
+  ];
 
   const handleLogout = async () => {
     await logout();
@@ -53,7 +57,7 @@ const navItems = [
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-24">
 
-          {/* Logo - Moved left and made much bigger */}
+          {/* Logo */}
           <Link href="/admin/dashboard" className="flex items-center -ml-4 sm:-ml-6 shrink-0">
             <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28">
               <Image
@@ -72,7 +76,8 @@ const navItems = [
             <div className="flex gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href;
+                const isActive = pathname === item.href || 
+                  (item.href === "/admin/services" && pathname?.startsWith("/admin/services"));
                 return (
                   <Link
                     key={item.href}
