@@ -17,7 +17,7 @@ export const socialLinks = [
   },
   {
     label: "Instagram",
-    href: "https://instagram.com/skinbloom_aesthetics",
+    href: "https://www.instagram.com/skinbloom._aesthetics/",
     icon: Instagram,
     variant: "secondary" as const,
   },
