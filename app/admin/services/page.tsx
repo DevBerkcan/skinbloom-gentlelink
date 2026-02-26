@@ -145,11 +145,11 @@ export default function AdminServicesPage() {
                 getAdminCategories(),
                 getEmployeesForAssignment(),
             ]);
-            
+
             // Filter based on search term
             let filteredServices = servicesData;
             let filteredCategories = categoriesData;
-            
+
             if (searchTerm) {
                 const term = searchTerm.toLowerCase();
                 filteredServices = servicesData.filter(s =>
@@ -157,13 +157,13 @@ export default function AdminServicesPage() {
                     s.categoryName.toLowerCase().includes(term) ||
                     (s.employeeName?.toLowerCase().includes(term))
                 );
-                
+
                 filteredCategories = categoriesData.filter(c =>
                     c.name.toLowerCase().includes(term) ||
                     (c.description?.toLowerCase().includes(term))
                 );
             }
-            
+
             // Apply pagination based on view mode
             if (viewMode === "services") {
                 setTotalCount(filteredServices.length);
@@ -184,7 +184,7 @@ export default function AdminServicesPage() {
                 setServices(servicesData);
                 setCategories(categoriesData);
             }
-            
+
         } catch (err: any) {
             setError(err.message || "Fehler beim Laden der Daten");
         } finally {
@@ -411,9 +411,9 @@ export default function AdminServicesPage() {
                         <div className="text-xs text-[#8A8A8A] mt-0.5">{service.categoryName}</div>
                     </div>
                 </div>
-                <Chip 
-                    size="sm" 
-                    variant="flat" 
+                <Chip
+                    size="sm"
+                    variant="flat"
                     className={service.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
                 >
                     {service.isActive ? "Aktiv" : "Inaktiv"}
@@ -495,9 +495,9 @@ export default function AdminServicesPage() {
                             </div>
                         </div>
                     </div>
-                    <Chip 
-                        size="sm" 
-                        variant="flat" 
+                    <Chip
+                        size="sm"
+                        variant="flat"
                         className={category.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
                     >
                         {category.isActive ? "Aktiv" : "Inaktiv"}
@@ -603,11 +603,10 @@ export default function AdminServicesPage() {
                 {/* View Tabs */}
                 <div className="flex gap-2 mb-6">
                     <Button
-                        className={`flex-1 py-6 font-medium transition-all ${
-                            viewMode === "services"
+                        className={`flex-1 py-6 font-medium transition-all ${viewMode === "services"
                                 ? "bg-gradient-to-r from-[#017172] to-[#015f60] text-white shadow-lg shadow-[#017172]/20"
                                 : "bg-white text-[#8A8A8A] border border-[#E8C7C3]/30 hover:bg-[#F5EDEB]"
-                        }`}
+                            }`}
                         onPress={() => {
                             setViewMode("services");
                             setPage(1);
@@ -617,11 +616,10 @@ export default function AdminServicesPage() {
                         Services
                     </Button>
                     <Button
-                        className={`flex-1 py-6 font-medium transition-all ${
-                            viewMode === "categories"
+                        className={`flex-1 py-6 font-medium transition-all ${viewMode === "categories"
                                 ? "bg-gradient-to-r from-[#017172] to-[#015f60] text-white shadow-lg shadow-[#017172]/20"
                                 : "bg-white text-[#8A8A8A] border border-[#E8C7C3]/30 hover:bg-[#F5EDEB]"
-                        }`}
+                            }`}
                         onPress={() => {
                             setViewMode("categories");
                             setPage(1);
@@ -631,11 +629,10 @@ export default function AdminServicesPage() {
                         Kategorien
                     </Button>
                     <Button
-                        className={`flex-1 py-6 font-medium transition-all ${
-                            viewMode === "assignments"
+                        className={`flex-1 py-6 font-medium transition-all ${viewMode === "assignments"
                                 ? "bg-gradient-to-r from-[#017172] to-[#015f60] text-white shadow-lg shadow-[#017172]/20"
                                 : "bg-white text-[#8A8A8A] border border-[#E8C7C3]/30 hover:bg-[#F5EDEB]"
-                        }`}
+                            }`}
                         onPress={() => {
                             setViewMode("assignments");
                             setSearchTerm("");
@@ -651,7 +648,7 @@ export default function AdminServicesPage() {
                         <CardBody className="p-4">
                             <div className="flex gap-2">
                                 <Input
-                                    placeholder={viewMode === "services" 
+                                    placeholder={viewMode === "services"
                                         ? "Services suchen (Name, Kategorie, Mitarbeiter)..."
                                         : "Kategorien suchen (Name, Beschreibung)..."
                                     }
@@ -742,9 +739,8 @@ export default function AdminServicesPage() {
                                                 {services.map((service, index) => (
                                                     <tr
                                                         key={service.id}
-                                                        className={`hover:bg-[#F5EDEB]/60 transition-colors cursor-pointer ${
-                                                            index % 2 === 0 ? "bg-white" : "bg-[#F5EDEB]/20"
-                                                        }`}
+                                                        className={`hover:bg-[#F5EDEB]/60 transition-colors cursor-pointer ${index % 2 === 0 ? "bg-white" : "bg-[#F5EDEB]/20"
+                                                            }`}
                                                         onClick={() => openServiceModal("view", service)}
                                                     >
                                                         <td className="px-5 py-4">
@@ -794,9 +790,9 @@ export default function AdminServicesPage() {
                                                             )}
                                                         </td>
                                                         <td className="px-5 py-4">
-                                                            <Chip 
-                                                                size="sm" 
-                                                                variant="flat" 
+                                                            <Chip
+                                                                size="sm"
+                                                                variant="flat"
                                                                 className={service.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
                                                             >
                                                                 {service.isActive ? "Aktiv" : "Inaktiv"}
@@ -817,11 +813,10 @@ export default function AdminServicesPage() {
                                                                     size="sm"
                                                                     isIconOnly
                                                                     variant="flat"
-                                                                    className={`${
-                                                                        service.isActive 
-                                                                            ? "bg-amber-50 text-amber-600 hover:bg-amber-100" 
+                                                                    className={`${service.isActive
+                                                                            ? "bg-amber-50 text-amber-600 hover:bg-amber-100"
                                                                             : "bg-green-50 text-green-600 hover:bg-green-100"
-                                                                    }`}
+                                                                        }`}
                                                                     onPress={() => handleToggleActive(service)}
                                                                 >
                                                                     {service.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -892,9 +887,8 @@ export default function AdminServicesPage() {
                                                     return (
                                                         <tr
                                                             key={category.id}
-                                                            className={`hover:bg-[#F5EDEB]/60 transition-colors cursor-pointer ${
-                                                                index % 2 === 0 ? "bg-white" : "bg-[#F5EDEB]/20"
-                                                            }`}
+                                                            className={`hover:bg-[#F5EDEB]/60 transition-colors cursor-pointer ${index % 2 === 0 ? "bg-white" : "bg-[#F5EDEB]/20"
+                                                                }`}
                                                             onClick={() => openCategoryModal("view", category)}
                                                         >
                                                             <td className="px-5 py-4">
@@ -921,9 +915,9 @@ export default function AdminServicesPage() {
                                                                 {category.displayOrder}
                                                             </td>
                                                             <td className="px-5 py-4">
-                                                                <Chip 
-                                                                    size="sm" 
-                                                                    variant="flat" 
+                                                                <Chip
+                                                                    size="sm"
+                                                                    variant="flat"
                                                                     className={category.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
                                                                 >
                                                                     {category.isActive ? "Aktiv" : "Inaktiv"}
@@ -1315,7 +1309,7 @@ function ServiceModals({
                                     classNames={inputClassNames}
                                 />
 
-<Select
+                                <Select
                                     label="Kategorie *"
                                     placeholder="Kategorie auswählen"
                                     selectedKeys={serviceForm.categoryId ? [serviceForm.categoryId] : []}
@@ -1328,9 +1322,9 @@ function ServiceModals({
                                         value: "text-[#1E1E1E]",
                                     }} children={null}>
 
-</Select>
+                                </Select>
 
-<Select
+                                <Select
                                     label="Mitarbeiter (optional)"
                                     placeholder="Mitarbeiter auswählen"
                                     selectedKeys={serviceForm.employeeId ? [serviceForm.employeeId] : []}
@@ -1341,8 +1335,8 @@ function ServiceModals({
                                         label: "text-[#8A8A8A]",
                                         value: "text-[#1E1E1E]",
                                     }} children={null}>
-    {/* options */}
-</Select>
+                                    {/* options */}
+                                </Select>
                             </div>
                         </ModalBody>
 
@@ -1567,6 +1561,7 @@ function ViewModals({
                                 variant="flat"
                                 className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
                                 onPress={onClose}
+                                startContent={<X size={14} />}
                             >
                                 Schließen
                             </Button>
@@ -1602,9 +1597,9 @@ function ServiceViewContent({ service, categories, employees }: { service: Admin
                     </div>
                     <div>
                         <p className="text-xs text-[#8A8A8A]">Status</p>
-                        <Chip 
-                            size="sm" 
-                            variant="flat" 
+                        <Chip
+                            size="sm"
+                            variant="flat"
                             className={service.isActive ? "bg-green-100 text-green-700 mt-1" : "bg-red-100 text-red-700 mt-1"}
                         >
                             {service.isActive ? "Aktiv" : "Inaktiv"}
@@ -1674,9 +1669,9 @@ function CategoryViewContent({ category, services }: { category: AdminServiceCat
                     </div>
                     <div>
                         <p className="text-xs text-[#8A8A8A]">Status</p>
-                        <Chip 
-                            size="sm" 
-                            variant="flat" 
+                        <Chip
+                            size="sm"
+                            variant="flat"
                             className={category.isActive ? "bg-green-100 text-green-700 mt-1" : "bg-red-100 text-red-700 mt-1"}
                         >
                             {category.isActive ? "Aktiv" : "Inaktiv"}
@@ -1722,9 +1717,9 @@ function CategoryViewContent({ category, services }: { category: AdminServiceCat
                                             {service.durationMinutes} Min · {service.price.toFixed(2)} CHF
                                         </p>
                                     </div>
-                                    <Chip 
-                                        size="sm" 
-                                        variant="flat" 
+                                    <Chip
+                                        size="sm"
+                                        variant="flat"
                                         className={service.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
                                     >
                                         {service.isActive ? "Aktiv" : "Inaktiv"}
@@ -1831,19 +1826,17 @@ function AssignmentModalContent({
                         key={service.id}
                         isPressable
                         onPress={() => toggleService(service.id)}
-                        className={`w-full transition-all cursor-pointer ${
-                            selectedServices.has(service.id)
+                        className={`w-full transition-all cursor-pointer ${selectedServices.has(service.id)
                                 ? "ring-2 ring-[#017172] ring-offset-2"
                                 : "hover:ring-2 hover:ring-[#017172]/30 hover:ring-offset-1"
-                        }`}
+                            }`}
                     >
                         <CardBody className="p-3">
                             <div className="flex items-center gap-3">
-                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                                    selectedServices.has(service.id)
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${selectedServices.has(service.id)
                                         ? "bg-[#017172] border-[#017172]"
                                         : "border-[#8A8A8A]"
-                                }`}>
+                                    }`}>
                                     {selectedServices.has(service.id) && (
                                         <Check size={14} className="text-white" />
                                     )}
@@ -1867,6 +1860,7 @@ function AssignmentModalContent({
                     variant="flat"
                     className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
                     onPress={onClose}
+                    startContent={<X size={14} />}
                     isDisabled={submitting}
                 >
                     Abbrechen
