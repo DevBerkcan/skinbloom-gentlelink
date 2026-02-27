@@ -371,24 +371,41 @@ const handleCreateService = async () => {
         resetForms();
     };
 
-    const openServiceModal = (mode: "create" | "edit" | "view", service?: AdminService) => {
-        if (mode === "edit" && service) {
-            setSelectedItem(service);
-            setServiceForm({
-                name: service.name,
-                description: service.description,
-                durationMinutes: service.durationMinutes,
-                price: service.price,
-                displayOrder: service.displayOrder,
-                categoryId: service.categoryId,
-                employeeIds: service.assignedEmployees?.map(emp => emp.id) || [], // Map to array of IDs
-            });
-        } else if (mode === "view" && service) {
-            setSelectedItem(service);
+const openServiceModal = async (mode: "create" | "edit" | "view", service?: AdminService) => {
+    // Ensure employees are loaded
+    if (employees.length === 0) {
+        try {
+            const employeesData = await getEmployeesForAssignment();
+            setEmployees(employeesData);
+        } catch (err) {
+            console.error("Failed to load employees:", err);
         }
-        setModalMode(mode);
-        onOpen();
-    };
+    }
+    
+    if (mode === "edit" && service) {
+        setSelectedItem(service);
+        
+        // Get the employee IDs
+        const employeeIds = service.assignedEmployees?.map(emp => emp.id) || [];
+        console.log('Setting employee IDs:', employeeIds);
+        console.log('Current employees:', employees); // This might still be empty due to async
+        
+        setServiceForm({
+            name: service.name,
+            description: service.description,
+            durationMinutes: service.durationMinutes,
+            price: service.price,
+            currency: service.currency,
+            displayOrder: service.displayOrder,
+            categoryId: service.categoryId,
+            employeeIds: employeeIds,
+        });
+    } else if (mode === "view" && service) {
+        setSelectedItem(service);
+    }
+    setModalMode(mode);
+    onOpen();
+};
 
     const openCategoryModal = (mode: "create" | "edit" | "view", category?: AdminServiceCategory) => {
         if (mode === "edit" && category) {
