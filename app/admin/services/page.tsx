@@ -201,32 +201,32 @@ export default function AdminServicesPage() {
         }
     };
 
-const handleCreateService = async () => {
-    try {
-        if (!serviceForm.name || !serviceForm.categoryId || !serviceForm.currency) {
-            setModalError("Bitte füllen Sie alle Pflichtfelder aus");
-            return;
+    const handleCreateService = async () => {
+        try {
+            if (!serviceForm.name || !serviceForm.categoryId || !serviceForm.currency) {
+                setModalError("Bitte füllen Sie alle Pflichtfelder aus");
+                return;
+            }
+            setSubmitting(true);
+            setModalError(null);
+            const newService = await createAdminService({
+                name: serviceForm.name,
+                description: serviceForm.description || null,
+                durationMinutes: serviceForm.durationMinutes!,
+                price: serviceForm.price!,
+                currency: serviceForm.currency!,
+                displayOrder: serviceForm.displayOrder!,
+                categoryId: serviceForm.categoryId,
+                employeeIds: serviceForm.employeeIds || [],
+            });
+            setServices(prev => [newService, ...prev]);
+            handleClose();
+        } catch (err: any) {
+            setModalError(err.message);
+        } finally {
+            setSubmitting(false);
         }
-        setSubmitting(true);
-        setModalError(null);
-        const newService = await createAdminService({
-            name: serviceForm.name,
-            description: serviceForm.description || null,
-            durationMinutes: serviceForm.durationMinutes!,
-            price: serviceForm.price!,
-            currency: serviceForm.currency!,
-            displayOrder: serviceForm.displayOrder!,
-            categoryId: serviceForm.categoryId,
-            employeeIds: serviceForm.employeeIds || [],
-        });
-        setServices(prev => [newService, ...prev]);
-        handleClose();
-    } catch (err: any) {
-        setModalError(err.message);
-    } finally {
-        setSubmitting(false);
-    }
-};
+    };
     const handleUpdateService = async () => {
         try {
             if (!selectedItem || !('categoryId' in selectedItem)) return;
@@ -371,41 +371,41 @@ const handleCreateService = async () => {
         resetForms();
     };
 
-const openServiceModal = async (mode: "create" | "edit" | "view", service?: AdminService) => {
-    // Ensure employees are loaded
-    if (employees.length === 0) {
-        try {
-            const employeesData = await getEmployeesForAssignment();
-            setEmployees(employeesData);
-        } catch (err) {
-            console.error("Failed to load employees:", err);
+    const openServiceModal = async (mode: "create" | "edit" | "view", service?: AdminService) => {
+        // Ensure employees are loaded
+        if (employees.length === 0) {
+            try {
+                const employeesData = await getEmployeesForAssignment();
+                setEmployees(employeesData);
+            } catch (err) {
+                console.error("Failed to load employees:", err);
+            }
         }
-    }
-    
-    if (mode === "edit" && service) {
-        setSelectedItem(service);
-        
-        // Get the employee IDs
-        const employeeIds = service.assignedEmployees?.map(emp => emp.id) || [];
-        console.log('Setting employee IDs:', employeeIds);
-        console.log('Current employees:', employees); // This might still be empty due to async
-        
-        setServiceForm({
-            name: service.name,
-            description: service.description,
-            durationMinutes: service.durationMinutes,
-            price: service.price,
-            currency: service.currency,
-            displayOrder: service.displayOrder,
-            categoryId: service.categoryId,
-            employeeIds: employeeIds,
-        });
-    } else if (mode === "view" && service) {
-        setSelectedItem(service);
-    }
-    setModalMode(mode);
-    onOpen();
-};
+
+        if (mode === "edit" && service) {
+            setSelectedItem(service);
+
+            // Get the employee IDs
+            const employeeIds = service.assignedEmployees?.map(emp => emp.id) || [];
+            console.log('Setting employee IDs:', employeeIds);
+            console.log('Current employees:', employees); // This might still be empty due to async
+
+            setServiceForm({
+                name: service.name,
+                description: service.description,
+                durationMinutes: service.durationMinutes,
+                price: service.price,
+                currency: service.currency,
+                displayOrder: service.displayOrder,
+                categoryId: service.categoryId,
+                employeeIds: employeeIds,
+            });
+        } else if (mode === "view" && service) {
+            setSelectedItem(service);
+        }
+        setModalMode(mode);
+        onOpen();
+    };
 
     const openCategoryModal = (mode: "create" | "edit" | "view", category?: AdminServiceCategory) => {
         if (mode === "edit" && category) {
@@ -1257,7 +1257,7 @@ function ServiceModals({
     onClose: () => void;
 }) {
     const isCreateOrEdit = modalMode === "create" || modalMode === "edit";
-    
+
     return (
         <Modal
             isOpen={isOpen && (modalMode === "create" || modalMode === "edit")}
