@@ -46,6 +46,7 @@ import {
     type UpdateCategoryData
 } from "@/lib/api/admin-services";
 import { form } from "@nextui-org/react";
+import { formatPrice } from "@/lib/utils/currency";
 
 const modalClassNames = {
     base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
@@ -440,7 +441,7 @@ export default function AdminServicesPage() {
                     </span>
                     <span className="flex items-center gap-1 text-xs bg-[#F5EDEB] px-3 py-1.5 rounded-full">
                         <DollarSign size={12} className="text-[#017172]" />
-                        {service.price.toFixed(2)} CHF
+                        {formatPrice(service.price, service.currency)}
                     </span>
                     {/* Replace the single employeeName with multiple employees */}
                     {service.assignedEmployees && service.assignedEmployees.length > 0 && (
@@ -781,7 +782,7 @@ export default function AdminServicesPage() {
                                                                 </span>
                                                                 <span className="flex items-center gap-1 text-xs bg-[#F5EDEB] px-2 py-1 rounded-full">
                                                                     <DollarSign size={10} className="text-[#017172]" />
-                                                                    {service.price.toFixed(2)} CHF
+                                                                    {formatPrice(service.price, service.currency)}
                                                                 </span>
                                                                 <span className="text-xs text-[#8A8A8A]">
                                                                     #{service.displayOrder}
@@ -1319,7 +1320,7 @@ function ServiceModals({
                                     />
 
                                     <Input
-                                        label="Preis (CHF) *"
+                                        label="Preis*"
                                         type="number"
                                         min={0}
                                         step={0.01}
@@ -1702,7 +1703,7 @@ function ServiceViewContent({ service, categories, employees }: { service: Admin
                     </div>
                     <div className="bg-white p-3 rounded-lg">
                         <p className="text-xs text-[#8A8A8A]">Preis</p>
-                        <p className="text-base font-bold text-[#017172]">{service.price.toFixed(2)} CHF</p>
+                        <p className="text-base font-bold text-[#017172]">{formatPrice(service.price, service.currency)}</p>
                     </div>
                     <div className="bg-white p-3 rounded-lg">
                         <p className="text-xs text-[#8A8A8A]">Sortierreihenfolge</p>
@@ -1799,7 +1800,7 @@ function CategoryViewContent({ category, services }: { category: AdminServiceCat
                                     <div>
                                         <p className="font-semibold text-[#1E1E1E] text-sm">{service.name}</p>
                                         <p className="text-xs text-[#8A8A8A] mt-1">
-                                            {service.durationMinutes} Min · {service.price.toFixed(2)} CHF
+                                            {service.durationMinutes} Min · {formatPrice(service.price, service.currency)}
                                         </p>
                                     </div>
                                     <Chip
@@ -1931,7 +1932,7 @@ function AssignmentModalContent({
                                         {service.name}
                                     </h4>
                                     <p className="text-xs text-[#8A8A8A]">
-                                        {service.categoryName} · {service.durationMinutes} Min · {service.price.toFixed(2)} CHF
+                                        {service.categoryName} · {service.durationMinutes} Min · {formatPrice(service.price, service.currency)}
                                     </p>
                                 </div>
                             </div>

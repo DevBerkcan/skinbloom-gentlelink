@@ -16,11 +16,11 @@ export interface AdminService {
   description: string | null;
   durationMinutes: number;
   price: number;
+  currency: string;
   displayOrder: number;
   categoryId: string;
   categoryName: string;
-  assignedEmployees: EmployeeBasicDto[];  // Array for multiple employees
-  // Backward compatibility fields - derived from first employee in array
+  assignedEmployees: EmployeeBasicDto[]; 
   employeeId?: string | null;
   employeeName?: string | null;
   isActive: boolean;
