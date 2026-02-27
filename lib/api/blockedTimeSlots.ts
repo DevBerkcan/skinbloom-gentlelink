@@ -1,5 +1,5 @@
 // lib/api/blockedTimeSlots.ts
-import api, { withAdminSecret } from './client';
+import api from './client';
 
 export interface BlockedTimeSlot {
   id: string;
@@ -44,8 +44,7 @@ export const blockedTimeSlotsApi = {
       
       const query = params.toString() ? `?${params.toString()}` : '';
       
-      const headers = all ? withAdminSecret() : {};
-      const response = await api.get(`/blockedtimeslots${query}`, { headers });
+      const response = await api.get(`/blockedtimeslots${query}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching blocked time slots:', error);
