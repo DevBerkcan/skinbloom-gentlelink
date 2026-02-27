@@ -283,49 +283,58 @@ const resetManualBookingForm = () => {
     customerNotes: ''
   });
   setAvailableSlots([]);
+
+    if (employees.length > 0) {
+    const firstEmployeeId = employees[0].id;
+    setSelectedEmployeeId(firstEmployeeId);
+    loadServicesForEmployee(firstEmployeeId);
+  }
 };
 
-  const handleCreateManualBooking = async () => {
-    setError(null);
-    setSubmitting(true);
-    try {
-      const selectedService = services.find(s => s.id === bookingForm.serviceId);
-      if (!selectedService) throw new Error("Service nicht gefunden");
+const handleCreateManualBooking = async () => {
+  setError(null);
+  setSubmitting(true);
+  try {
+    // First try to find in employeeServices, then fall back to global services
+    const selectedService = employeeServices.find(s => s.id === bookingForm.serviceId) || 
+                           services.find(s => s.id === bookingForm.serviceId);
+    
+    if (!selectedService) throw new Error("Service nicht gefunden");
 
-      const availabilityCheck = await bookingApi.getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
-      const isSlotAvailable = availabilityCheck.availableSlots?.some(
-        (slot: { startTime: string; isAvailable: any; }) => slot.startTime === bookingForm.startTime && slot.isAvailable
-      );
-      if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
+    const availabilityCheck = await bookingApi.getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
+    const isSlotAvailable = availabilityCheck.availableSlots?.some(
+      (slot: { startTime: string; isAvailable: any; }) => slot.startTime === bookingForm.startTime && slot.isAvailable
+    );
+    if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
 
-      const bookingData: CreateManualBookingDto = {
-        serviceId: bookingForm.serviceId,
-        bookingDate: bookingForm.bookingDate,
-        startTime: bookingForm.startTime,
-        firstName: bookingForm.firstName.trim(),
-        lastName: bookingForm.lastName.trim(),
-        email: bookingForm.email?.trim() || null,
-        phone: bookingForm.phone?.trim() || null,
-        customerNotes: bookingForm.customerNotes?.trim() || null,
-        employeeId: selectedEmployeeId || null,
-      };
+    const bookingData: CreateManualBookingDto = {
+      serviceId: bookingForm.serviceId,
+      bookingDate: bookingForm.bookingDate,
+      startTime: bookingForm.startTime,
+      firstName: bookingForm.firstName.trim(),
+      lastName: bookingForm.lastName.trim(),
+      email: bookingForm.email?.trim() || null,
+      phone: bookingForm.phone?.trim() || null,
+      customerNotes: bookingForm.customerNotes?.trim() || null,
+      employeeId: selectedEmployeeId || null,
+    };
 
-      const booking = await adminApi.createManualBooking(bookingData);
-      setCreatedBooking(booking);
-      setSuccess(true);
-      await loadEvents();
+    const booking = await adminApi.createManualBooking(bookingData);
+    setCreatedBooking(booking);
+    setSuccess(true);
+    await loadEvents();
 
-      setTimeout(() => {
-        setIsManualBookingModalOpen(false);
-        resetManualBookingForm();
-      }, 3000);
-    } catch (error: any) {
-      console.error("Error creating manual booking:", error);
-      setError(error.message || "Fehler beim Erstellen der Buchung");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    setTimeout(() => {
+      setIsManualBookingModalOpen(false);
+      resetManualBookingForm();
+    }, 3000);
+  } catch (error: any) {
+    console.error("Error creating manual booking:", error);
+    setError(error.message || "Fehler beim Erstellen der Buchung");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const handleCreateBlockedSlot = async () => {
     setError(null);
@@ -1007,14 +1016,18 @@ const resetManualBookingForm = () => {
   ) : (
     <Popover placement="bottom" isOpen={isServicePopoverOpen} onOpenChange={setIsServicePopoverOpen}>
       <PopoverTrigger>
-        <Button
-          variant="flat"
-          className="w-full justify-start bg-white border border-[#E8C7C3]/30 text-[#1E1E1E] h-12"
-          endContent={<Search size={18} className="text-[#8A8A8A]" />}
-          isDisabled={!selectedEmployeeId}
-        >
-          {selectedService ? selectedService.name : "Service suchen oder auswählen..."}
-        </Button>
+<Button
+  variant="flat"
+  className="w-full justify-start bg-white border border-[#E8C7C3]/30 text-[#1E1E1E] h-12"
+  endContent={<Search size={18} className="text-[#8A8A8A]" />}
+  isDisabled={!selectedEmployeeId}
+>
+  {bookingForm.serviceId ? 
+    (employeeServices.find(s => s.id === bookingForm.serviceId)?.name || 
+     services.find(s => s.id === bookingForm.serviceId)?.name || 
+     "Service auswählen...") 
+    : "Service suchen oder auswählen..."}
+</Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0">
         <div className="w-full">
