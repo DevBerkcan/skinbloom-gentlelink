@@ -657,7 +657,11 @@ export default function AdminCalendarPage() {
                   )}
                 </ModalBody>
                 <ModalFooter>
-                  <Button variant="flat" className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold" onPress={onClose}>
+                  <Button 
+                  variant="flat" 
+                  className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold" 
+                  startContent={<X size={14} />}
+                  onPress={onClose}>
                     Schließen
                   </Button>
                 </ModalFooter>

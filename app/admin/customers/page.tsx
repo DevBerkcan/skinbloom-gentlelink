@@ -782,6 +782,7 @@ export default function CustomersPage() {
                 <Button
                   variant="flat"
                   className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                  startContent={<X size={14} />}
                   onPress={handleClose}
                 >
                   Schließen

@@ -13,7 +13,8 @@ import { Spinner } from "@nextui-org/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
 import {
   Search, ChevronLeft, ChevronRight, Edit, Filter, X, Calendar, CheckCircle,
-  Trash2, AlertTriangle, Plus, Clock, User, Phone, Mail, Ban, Scissors, ChevronRight as ChevronRightIcon
+  Trash2, AlertTriangle, Plus, Clock, User, Phone, Mail, Ban, Scissors, ChevronRight as ChevronRightIcon,
+  Save
 } from "lucide-react";
 import moment from "moment";
 
@@ -394,7 +395,7 @@ export default function AdminBookingsPage() {
             startContent={<Edit size={13} />}
             onPress={() => openStatusModal(booking)}
           >
-            Status
+            
           </Button>
           <Button
             size="sm"
@@ -627,6 +628,7 @@ export default function AdminBookingsPage() {
                   <Button
                     variant="flat"
                     className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                    startContent={<X size={14} />}
                     onPress={onModalClose}
                   >
                     Schließen
@@ -753,10 +755,12 @@ export default function AdminBookingsPage() {
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                               <Button size="sm"
-                                className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-sm"
+                                isIconOnly
+                                variant="flat"
+                                className="bg-[#F5EDEB] text-[#017172] hover:bg-[#017172]/10"
                                 startContent={<Edit size={13} />}
                                 onPress={() => openStatusModal(booking)}>
-                                Status
+                                
                               </Button>
                               <Button
                                 size="sm"
@@ -867,10 +871,10 @@ export default function AdminBookingsPage() {
                   className="bg-gradient-to-r from-[#017172] to-[#015f60] text-white font-semibold shadow-lg shadow-[#017172]/20"
                   onPress={handleStatusUpdate}
                   isLoading={updating}
-                  startContent={<CheckCircle size={14} />}
+                  startContent={!submitting && <Save size={14} />}
                   isDisabled={!newStatus}
                 >
-                  Aktualisieren
+                  Speichern
                 </Button>
               </ModalFooter>
             </>
