@@ -5,13 +5,14 @@ import { Card, CardBody, CardHeader } from "@nextui-org/card";
 import {
   TrendingUp, Users, BarChart3, MousePointerClick,
   Calendar, Instagram, MapPin, MessageCircle, FileText, Shield,
-  Clock, Eye, DollarSign
+  Clock, Eye, DollarSign, Euro
 } from "lucide-react";
 import {
   getTrackingStatistics, getRevenueStatistics,
   type SimplifiedTrackingStatistics, type RevenueStatistics,
 } from "@/lib/api/admin";
 import { socialLinks, footerLinks } from "@/lib/config";
+import { formatPrice } from "@/lib/utils/currency";
 
 const getIconForLink = (linkName: string) => {
   if (linkName.includes("Online buchen")) return Calendar;
@@ -98,7 +99,7 @@ export default function TrackingPage() {
         </div>
 
         {/* ── Overview Cards (All Time) ──────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <Card className="border border-[#E8C7C3]/30 shadow-xl">
             <CardBody className="p-4 sm:p-6">
               <div className="flex items-start justify-between">
@@ -145,13 +146,29 @@ export default function TrackingPage() {
             <CardBody className="p-4 sm:p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Ø Buchungswert</div>
+                  <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Ø CHF</div>
                   <div className="text-2xl sm:text-3xl font-bold text-[#017172]">
-                    {stats.averageBookingValue.toFixed(2)} CHF
+                    {formatPrice(stats.averageBookingValueCHF, "CHF")}
                   </div>
                 </div>
                 <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-xl">
-                  <TrendingUp className="text-[#017172]" size={20} />
+                  <DollarSign className="text-[#017172]" size={20} />
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card className="border border-[#E8C7C3]/30 shadow-xl">
+            <CardBody className="p-4 sm:p-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-xs sm:text-sm text-[#8A8A8A] mb-1">Ø EUR</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[#017172]">
+                    {formatPrice(stats.averageBookingValueEUR, "EUR")}
+                  </div>
+                </div>
+                <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-xl">
+                  <Euro className="text-[#017172]" size={20} />
                 </div>
               </div>
             </CardBody>
@@ -161,7 +178,7 @@ export default function TrackingPage() {
         {/* ── All Time Revenue Card ──────────────────────────────────────── */}
         <Card className="mb-6 border border-[#E8C7C3]/30 shadow-xl bg-gradient-to-br from-[#017172]/5 to-transparent">
           <CardBody className="p-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="p-3 bg-[#017172] rounded-xl">
                   <DollarSign className="text-white" size={24} />
@@ -171,8 +188,19 @@ export default function TrackingPage() {
                   <p className="text-sm text-[#8A8A8A]">{revenue.allTimeBookings} Buchungen insgesamt</p>
                 </div>
               </div>
-              <div className="text-3xl sm:text-4xl font-bold text-[#017172]">
-                {revenue.allTimeRevenue.toFixed(2)} CHF
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                <div>
+                  <div className="text-sm text-[#8A8A8A]">CHF</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[#017172]">
+                    {formatPrice(revenue.allTimeRevenueCHF, "CHF")}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-[#8A8A8A]">EUR</div>
+                  <div className="text-2xl sm:text-3xl font-bold text-[#017172]">
+                    {formatPrice(revenue.allTimeRevenueEUR, "EUR")}
+                  </div>
+                </div>
               </div>
             </div>
           </CardBody>
@@ -181,10 +209,28 @@ export default function TrackingPage() {
         {/* ── Revenue Cards (Time Periods) ───────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {[
-            { label: "Heute", bookings: revenue.todayBookings, rev: revenue.todayRevenue, icon: Clock },
-            { label: "Letzte 7 Tage", bookings: revenue.weekBookings, rev: revenue.weekRevenue, icon: Calendar },
-            { label: "Letzte 30 Tage", bookings: revenue.monthBookings, rev: revenue.monthRevenue, icon: Calendar },
-          ].map(({ label, bookings, rev, icon: Icon }) => (
+            { 
+              label: "Heute", 
+              bookings: revenue.todayBookings, 
+              revCHF: revenue.todayRevenueCHF, 
+              revEUR: revenue.todayRevenueEUR,
+              icon: Clock 
+            },
+            { 
+              label: "Letzte 7 Tage", 
+              bookings: revenue.weekBookings, 
+              revCHF: revenue.weekRevenueCHF, 
+              revEUR: revenue.weekRevenueEUR,
+              icon: Calendar 
+            },
+            { 
+              label: "Letzte 30 Tage", 
+              bookings: revenue.monthBookings, 
+              revCHF: revenue.monthRevenueCHF, 
+              revEUR: revenue.monthRevenueEUR,
+              icon: Calendar 
+            },
+          ].map(({ label, bookings, revCHF, revEUR, icon: Icon }) => (
             <Card key={label} className="border border-[#E8C7C3]/30 shadow-xl">
               <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0">
                 <div className="flex items-center gap-2">
@@ -193,10 +239,19 @@ export default function TrackingPage() {
                 </div>
               </CardHeader>
               <CardBody className="p-4 sm:p-6 pt-2">
-                <div className="text-2xl sm:text-3xl font-bold text-[#017172] mb-1">
-                  {rev.toFixed(2)} CHF
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-[#8A8A8A]">CHF</span>
+                  <div className="text-xl sm:text-2xl font-bold text-[#017172]">
+                    {formatPrice(revCHF, "CHF")}
+                  </div>
                 </div>
-                <div className="text-sm text-[#8A8A8A]">{bookings} Buchungen</div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-[#8A8A8A]">EUR</span>
+                  <div className="text-xl sm:text-2xl font-bold text-[#017172]">
+                    {formatPrice(revEUR, "EUR")}
+                  </div>
+                </div>
+                <div className="text-sm text-[#8A8A8A] text-right">{bookings} Buchungen</div>
               </CardBody>
             </Card>
           ))}

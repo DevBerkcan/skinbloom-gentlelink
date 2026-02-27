@@ -208,10 +208,13 @@ export interface SimplifiedTrackingStatistics {
   totalBookings: number;
   totalPageViews: number;
   totalLinkClicks: number;
-  totalRevenue: number;
-  averageBookingValue: number;
+  totalRevenueCHF: number;
+  totalRevenueEUR: number;
+  averageBookingValueCHF: number;
+  averageBookingValueEUR: number;
   linkClicks: LinkClickStatistic[];
 }
+
 
 export interface LinkClickStatistic {
   linkName: string;
@@ -220,13 +223,17 @@ export interface LinkClickStatistic {
 }
 
 export interface RevenueStatistics {
-  todayRevenue: number;
-  weekRevenue: number;
-  monthRevenue: number;
+  todayRevenueCHF: number;
+  todayRevenueEUR: number;
+  weekRevenueCHF: number;
+  weekRevenueEUR: number;
+  monthRevenueCHF: number;
+  monthRevenueEUR: number;
   todayBookings: number;
   weekBookings: number;
   monthBookings: number;
-  allTimeRevenue: number;
+  allTimeRevenueCHF: number;
+  allTimeRevenueEUR: number;
   allTimeBookings: number;
 }
 
