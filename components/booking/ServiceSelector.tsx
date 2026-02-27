@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { Service, ServiceCategory } from "@/lib/api/booking";
 import { getServiceCategories, getServicesByCategory } from "@/lib/api/booking";
+import { formatPrice } from "@/lib/utils/currency";
 
 interface ServiceSelectorProps {
   services: Service[];
@@ -190,7 +191,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
                                       {service.durationMinutes} Min
                                     </span>
                                     <span className="text-xs font-bold text-[#E8C7C3]">
-                                      {service.price.toFixed(2)} CHF
+                                      {formatPrice(service.price, service.currency)}
                                     </span>
                                   </div>
                                 </div>
@@ -291,7 +292,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
                                             {service.durationMinutes} Min
                                           </span>
                                           <span className="font-bold text-[#E8C7C3] text-sm sm:text-base whitespace-nowrap">
-                                            {service.price.toFixed(2)} CHF
+                                            {formatPrice(service.price, service.currency)}
                                           </span>
                                         </div>
                                       </div>
@@ -342,7 +343,7 @@ export function ServiceSelector({ services: fallbackServices, selectedService, o
                       {selectedService.durationMinutes} Min
                     </span>
                     <span className="text-xs font-bold text-[#E8C7C3]">
-                      {selectedService.price.toFixed(2)} CHF
+                      {formatPrice(selectedService.price, selectedService.currency)}
                     </span>
                   </div>
                 </div>

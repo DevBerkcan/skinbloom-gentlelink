@@ -27,6 +27,7 @@ import {
 import { getAvailability, getEmployees, type TimeSlot, type Employee } from "@/lib/api/booking";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { formatPrice } from "@/lib/utils/currency";
 
 const modalClassNames = {
   base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
@@ -106,7 +107,7 @@ export default function AdminBookingsPage() {
 
   const handleEmployeeSelect = (employeeId: string) => {
     setSelectedEmployeeId(employeeId);
-    setBookingForm(prev => ({ ...prev, serviceId: '' })); // Reset service selection
+    setBookingForm(prev => ({ ...prev, serviceId: '' }));
     loadServicesForEmployee(employeeId);
   };
 
@@ -423,7 +424,7 @@ export default function AdminBookingsPage() {
         {booking.customerEmail && <div className="break-all">{booking.customerEmail}</div>}
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-[#E8C7C3]/20">
-        <div className="font-bold text-[#017172]">{booking.price.toFixed(2)} CHF</div>
+        <div className="font-bold text-[#017172]">{formatPrice(booking.price, booking.currency)}</div>
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -586,7 +587,7 @@ export default function AdminBookingsPage() {
                             </div>
                           </div>
                           <p className="text-xl font-bold text-[#017172]">
-                            {selectedBookingDetails.price.toFixed(2)} CHF
+                            {formatPrice(selectedBookingDetails.price, selectedBookingDetails.currency)}
                           </p>
                         </div>
                       </div>
@@ -786,7 +787,7 @@ export default function AdminBookingsPage() {
                             </Chip>
                           </td>
                           <td className="px-5 py-4">
-                            <div className="font-bold text-[#017172] text-sm">{booking.price.toFixed(2)} CHF</div>
+                            <div className="font-bold text-[#017172] text-sm">{formatPrice(booking.price, booking.currency)}</div>
                           </td>
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -1019,7 +1020,7 @@ export default function AdminBookingsPage() {
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="font-medium text-[#1E1E1E] text-base">{createdBooking.booking.serviceName}</p>
-                          <p className="text-xl font-bold text-[#017172]">{createdBooking.booking.price.toFixed(2)} CHF</p>
+                          <p className="text-xl font-bold text-[#017172]">{formatPrice(createdBooking.booking.price, createdBooking.booking.currency)}</p>
                         </div>
                       </div>
 
@@ -1184,7 +1185,7 @@ export default function AdminBookingsPage() {
                                         <div className="font-medium text-[#1E1E1E]">{service.name}</div>
                                         <div className="flex items-center gap-2 mt-1">
                                           <span className="text-xs text-[#017172] font-semibold">
-                                            {service.price.toFixed(2)} CHF
+                                            {formatPrice(service.price, service.currency)}
                                           </span>
                                           <span className="text-xs text-[#8A8A8A]">
                                             {service.durationMinutes} Min
@@ -1317,7 +1318,7 @@ export default function AdminBookingsPage() {
                               : ''}
                           </p>
                         </div>
-                        <p className="text-lg font-bold text-[#017172]">{selectedService.price.toFixed(2)} CHF</p>
+                        <p className="text-lg font-bold text-[#017172]">{formatPrice(selectedService.price, selectedService.currency)} </p>
                       </div>
                     )}
                   </div>

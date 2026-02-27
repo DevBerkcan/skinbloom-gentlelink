@@ -28,6 +28,7 @@ export interface Service {
   durationMinutes: number;
   price: number;
   displayOrder: number;
+  currency: string;
 }
 
 export interface ServiceCategory {
@@ -89,6 +90,7 @@ export interface BookingResponse {
     startTime: string;
     endTime: string;
     price: number;
+    currency: string;
   };
   customer: {
     firstName: string;

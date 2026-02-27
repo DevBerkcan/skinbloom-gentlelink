@@ -6,6 +6,7 @@ import { Input } from "@nextui-org/input";
 import { Checkbox } from "@nextui-org/checkbox";
 import { MapPin, Sparkles, Calendar, Clock, User, AlertCircle, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import type { Service, CustomerInfo, Employee } from "@/lib/api/booking";
+import { formatPrice } from "@/lib/utils/currency";
 
 interface ContactFormProps {
   service: Service;
@@ -117,7 +118,7 @@ export function ContactForm({
             </div>
             <div className="text-right flex-shrink-0">
               <p className="text-xs text-[#8A8A8A]">Preis</p>
-              <p className="text-base font-bold text-[#E8C7C3]">{service.price.toFixed(2)} CHF</p>
+              <p className="text-base font-bold text-[#E8C7C3]">{formatPrice(service.price, service.currency)}</p>
             </div>
           </div>
 
@@ -153,7 +154,7 @@ export function ContactForm({
           <div className="pt-2 border-t border-[#E8C7C3]/30 flex justify-between items-center">
             <span className="font-medium text-[#1E1E1E] text-sm">Gesamtbetrag</span>
             <div className="text-right">
-              <p className="text-lg font-bold text-[#E8C7C3]">{service.price.toFixed(2)} CHF</p>
+              <p className="text-lg font-bold text-[#E8C7C3]">{formatPrice(service.price, service.currency)}</p>
               <p className="text-xs text-[#8A8A8A]">Inkl. MwSt. • Zahlung vor Ort</p>
             </div>
           </div>
@@ -291,7 +292,7 @@ export function ContactForm({
 
           <div className="flex-1 min-w-0">
             <p className="text-xs text-[#8A8A8A]">Gesamtbetrag</p>
-            <p className="font-bold text-[#1E1E1E] text-sm">{service.price.toFixed(2)} CHF</p>
+            <p className="font-bold text-[#1E1E1E] text-sm">{formatPrice(service.price, service.currency)}</p>
           </div>
 
           <button

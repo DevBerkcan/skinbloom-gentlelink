@@ -80,6 +80,7 @@ export interface BookingListItem {
   startTime: string;
   endTime: string;
   price: number;
+  currency: string;
   customerNotes: string | null;
   createdAt: string;
 }
@@ -145,6 +146,7 @@ export interface Service {
   name: string;
   description: string;
   price: number;
+  currency: string;
   durationMinutes: number;
   isActive: boolean;
 }
@@ -173,6 +175,7 @@ export interface ManualBookingResponse {
     startTime: string;
     endTime: string;
     price: number;
+    currency: string;
   };
   customer: {
     firstName: string;
