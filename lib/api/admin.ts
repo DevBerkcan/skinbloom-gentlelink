@@ -59,6 +59,7 @@ export interface DashboardStatistics {
   totalCustomers: number;
   newCustomersThisMonth: number;
   averageBookingValue: number;
+  currency: string;
   popularServices: PopularService[];
 }
 
@@ -66,6 +67,7 @@ export interface PopularService {
   serviceName: string;
   bookingCount: number;
   revenue: number;
+  currency: string;
 }
 
 export interface BookingListItem {

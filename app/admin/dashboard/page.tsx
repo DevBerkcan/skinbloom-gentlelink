@@ -6,6 +6,7 @@ import { Card, CardBody } from "@nextui-org/card";
 import { Chip } from "@nextui-org/chip";
 import { Calendar, Clock, TrendingUp, TrendingDown, Users, Sparkles, Euro } from "lucide-react";
 import { getDashboard, type DashboardOverview } from "@/lib/api/admin";
+import { formatPrice } from "@/lib/utils/currency";
 
 export default function AdminDashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardOverview | null>(null);
@@ -129,26 +130,26 @@ export default function AdminDashboardPage() {
             </CardBody>
           </Card>
 
-          {/* Revenue */}
-          <Card className="border border-[#E8C7C3]/30 shadow-xl">
-            <CardBody className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-lg">
-                  <Euro className="text-[#017172]" size={20} />
-                </div>
-                {revenueGrowth !== 0 && (
-                  <div className={`flex items-center gap-1 text-xs sm:text-sm ${revenueGrowth > 0 ? "text-emerald-600" : "text-red-500"}`}>
-                    {revenueGrowth > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                    <span className="font-semibold">{Math.abs(revenueGrowth).toFixed(0)}%</span>
-                  </div>
-                )}
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">
-                {statistics.revenueThisMonth.toFixed(2)} CHF
-              </div>
-              <div className="text-xs sm:text-sm text-[#8A8A8A]">Umsatz diesen Monat</div>
-            </CardBody>
-          </Card>
+{/* Revenue */}
+<Card className="border border-[#E8C7C3]/30 shadow-xl">
+  <CardBody className="p-4 sm:p-6">
+    <div className="flex items-center justify-between mb-3 sm:mb-4">
+      <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-lg">
+        <Euro className="text-[#017172]" size={20} />
+      </div>
+      {revenueGrowth !== 0 && (
+        <div className={`flex items-center gap-1 text-xs sm:text-sm ${revenueGrowth > 0 ? "text-emerald-600" : "text-red-500"}`}>
+          {revenueGrowth > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+          <span className="font-semibold">{Math.abs(revenueGrowth).toFixed(0)}%</span>
+        </div>
+      )}
+    </div>
+    <div className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">
+      {formatPrice(statistics.revenueThisMonth, statistics.currency)}
+    </div>
+    <div className="text-xs sm:text-sm text-[#8A8A8A]">Umsatz diesen Monat</div>
+  </CardBody>
+</Card>
 
           {/* Customers */}
           <Card className="border border-[#E8C7C3]/30 shadow-xl">
@@ -167,20 +168,20 @@ export default function AdminDashboardPage() {
             </CardBody>
           </Card>
 
-          {/* Avg value */}
-          <Card className="border border-[#E8C7C3]/30 shadow-xl">
-            <CardBody className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-lg">
-                  <Sparkles className="text-[#017172]" size={20} />
-                </div>
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">
-                {statistics.averageBookingValue.toFixed(2)} CHF
-              </div>
-              <div className="text-xs sm:text-sm text-[#8A8A8A]">Durchschnittswert</div>
-            </CardBody>
-          </Card>
+{/* Avg value */}
+<Card className="border border-[#E8C7C3]/30 shadow-xl">
+  <CardBody className="p-4 sm:p-6">
+    <div className="flex items-center justify-between mb-3 sm:mb-4">
+      <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-lg">
+        <Sparkles className="text-[#017172]" size={20} />
+      </div>
+    </div>
+    <div className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">
+      {formatPrice(statistics.averageBookingValue, statistics.currency)}
+    </div>
+    <div className="text-xs sm:text-sm text-[#8A8A8A]">Durchschnittswert</div>
+  </CardBody>
+</Card>
         </div>
 
         {/* ── Main Grid ──────────────────────────────────────────────────── */}
@@ -242,14 +243,14 @@ export default function AdminDashboardPage() {
                               {booking.serviceName}
                             </div>
                           </div>
-                          <div className="text-right flex sm:block justify-between items-center">
-                            <div className="font-bold text-[#017172] text-base sm:text-lg">
-                              {booking.price.toFixed(2)} CHF
-                            </div>
-                            <div className="text-xs text-[#8A8A8A] font-mono">
-                              {booking.bookingNumber.slice(-6)}
-                            </div>
-                          </div>
+<div className="text-right flex sm:block justify-between items-center">
+  <div className="font-bold text-[#017172] text-base sm:text-lg">
+    {formatPrice(booking.price, booking.currency)}
+  </div>
+  <div className="text-xs text-[#8A8A8A] font-mono">
+    {booking.bookingNumber.slice(-6)}
+  </div>
+</div>
                         </div>
                       ))}
                     </div>
@@ -323,9 +324,9 @@ export default function AdminDashboardPage() {
                             {service.bookingCount} Buchungen
                           </div>
                         </div>
-                        <div className="font-bold text-[#017172] text-sm sm:text-base whitespace-nowrap">
-                          {service.revenue.toFixed(2)} CHF
-                        </div>
+<div className="font-bold text-[#017172] text-sm sm:text-base whitespace-nowrap">
+  {formatPrice(service.revenue, service.currency)}
+</div>
                       </div>
                     ))}
                   </div>
