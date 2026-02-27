@@ -294,6 +294,12 @@ export async function createManualBooking(
   return response.data;
 }
 
+// lib/api/admin.ts - Add this new function
+export async function getServicesByEmployee(employeeId: string): Promise<Service[]> {
+  const response = await api.get(`/admin/services/employees/${employeeId}/services`);
+  return response.data;
+}
+
 // ── Services & Availability ───────────────────────────────────────────────────
 
 export async function getServices(): Promise<Service[]> {
