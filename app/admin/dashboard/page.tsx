@@ -89,11 +89,16 @@ export default function AdminDashboardPage() {
       100
       : 0;
 
-  const revenueGrowth =
-    statistics.revenueLastMonth > 0
-      ? ((statistics.revenueThisMonth - statistics.revenueLastMonth) /
-        statistics.revenueLastMonth) *
-      100
+  const revenueGrowthCHF =
+    statistics.revenueLastMonthCHF > 0
+      ? ((statistics.revenueThisMonthCHF - statistics.revenueLastMonthCHF) /
+        statistics.revenueLastMonthCHF) * 100
+      : 0;
+
+  const revenueGrowthEUR =
+    statistics.revenueLastMonthEUR > 0
+      ? ((statistics.revenueThisMonthEUR - statistics.revenueLastMonthEUR) /
+        statistics.revenueLastMonthEUR) * 100
       : 0;
 
   return (
@@ -130,24 +135,45 @@ export default function AdminDashboardPage() {
             </CardBody>
           </Card>
 
-          {/* Revenue */}
+          {/* Revenue CHF */}
           <Card className="border border-[#E8C7C3]/30 shadow-xl">
             <CardBody className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-lg">
                   <Euro className="text-[#017172]" size={20} />
                 </div>
-                {revenueGrowth !== 0 && (
-                  <div className={`flex items-center gap-1 text-xs sm:text-sm ${revenueGrowth > 0 ? "text-emerald-600" : "text-red-500"}`}>
-                    {revenueGrowth > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                    <span className="font-semibold">{Math.abs(revenueGrowth).toFixed(0)}%</span>
+                {revenueGrowthCHF !== 0 && (
+                  <div className={`flex items-center gap-1 text-xs sm:text-sm ${revenueGrowthCHF > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                    {revenueGrowthCHF > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                    <span className="font-semibold">{Math.abs(revenueGrowthCHF).toFixed(0)}%</span>
                   </div>
                 )}
               </div>
               <div className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">
-                {formatPrice(statistics.revenueThisMonth, statistics.currency)}
+                {formatPrice(statistics.revenueThisMonthCHF, "CHF")}
               </div>
-              <div className="text-xs sm:text-sm text-[#8A8A8A]">Umsatz diesen Monat</div>
+              <div className="text-xs sm:text-sm text-[#8A8A8A]">Umsatz CHF diesen Monat</div>
+            </CardBody>
+          </Card>
+
+          {/* Revenue EUR */}
+          <Card className="border border-[#E8C7C3]/30 shadow-xl">
+            <CardBody className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-lg">
+                  <Euro className="text-[#017172]" size={20} />
+                </div>
+                {revenueGrowthEUR !== 0 && (
+                  <div className={`flex items-center gap-1 text-xs sm:text-sm ${revenueGrowthEUR > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                    {revenueGrowthEUR > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                    <span className="font-semibold">{Math.abs(revenueGrowthEUR).toFixed(0)}%</span>
+                  </div>
+                )}
+              </div>
+              <div className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">
+                {formatPrice(statistics.revenueThisMonthEUR, "EUR")}
+              </div>
+              <div className="text-xs sm:text-sm text-[#8A8A8A]">Umsatz EUR diesen Monat</div>
             </CardBody>
           </Card>
 
@@ -168,20 +194,6 @@ export default function AdminDashboardPage() {
             </CardBody>
           </Card>
 
-          {/* Avg value */}
-          <Card className="border border-[#E8C7C3]/30 shadow-xl">
-            <CardBody className="p-4 sm:p-6">
-              <div className="flex items-center justify-between mb-3 sm:mb-4">
-                <div className="p-2 sm:p-3 bg-[#017172]/10 rounded-lg">
-                  <Sparkles className="text-[#017172]" size={20} />
-                </div>
-              </div>
-              <div className="text-2xl sm:text-3xl font-bold text-[#1E1E1E] mb-1">
-                {formatPrice(statistics.averageBookingValue, statistics.currency)}
-              </div>
-              <div className="text-xs sm:text-sm text-[#8A8A8A]">Durchschnittswert</div>
-            </CardBody>
-          </Card>
         </div>
 
         {/* ── Main Grid ──────────────────────────────────────────────────── */}
@@ -325,7 +337,16 @@ export default function AdminDashboardPage() {
                           </div>
                         </div>
                         <div className="font-bold text-[#017172] text-sm sm:text-base whitespace-nowrap">
-                          {formatPrice(service.revenue, service.currency)}
+                          {service.revenueCHF > 0 && (
+                            <div className="text-right">
+                              {formatPrice(service.revenueCHF, "CHF")}
+                            </div>
+                          )}
+                          {service.revenueEUR > 0 && (
+                            <div className="text-right text-sm sm:text-base">
+                              {formatPrice(service.revenueEUR, "EUR")}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

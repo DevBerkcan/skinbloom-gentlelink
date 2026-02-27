@@ -54,22 +54,21 @@ export interface UpcomingBooking {
 export interface DashboardStatistics {
   totalBookingsThisMonth: number;
   totalBookingsLastMonth: number;
-  revenueThisMonth: number;
-  revenueLastMonth: number;
+  revenueThisMonthCHF: number;
+  revenueLastMonthCHF: number;
+  revenueThisMonthEUR: number;
+  revenueLastMonthEUR: number;
   totalCustomers: number;
   newCustomersThisMonth: number;
-  averageBookingValue: number;
-  currency: string;
   popularServices: PopularService[];
 }
 
 export interface PopularService {
   serviceName: string;
   bookingCount: number;
-  revenue: number;
-  currency: string;
+  revenueCHF: number;
+  revenueEUR: number;
 }
-
 export interface BookingListItem {
   id: string;
   bookingNumber: string;
