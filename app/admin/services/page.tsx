@@ -201,32 +201,32 @@ export default function AdminServicesPage() {
         }
     };
 
-    const handleCreateService = async () => {
-        try {
-            if (!serviceForm.name || !serviceForm.categoryId) {
-                setModalError("Bitte füllen Sie alle Pflichtfelder aus");
-                return;
-            }
-            setSubmitting(true);
-            setModalError(null);
-            const newService = await createAdminService({
-                name: serviceForm.name,
-                description: serviceForm.description || null,
-                durationMinutes: serviceForm.durationMinutes!,
-                price: serviceForm.price!,
-                displayOrder: serviceForm.displayOrder!,
-                categoryId: serviceForm.categoryId,
-                employeeIds: serviceForm.employeeIds || [], // Pass array instead of single ID
-            });
-            setServices(prev => [newService, ...prev]);
-            handleClose();
-        } catch (err: any) {
-            setModalError(err.message);
-        } finally {
-            setSubmitting(false);
+const handleCreateService = async () => {
+    try {
+        if (!serviceForm.name || !serviceForm.categoryId || !serviceForm.currency) {
+            setModalError("Bitte füllen Sie alle Pflichtfelder aus");
+            return;
         }
-    };
-
+        setSubmitting(true);
+        setModalError(null);
+        const newService = await createAdminService({
+            name: serviceForm.name,
+            description: serviceForm.description || null,
+            durationMinutes: serviceForm.durationMinutes!,
+            price: serviceForm.price!,
+            currency: serviceForm.currency!,
+            displayOrder: serviceForm.displayOrder!,
+            categoryId: serviceForm.categoryId,
+            employeeIds: serviceForm.employeeIds || [],
+        });
+        setServices(prev => [newService, ...prev]);
+        handleClose();
+    } catch (err: any) {
+        setModalError(err.message);
+    } finally {
+        setSubmitting(false);
+    }
+};
     const handleUpdateService = async () => {
         try {
             if (!selectedItem || !('categoryId' in selectedItem)) return;
@@ -237,6 +237,7 @@ export default function AdminServicesPage() {
                 description: serviceForm.description || null,
                 durationMinutes: serviceForm.durationMinutes!,
                 price: serviceForm.price!,
+                currency: serviceForm.currency!,
                 displayOrder: serviceForm.displayOrder!,
                 categoryId: serviceForm.categoryId!,
                 employeeIds: serviceForm.employeeIds || [], // Pass array instead of single ID
@@ -1212,7 +1213,6 @@ export default function AdminServicesPage() {
     );
 }
 
-
 // Service Modal Component
 function ServiceModals({
     isOpen,
@@ -1240,12 +1240,7 @@ function ServiceModals({
     onClose: () => void;
 }) {
     const isCreateOrEdit = modalMode === "create" || modalMode === "edit";
-    console.log("Rendering Mitarbeiter Select with employees:", employees);
-    console.log("Employees mapped to options:", employees.map(emp => ({
-        key: emp.id,
-        label: `${emp.name} - ${emp.role}`,
-        value: emp.id
-    })));
+    
     return (
         <Modal
             isOpen={isOpen && (modalMode === "create" || modalMode === "edit")}
@@ -1333,6 +1328,29 @@ function ServiceModals({
                                     />
                                 </div>
 
+                                {/* Currency Select - Add this */}
+                                <Select
+                                    label="Währung *"
+                                    placeholder="Währung auswählen"
+                                    selectedKeys={serviceForm.currency ? [serviceForm.currency] : ["CHF"]}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (value) {
+                                            setServiceForm({ ...serviceForm, currency: value });
+                                        }
+                                    }}
+                                    isRequired
+                                    isDisabled={submitting}
+                                    classNames={{
+                                        trigger: "bg-[#F5EDEB] border border-[#E8C7C3]/30 hover:border-[#017172] data-[focus=true]:border-[#017172]",
+                                        label: "text-[#8A8A8A]",
+                                        value: "text-[#1E1E1E]",
+                                    }}
+                                >
+                                    <SelectItem key="CHF" value="CHF">CHF - Schweizer Franken</SelectItem>
+                                    <SelectItem key="EUR" value="EUR">EUR - Euro</SelectItem>
+                                </Select>
+
                                 <Input
                                     label="Sortierreihenfolge"
                                     type="number"
@@ -1373,11 +1391,10 @@ function ServiceModals({
                                 <Select
                                     label="Mitarbeiter (optional)"
                                     placeholder="Mitarbeiter auswählen"
-                                    selectionMode="multiple" // Add this for multi-select
+                                    selectionMode="multiple"
                                     selectedKeys={serviceForm.employeeIds || []}
                                     onSelectionChange={(keys) => {
                                         const selectedKeys = Array.from(keys) as string[];
-                                        console.log("Selected keys:", selectedKeys);
                                         setServiceForm({
                                             ...serviceForm,
                                             employeeIds: selectedKeys.filter(key => key !== "none")

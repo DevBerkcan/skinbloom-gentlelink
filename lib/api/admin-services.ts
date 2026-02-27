@@ -41,10 +41,11 @@ export interface CreateServiceData {
   description?: string | null;
   durationMinutes: number;
   price: number;
+  currency: string;
   displayOrder: number;
   categoryId: string;
-  employeeIds?: string[] | null;  // Primary - array of employee IDs
-  employeeId?: string | null;      // Backward compatibility - single employee ID
+  employeeIds?: string[] | null;  
+  employeeId?: string | null;  
 }
 
 // Updated to use array of employee IDs with backward compatibility
@@ -53,6 +54,7 @@ export interface UpdateServiceData {
   description?: string | null;
   durationMinutes: number;
   price: number;
+  currency: string;
   displayOrder: number;
   categoryId: string;
   employeeIds?: string[] | null;  // Primary - array of employee IDs
