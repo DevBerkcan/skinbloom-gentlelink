@@ -99,6 +99,10 @@ export default function AdminCalendarPage() {
     reason: ""
   });
 
+  // Add these states with the other useState declarations
+const [employeeServices, setEmployeeServices] = useState<Service[]>([]);
+const [loadingEmployeeServices, setLoadingEmployeeServices] = useState(false);
+
   const [bookingForm, setBookingForm] = useState<{
     serviceId: string;
     bookingDate: string;
@@ -143,6 +147,23 @@ export default function AdminCalendarPage() {
     }
   }, [bookingForm.serviceId, bookingForm.bookingDate, selectedEmployeeId]);
 
+
+  // Add this function to load services by employee
+async function loadServicesForEmployee(employeeId: string) {
+  if (!employeeId) return;
+  
+  setLoadingEmployeeServices(true);
+  try {
+    // You'll need to add this function to your adminApi
+    const data = await adminApi.getServicesByEmployee(employeeId);
+    setEmployeeServices(data);
+  } catch (error) {
+    console.error("Error loading employee services:", error);
+    setEmployeeServices([]);
+  } finally {
+    setLoadingEmployeeServices(false);
+  }
+}
   const loadEvents = useCallback(async () => {
     try {
       setLoading(true);
@@ -244,24 +265,25 @@ export default function AdminCalendarPage() {
     }
   };
 
-  const resetManualBookingForm = () => {
-    setSuccess(false);
-    setCreatedBooking(null);
-    setSelectedSlot(null);
-    setError(null);
-    if (employees.length > 0) setSelectedEmployeeId(employees[0].id);
-    setBookingForm({
-      serviceId: '',
-      bookingDate: moment().format('YYYY-MM-DD'),
-      startTime: '',
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      customerNotes: ''
-    });
-    setAvailableSlots([]);
-  };
+const resetManualBookingForm = () => {
+  setSuccess(false);
+  setCreatedBooking(null);
+  setSelectedSlot(null);
+  setError(null);
+  setEmployeeServices([]); // Add this line
+  if (employees.length > 0) setSelectedEmployeeId(employees[0].id);
+  setBookingForm({
+    serviceId: '',
+    bookingDate: moment().format('YYYY-MM-DD'),
+    startTime: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    customerNotes: ''
+  });
+  setAvailableSlots([]);
+};
 
   const handleCreateManualBooking = async () => {
     setError(null);
@@ -926,109 +948,132 @@ export default function AdminCalendarPage() {
                     <div className="space-y-4">
                       {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
 
-                      {/* Step 1: Employee */}
-                      <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
-                        <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">1. Fachkraft wählen</p>
-                        {loadingEmployees ? (
-                          <div className="flex items-center gap-2 p-3 bg-white rounded-lg">
-                            <Spinner size="sm" />
-                            <span className="text-sm text-[#8A8A8A]">Lade Mitarbeiter...</span>
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-2 gap-2">
-                            {employees.map(emp => (
-                              <button
-                                key={emp.id}
-                                onClick={() => setSelectedEmployeeId(emp.id)}
-                                className={`text-left p-3 rounded-xl border-2 transition-all ${selectedEmployeeId === emp.id
-                                  ? 'border-[#017172] bg-[#017172]/5'
-                                  : 'border-[#E8C7C3]/30 bg-white hover:border-[#017172]/30'
-                                  }`}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${selectedEmployeeId === emp.id
-                                    ? 'bg-[#017172] text-white'
-                                    : 'bg-[#E8C7C3]/20 text-[#017172]'
-                                    }`}>
-                                    {emp.name.charAt(0)}
-                                  </div>
-                                  <div>
-                                    <p className="font-semibold text-[#1E1E1E] text-sm">{emp.name}</p>
-                                    <p className="text-[10px] text-[#8A8A8A]">{emp.role}</p>
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+{/* Step 1: Employee */}
+<div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+  <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">1. Fachkraft wählen</p>
+  {loadingEmployees ? (
+    <div className="flex items-center gap-2 p-3 bg-white rounded-lg">
+      <Spinner size="sm" />
+      <span className="text-sm text-[#8A8A8A]">Lade Mitarbeiter...</span>
+    </div>
+  ) : (
+    <div className="grid grid-cols-2 gap-2">
+      {employees.map(emp => (
+        <button
+          key={emp.id}
+          onClick={() => {
+            setSelectedEmployeeId(emp.id);
+            setBookingForm({ ...bookingForm, serviceId: '' }); // Reset service selection
+            loadServicesForEmployee(emp.id);
+          }}
+          className={`text-left p-3 rounded-xl border-2 transition-all ${
+            selectedEmployeeId === emp.id
+              ? 'border-[#017172] bg-[#017172]/5'
+              : 'border-[#E8C7C3]/30 bg-white hover:border-[#017172]/30'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+              selectedEmployeeId === emp.id
+                ? 'bg-[#017172] text-white'
+                : 'bg-[#E8C7C3]/20 text-[#017172]'
+            }`}>
+              {emp.name.charAt(0)}
+            </div>
+            <div>
+              <p className="font-semibold text-[#1E1E1E] text-sm">{emp.name}</p>
+              <p className="text-[10px] text-[#8A8A8A]">{emp.role}</p>
+            </div>
+          </div>
+        </button>
+      ))}
+    </div>
+  )}
+</div>
 
-                      {/* Step 2: Service with integrated search */}
-                      <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
-                        <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">2. Service auswählen</p>
-
-                        <Popover placement="bottom" isOpen={isServicePopoverOpen} onOpenChange={setIsServicePopoverOpen}>
-                          <PopoverTrigger>
-                            <Button
-                              variant="flat"
-                              className="w-full justify-start bg-white border border-[#E8C7C3]/30 text-[#1E1E1E] h-12"
-                              endContent={<Search size={18} className="text-[#8A8A8A]" />}
-                            >
-                              {selectedService ? selectedService.name : "Service suchen oder auswählen..."}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[400px] p-0">
-                            <div className="w-full">
-                              <Input
-                                placeholder="Service suchen..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="border-b border-[#E8C7C3]/20"
-                                startContent={<Search size={18} className="text-[#8A8A8A]" />}
-                                classNames={{
-                                  inputWrapper: "bg-transparent shadow-none",
-                                  base: "p-3"
-                                }}
-                                autoFocus
-                              />
-                              <div className="max-h-[300px] overflow-y-auto">
-                                {filteredServices.length > 0 ? (
-                                  filteredServices.map(service => (
-                                    <button
-                                      key={service.id}
-                                      className="w-full text-left p-3 hover:bg-[#F5EDEB] transition-colors border-b border-[#E8C7C3]/10 last:border-0"
-                                      onClick={() => {
-                                        setBookingForm({ ...bookingForm, serviceId: service.id });
-                                        setSearchTerm('');
-                                        setIsServicePopoverOpen(false);
-                                      }}
-                                    >
-                                      <div className="font-medium text-[#1E1E1E]">{service.name}</div>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-xs text-[#017172] font-semibold">
-                                          {service.price.toFixed(2)} CHF
-                                        </span>
-                                        <span className="text-xs text-[#8A8A8A]">
-                                          {service.durationMinutes} Min
-                                        </span>
-                                      </div>
-                                      {service.description && (
-                                        <div className="text-xs text-[#8A8A8A] mt-1 line-clamp-2">
-                                          {service.description}
-                                        </div>
-                                      )}
-                                    </button>
-                                  ))
-                                ) : (
-                                  <div className="p-4 text-center text-[#8A8A8A]">
-                                    Keine Services gefunden
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
+                    {/* Step 2: Service with integrated search */}
+<div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">
+  <p className="font-semibold text-[#1E1E1E] mb-3 text-sm">2. Service auswählen</p>
+  
+  {!selectedEmployeeId ? (
+    <div className="p-3 bg-white rounded-lg text-center text-sm text-[#8A8A8A]">
+      Bitte zuerst eine Fachkraft auswählen
+    </div>
+  ) : loadingEmployeeServices ? (
+    <div className="flex items-center gap-2 p-3 bg-white rounded-lg">
+      <Spinner size="sm" />
+      <span className="text-sm text-[#8A8A8A]">Lade Services...</span>
+    </div>
+  ) : (
+    <Popover placement="bottom" isOpen={isServicePopoverOpen} onOpenChange={setIsServicePopoverOpen}>
+      <PopoverTrigger>
+        <Button
+          variant="flat"
+          className="w-full justify-start bg-white border border-[#E8C7C3]/30 text-[#1E1E1E] h-12"
+          endContent={<Search size={18} className="text-[#8A8A8A]" />}
+          isDisabled={!selectedEmployeeId}
+        >
+          {selectedService ? selectedService.name : "Service suchen oder auswählen..."}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[400px] p-0">
+        <div className="w-full">
+          <Input
+            placeholder="Service suchen..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="border-b border-[#E8C7C3]/20"
+            startContent={<Search size={18} className="text-[#8A8A8A]" />}
+            classNames={{
+              inputWrapper: "bg-transparent shadow-none",
+              base: "p-3"
+            }}
+            autoFocus
+          />
+          <div className="max-h-[300px] overflow-y-auto">
+            {employeeServices.length > 0 ? (
+              employeeServices
+                .filter(service => 
+                  service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  service.description?.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map(service => (
+                  <button
+                    key={service.id}
+                    className="w-full text-left p-3 hover:bg-[#F5EDEB] transition-colors border-b border-[#E8C7C3]/10 last:border-0"
+                    onClick={() => {
+                      setBookingForm({ ...bookingForm, serviceId: service.id });
+                      setSearchTerm('');
+                      setIsServicePopoverOpen(false);
+                    }}
+                  >
+                    <div className="font-medium text-[#1E1E1E]">{service.name}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-[#017172] font-semibold">
+                        {service.price.toFixed(2)} CHF
+                      </span>
+                      <span className="text-xs text-[#8A8A8A]">
+                        {service.durationMinutes} Min
+                      </span>
+                    </div>
+                    {service.description && (
+                      <div className="text-xs text-[#8A8A8A] mt-1 line-clamp-2">
+                        {service.description}
                       </div>
+                    )}
+                  </button>
+                ))
+            ) : (
+              <div className="p-4 text-center text-[#8A8A8A]">
+                Keine Services für diese Fachkraft gefunden
+              </div>
+            )}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  )}
+</div>
 
                       {/* Step 3: Date */}
                       <div className="bg-[#F5EDEB] rounded-xl p-4 border border-[#E8C7C3]/20">

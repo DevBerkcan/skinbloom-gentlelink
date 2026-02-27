@@ -1,4 +1,5 @@
 // lib/api/admin.ts
+import { get } from 'http';
 import api from './client';
 
 export const adminApi = {
@@ -18,6 +19,7 @@ export const adminApi = {
   getTrackingStatistics,
   getRevenueStatistics,
   trackLinkClick,
+  getServicesByEmployee,
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -294,7 +296,6 @@ export async function createManualBooking(
   return response.data;
 }
 
-// lib/api/admin.ts - Add this new function
 export async function getServicesByEmployee(employeeId: string): Promise<Service[]> {
   const response = await api.get(`/admin/services/employees/${employeeId}/services`);
   return response.data;
