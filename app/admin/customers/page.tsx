@@ -35,6 +35,7 @@ import {
 import { customersApi, CustomerListItem, CustomerDetail } from "@/lib/api/customers";
 import { useConfirm } from "@/components/ConfirmDialog";
 import moment from "moment";
+import { formatPrice } from "@/lib/utils/currency";
 
 const modalClassNames = {
   base: "bg-white border border-[#E8C7C3]/30 shadow-2xl",
@@ -761,7 +762,7 @@ export default function CustomersPage() {
                                     {getStatusLabel(booking.status)}
                                   </Chip>
                                   <p className="text-xs font-semibold text-[#017172] whitespace-nowrap">
-                                    {booking.price.toFixed(2)} CHF
+                                    {formatPrice(booking.price, booking.currency)}
                                   </p>
                                 </div>
                               </div>

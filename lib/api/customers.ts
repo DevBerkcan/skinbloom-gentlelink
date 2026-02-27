@@ -37,6 +37,7 @@ export interface CustomerBookingItem {
   endTime: string;
   status: string;
   price: number;
+  currency: string;
 }
 
 export interface CustomerResponse {
