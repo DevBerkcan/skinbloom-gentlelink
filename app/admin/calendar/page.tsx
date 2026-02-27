@@ -24,6 +24,7 @@ import { adminApi, BookingListItem, Service, CreateManualBookingDto, ManualBooki
 import { bookingApi, TimeSlot, Employee, getAvailability } from "@/lib/api/booking";
 import { blockedTimeSlotsApi, BlockedTimeSlot, CreateBlockedTimeSlotDto, CreateBlockedDateRangeDto } from "@/lib/api/blockedTimeSlots";
 import { useAuth } from "@/lib/contexts/AuthContext";
+import { formatPrice } from "@/lib/utils/currency";
 
 moment.locale('de');
 const localizer = momentLocalizer(moment);
@@ -613,7 +614,7 @@ const handleCreateManualBooking = async () => {
                               {moment(selectedEvent.start).format('DD.MM.YYYY')} · {moment(selectedEvent.start).format('HH:mm')} – {moment(selectedEvent.end).format('HH:mm')}
                             </p>
                           </div>
-                          <p className="text-xl font-bold text-[#017172]">{selectedEvent.resource.price.toFixed(2)} CHF</p>
+                          <p className="text-xl font-bold text-[#017172]">{formatPrice(selectedEvent.resource.price, selectedEvent.resource.currency)}</p>
                         </div>
                       </div>
 
@@ -895,7 +896,7 @@ const handleCreateManualBooking = async () => {
     </div>
     <div className="flex items-center justify-between">
       <p className="font-medium text-[#1E1E1E] text-base">{createdBooking.booking.serviceName}</p>
-      <p className="text-xl font-bold text-[#017172]">{createdBooking.booking.price.toFixed(2)} CHF</p>
+      <p className="text-xl font-bold text-[#017172]">{formatPrice(createdBooking.booking.price, createdBooking.booking.currency)} </p>
     </div>
   </div>
 
@@ -1063,7 +1064,7 @@ const handleCreateManualBooking = async () => {
                     <div className="font-medium text-[#1E1E1E]">{service.name}</div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-[#017172] font-semibold">
-                        {service.price.toFixed(2)} CHF
+                        {formatPrice(service.price, service.currency)}
                       </span>
                       <span className="text-xs text-[#8A8A8A]">
                         {service.durationMinutes} Min
@@ -1196,7 +1197,7 @@ const handleCreateManualBooking = async () => {
                                 : ''}
                             </p>
                           </div>
-                          <p className="text-lg font-bold text-[#017172]">{selectedService.price.toFixed(2)} CHF</p>
+                          <p className="text-lg font-bold text-[#017172]">{formatPrice(selectedService.price, selectedService.currency)}</p>
                         </div>
                       )}
                     </div>
