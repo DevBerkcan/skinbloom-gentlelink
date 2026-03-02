@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { NextUIProvider } from "@nextui-org/react";
@@ -8,6 +8,11 @@ import { TrackingProvider } from "@/components/analytics/TrackingProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: "Skinbloom Aesthetics",
@@ -32,12 +37,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Skinbloom Aesthetics – Premium Skinbloom Aesthetics Basel",
-    description:
-      "Skinbloom Aesthetics in Basel - Online buchen!",
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
+    description: "Skinbloom Aesthetics in Basel - Online buchen!",
   },
   robots: {
     index: true,
