@@ -20,7 +20,7 @@ export interface AdminService {
   displayOrder: number;
   categoryId: string;
   categoryName: string;
-  assignedEmployees: EmployeeBasicDto[]; 
+  assignedEmployees: EmployeeBasicDto[];
   employeeId?: string | null;
   employeeName?: string | null;
   isActive: boolean;

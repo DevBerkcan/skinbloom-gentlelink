@@ -2013,9 +2013,18 @@ function DeleteModal({
     onClose: () => void;
 }) {
     const isService = selectedItem && 'categoryId' in selectedItem;
-    const title = isService ? "Service löschen" : "Kategorie löschen";
+    const isCategory = selectedItem && 'services' in selectedItem;
+    
+    const title = isService ? "Service löschen" : isCategory ? "Kategorie löschen" : "Löschen";
     const name = selectedItem?.name || "";
-    const hasServices = !isService && selectedItem && 'services' in selectedItem && selectedItem.services.length > 0;
+    
+    // For services - check if there are employee assignments
+    const hasEmployeeAssignments = isService && (selectedItem as AdminService).assignedEmployees?.length > 0;
+    const employeeCount = isService ? (selectedItem as AdminService).assignedEmployees?.length || 0 : 0;
+    
+    // For categories - check if there are services
+    const hasServices = isCategory && (selectedItem as AdminServiceCategory).services.length > 0;
+    const servicesCount = isCategory ? (selectedItem as AdminServiceCategory).services.length : 0;
 
     return (
         <Modal
@@ -2054,7 +2063,7 @@ function DeleteModal({
 
                                 {/* Item Info */}
                                 <div className="bg-[#F5EDEB] p-4 rounded-xl border border-[#E8C7C3]/30">
-                                    <div className="flex items-center gap-3 mb-3">
+                                    <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-[#017172] flex items-center justify-center text-white font-bold shrink-0">
                                             {name.charAt(0)}
                                         </div>
@@ -2067,13 +2076,52 @@ function DeleteModal({
                                     </div>
                                 </div>
 
-                                {/* Impact Warning for Categories with Services */}
-                                {hasServices && (
+                                {/* Impact Warning for Services with Employee Assignments */}
+                                {isService && hasEmployeeAssignments && (
+                                    <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                                        <p className="text-sm text-amber-700 flex items-start gap-2 mb-3">
+                                            <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                                            <span className="font-semibold">Folgende Daten werden gelöscht:</span>
+                                        </p>
+                                        
+                                        <div className="space-y-2 pl-7">
+                                            {hasEmployeeAssignments && (
+                                                <div className="flex items-center gap-2 text-sm text-amber-700">
+                                                    <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                                                    <span>
+                                                        <strong>{employeeCount}</strong> {employeeCount === 1 ? 'Mitarbeiter-Zuordnung' : 'Mitarbeiter-Zuordnungen'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <p className="text-sm text-amber-700 mt-3 pt-2 border-t border-amber-200">
+                                            <strong>Hinweis:</strong> Dieser Service wird aus allen Systemen entfernt. 
+                                            Alle Buchungen und zugehörigen Daten (E-Mail-Logs) werden unwiderruflich gelöscht.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Simple warning for Services without assignments */}
+                                {isService && !hasEmployeeAssignments && (
                                     <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
                                         <p className="text-sm text-amber-700 flex items-start gap-2">
                                             <AlertCircle size={16} className="shrink-0 mt-0.5" />
                                             <span>
-                                                <strong>Auswirkung:</strong> Diese Kategorie enthält <strong>{(selectedItem as AdminServiceCategory).services.length} Services</strong>.
+                                                <strong>Hinweis:</strong> Beim Löschen dieses Services werden auch alle 
+                                                zugehörigen Buchungen und E-Mail-Logs unwiderruflich gelöscht.
+                                            </span>
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Impact Warning for Categories with Services */}
+                                {isCategory && hasServices && (
+                                    <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                                        <p className="text-sm text-amber-700 flex items-start gap-2">
+                                            <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                                            <span>
+                                                <strong>Auswirkung:</strong> Diese Kategorie enthält <strong>{servicesCount} Services</strong>.
                                                 Sie können die Kategorie erst löschen, wenn alle Services entfernt oder einer anderen Kategorie zugewiesen wurden.
                                             </span>
                                         </p>
@@ -2092,7 +2140,23 @@ function DeleteModal({
                             >
                                 Abbrechen
                             </Button>
-                            {!hasServices && (
+                            
+                            {/* Show delete button for services even with assignments (cascade delete) */}
+                            {isService && (
+                                <Button
+                                    className="bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold shadow-lg shadow-red-500/20"
+                                    onPress={onConfirm}
+                                    isLoading={submitting}
+                                    startContent={!submitting && <Trash2 size={14} />}
+                                >
+                                    {hasEmployeeAssignments 
+                                        ? "Trotzdem löschen" 
+                                        : "Endgültig löschen"}
+                                </Button>
+                            )}
+                            
+                            {/* Show delete button for categories only if no services */}
+                            {isCategory && !hasServices && (
                                 <Button
                                     className="bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold shadow-lg shadow-red-500/20"
                                     onPress={onConfirm}
