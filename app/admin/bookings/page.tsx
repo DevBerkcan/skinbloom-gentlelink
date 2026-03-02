@@ -328,66 +328,66 @@ export default function AdminBookingsPage() {
     bookingData: CreateManualBookingDto;
   } | null>(null);
 
- async function handleCreateManualBooking() {
-  setError(null);
+  async function handleCreateManualBooking() {
+    setError(null);
 
-  try {
-    const selectedService = employeeServices.find(s => s.id === bookingForm.serviceId) ||
-      services.find(s => s.id === bookingForm.serviceId);
-    if (!selectedService) throw new Error("Service nicht gefunden");
+    try {
+      const selectedService = employeeServices.find(s => s.id === bookingForm.serviceId) ||
+        services.find(s => s.id === bookingForm.serviceId);
+      if (!selectedService) throw new Error("Service nicht gefunden");
 
-    const availabilityCheck = await getAvailability(
-      bookingForm.serviceId,
-      bookingForm.bookingDate,
-      selectedEmployeeId
-    );
-
-    const isSlotAvailable = availabilityCheck.availableSlots?.some(
-      slot => slot.startTime === bookingForm.startTime && slot.isAvailable
-    );
-    if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
-
-    const bookingData: CreateManualBookingDto = {
-      serviceId: bookingForm.serviceId,
-      bookingDate: bookingForm.bookingDate,
-      startTime: bookingForm.startTime,
-      firstName: bookingForm.firstName.trim(),
-      lastName: bookingForm.lastName.trim(),
-      email: bookingForm.email?.trim() || null,
-      phone: bookingForm.phone?.trim() || null,
-      customerNotes: bookingForm.customerNotes?.trim() || null,
-      employeeId: selectedEmployeeId || null,
-    };
-
-    // THIS IS THE KEY PART - ACTUALLY CALL checkEmailConflict
-    if (bookingData.email) {
-      const conflictCheck = await checkEmailConflict(
-        bookingData.email,
-        bookingData.firstName,
-        bookingData.lastName,
-        selectedEmployeeId 
+      const availabilityCheck = await getAvailability(
+        bookingForm.serviceId,
+        bookingForm.bookingDate,
+        selectedEmployeeId
       );
-      
-      if (conflictCheck.hasConflict) {
-        // Show warning modal - PREVENTS booking creation
-        setConflictData({
-          existingName: conflictCheck.existingName!,
-          existingEmail: conflictCheck.existingEmail!,
-          bookingData
-        });
-        setShowEmailConflictModal(true);
-        return; // IMPORTANT: Stop here, don't create booking
+
+      const isSlotAvailable = availabilityCheck.availableSlots?.some(
+        slot => slot.startTime === bookingForm.startTime && slot.isAvailable
+      );
+      if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
+
+      const bookingData: CreateManualBookingDto = {
+        serviceId: bookingForm.serviceId,
+        bookingDate: bookingForm.bookingDate,
+        startTime: bookingForm.startTime,
+        firstName: bookingForm.firstName.trim(),
+        lastName: bookingForm.lastName.trim(),
+        email: bookingForm.email?.trim() || null,
+        phone: bookingForm.phone?.trim() || null,
+        customerNotes: bookingForm.customerNotes?.trim() || null,
+        employeeId: selectedEmployeeId || null,
+      };
+
+      // THIS IS THE KEY PART - ACTUALLY CALL checkEmailConflict
+      if (bookingData.email) {
+        const conflictCheck = await checkEmailConflict(
+          bookingData.email,
+          bookingData.firstName,
+          bookingData.lastName,
+          selectedEmployeeId
+        );
+
+        if (conflictCheck.hasConflict) {
+          // Show warning modal - PREVENTS booking creation
+          setConflictData({
+            existingName: conflictCheck.existingName!,
+            existingEmail: conflictCheck.existingEmail!,
+            bookingData
+          });
+          setShowEmailConflictModal(true);
+          return; // IMPORTANT: Stop here, don't create booking
+        }
       }
+
+      // No conflict, proceed directly
+      await submitBooking(bookingData);
+
+    } catch (error: any) {
+      console.error("Error preparing booking:", error);
+      setError(error.message || "Fehler beim Erstellen der Buchung");
     }
-
-    // No conflict, proceed directly
-    await submitBooking(bookingData);
-
-  } catch (error: any) {
-    console.error("Error preparing booking:", error);
-    setError(error.message || "Fehler beim Erstellen der Buchung");
   }
-}
 
   async function submitBooking(bookingData: CreateManualBookingDto) {
     setSubmitting(true);
@@ -791,11 +791,11 @@ export default function AdminBookingsPage() {
                   {conflictData && (
                     <div className="space-y-4">
                       <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
-<p className="text-sm text-amber-700">
-  Die E-Mail <strong>{conflictData.existingEmail}</strong> ist bereits dem Kunden
-  <strong> {conflictData.existingName}</strong> der Fachkraft{' '}
-  <strong>{employees.find(e => e.id === selectedEmployeeId)?.name}</strong> zugeordnet.
-</p>
+                        <p className="text-sm text-amber-700">
+                          Die E-Mail <strong>{conflictData.existingEmail}</strong> ist bereits dem Kunden
+                          <strong> {conflictData.existingName}</strong> der Fachkraft{' '}
+                          <strong>{employees.find(e => e.id === selectedEmployeeId)?.name}</strong> zugeordnet.
+                        </p>
 
                       </div>
 
