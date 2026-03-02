@@ -312,6 +312,26 @@ export async function getServicesByEmployee(employeeId: string): Promise<Service
   return response.data;
 }
 
+
+export async function checkEmailConflict(
+  email: string,
+  firstName: string,
+  lastName: string,
+  employeeId?: string
+): Promise<{ hasConflict: boolean; existingName?: string; existingEmail?: string }> {
+  const params = new URLSearchParams({
+    email: email.trim(),
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
+  });
+  
+  if (employeeId) params.append("employeeId", employeeId);
+
+  const response = await api.get(`/admin/manual/booking/check-email?${params.toString()}`);
+  return response.data;
+}
+
+
 // ── Services & Availability ───────────────────────────────────────────────────
 
 export async function getServices(): Promise<Service[]> {

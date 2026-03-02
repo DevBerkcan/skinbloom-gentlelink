@@ -14,7 +14,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/react";
 import {
   Search, ChevronLeft, ChevronRight, Edit, Filter, X, Calendar, CheckCircle,
   Trash2, AlertTriangle, Plus, Clock, User, Phone, Mail, Ban, Scissors, ChevronRight as ChevronRightIcon,
-  Save
+  Save,
+  Check
 } from "lucide-react";
 import moment from "moment";
 
@@ -22,7 +23,8 @@ import {
   getBookings, updateBookingStatus, deleteBooking, getServices, createManualBooking,
   type BookingListItem, type BookingFilter, type Service, type CreateManualBookingDto,
   type ManualBookingResponse,
-  getServicesByEmployee
+  getServicesByEmployee,
+  checkEmailConflict
 } from "@/lib/api/admin";
 import { getAvailability, getEmployees, type TimeSlot, type Employee } from "@/lib/api/booking";
 import { useAuth } from "@/lib/contexts/AuthContext";
@@ -280,11 +282,11 @@ export default function AdminBookingsPage() {
     setAvailableSlots([]);
 
     if (employees.length > 0) {
-    const firstEmployeeId = employees[0].id;
-    setSelectedEmployeeId(firstEmployeeId);
-    // Load services for the first employee immediately
-    loadServicesForEmployee(firstEmployeeId);
-  }
+      const firstEmployeeId = employees[0].id;
+      setSelectedEmployeeId(firstEmployeeId);
+      // Load services for the first employee immediately
+      loadServicesForEmployee(firstEmployeeId);
+    }
   };
 
   async function handleStatusUpdate() {
@@ -318,38 +320,113 @@ export default function AdminBookingsPage() {
       setDeleting(false);
     }
   }
+  // Add these state variables
+  const [showEmailConflictModal, setShowEmailConflictModal] = useState(false);
+  const [conflictData, setConflictData] = useState<{
+    existingName: string;
+    existingEmail: string;
+    bookingData: CreateManualBookingDto;
+  } | null>(null);
 
-  async function handleCreateManualBooking() {
-    setError(null);
+ async function handleCreateManualBooking() {
+  setError(null);
+
+  try {
+    const selectedService = employeeServices.find(s => s.id === bookingForm.serviceId) ||
+      services.find(s => s.id === bookingForm.serviceId);
+    if (!selectedService) throw new Error("Service nicht gefunden");
+
+    const availabilityCheck = await getAvailability(
+      bookingForm.serviceId,
+      bookingForm.bookingDate,
+      selectedEmployeeId
+    );
+
+    const isSlotAvailable = availabilityCheck.availableSlots?.some(
+      slot => slot.startTime === bookingForm.startTime && slot.isAvailable
+    );
+    if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
+
+    const bookingData: CreateManualBookingDto = {
+      serviceId: bookingForm.serviceId,
+      bookingDate: bookingForm.bookingDate,
+      startTime: bookingForm.startTime,
+      firstName: bookingForm.firstName.trim(),
+      lastName: bookingForm.lastName.trim(),
+      email: bookingForm.email?.trim() || null,
+      phone: bookingForm.phone?.trim() || null,
+      customerNotes: bookingForm.customerNotes?.trim() || null,
+      employeeId: selectedEmployeeId || null,
+    };
+
+    // THIS IS THE KEY PART - ACTUALLY CALL checkEmailConflict
+    if (bookingData.email) {
+      const conflictCheck = await checkEmailConflict(
+        bookingData.email,
+        bookingData.firstName,
+        bookingData.lastName,
+        selectedEmployeeId 
+      );
+      
+      if (conflictCheck.hasConflict) {
+        // Show warning modal - PREVENTS booking creation
+        setConflictData({
+          existingName: conflictCheck.existingName!,
+          existingEmail: conflictCheck.existingEmail!,
+          bookingData
+        });
+        setShowEmailConflictModal(true);
+        return; // IMPORTANT: Stop here, don't create booking
+      }
+    }
+
+    // No conflict, proceed directly
+    await submitBooking(bookingData);
+
+  } catch (error: any) {
+    console.error("Error preparing booking:", error);
+    setError(error.message || "Fehler beim Erstellen der Buchung");
+  }
+}
+
+  async function submitBooking(bookingData: CreateManualBookingDto) {
     setSubmitting(true);
     try {
-      const selectedService = employeeServices.find(s => s.id === bookingForm.serviceId) ||
-        services.find(s => s.id === bookingForm.serviceId);
-      if (!selectedService) throw new Error("Service nicht gefunden");
-
-      const availabilityCheck = await getAvailability(bookingForm.serviceId, bookingForm.bookingDate);
-      const isSlotAvailable = availabilityCheck.availableSlots?.some(
-        slot => slot.startTime === bookingForm.startTime && slot.isAvailable
-      );
-      if (!isSlotAvailable) throw new Error("Dieser Zeitslot ist nicht mehr verfügbar.");
-
-      const bookingData: CreateManualBookingDto = {
-        serviceId: bookingForm.serviceId,
-        bookingDate: bookingForm.bookingDate,
-        startTime: bookingForm.startTime,
-        firstName: bookingForm.firstName.trim(),
-        lastName: bookingForm.lastName.trim(),
-        email: bookingForm.email?.trim() || null,
-        phone: bookingForm.phone?.trim() || null,
-        customerNotes: bookingForm.customerNotes?.trim() || null,
-        employeeId: selectedEmployeeId || null,
-      };
-
       const booking = await createManualBooking(bookingData);
       setCreatedBooking(booking);
       setSuccess(true);
       await loadBookings();
 
+      setTimeout(() => {
+        onManualBookingModalClose();
+        resetManualBookingForm();
+      }, 3000);
+    } catch (error: any) {
+      console.error("Error creating manual booking:", error);
+      setError(error.message || "Fehler beim Erstellen der Buchung");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleConflictConfirmed() {
+    if (!conflictData) return;
+
+    // Set submitting to true to show loading state
+    setSubmitting(true);
+
+    try {
+      // Now execute the booking creation with the confirmed data
+      const booking = await createManualBooking(conflictData.bookingData);
+      setCreatedBooking(booking);
+      setSuccess(true);
+      await loadBookings();
+
+      // Close the conflict modal
+      setShowEmailConflictModal(false);
+      setConflictData(null);
+
+      // Close the manual booking modal after success
       setTimeout(() => {
         onManualBookingModalClose();
         resetManualBookingForm();
@@ -679,6 +756,98 @@ export default function AdminBookingsPage() {
                       Status ändern
                     </Button>
                   )}
+                </ModalFooter>
+              </>
+            )}
+          </ModalContent>
+        </Modal>
+
+        {/* Email Conflict Warning Modal */}
+        <Modal
+          isOpen={showEmailConflictModal}
+          onClose={() => {
+            setShowEmailConflictModal(false);
+            setConflictData(null);
+          }}
+          size="md"
+          placement="center"
+          classNames={modalClassNames}
+        >
+          <ModalContent>
+            {(onModalClose) => (
+              <>
+                <ModalHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center">
+                      <AlertTriangle size={18} className="text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold text-[#1E1E1E]">Kunde bereits vorhanden</h2>
+                    </div>
+                  </div>
+                </ModalHeader>
+
+                <ModalBody>
+                  {conflictData && (
+                    <div className="space-y-4">
+                      <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+<p className="text-sm text-amber-700">
+  Die E-Mail <strong>{conflictData.existingEmail}</strong> ist bereits dem Kunden
+  <strong> {conflictData.existingName}</strong> der Fachkraft{' '}
+  <strong>{employees.find(e => e.id === selectedEmployeeId)?.name}</strong> zugeordnet.
+</p>
+
+                      </div>
+
+                      <div className="bg-[#F5EDEB] p-4 rounded-xl border border-[#E8C7C3]/30">
+                        <p className="text-sm text-[#1E1E1E] font-medium mb-3">Was passiert jetzt?</p>
+                        <ul className="text-sm text-[#8A8A8A] space-y-3">
+                          <li className="flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#017172] mt-1.5"></span>
+                            <span>
+                              Der Name des bestehenden Kunden wird von{' '}
+                              <strong className="text-[#1E1E1E]">{conflictData.existingName}</strong> zu{' '}
+                              <strong className="text-[#1E1E1E]">{conflictData.bookingData.firstName} {conflictData.bookingData.lastName}</strong> geändert.
+                            </span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#017172] mt-1.5"></span>
+                            <span>
+                              Diese Änderung betrifft <strong>alle vergangenen und zukünftigen Buchungen</strong> dieses Kunden.
+                            </span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#017172] mt-1.5"></span>
+                            <span>
+                              Die Buchung wird mit den neuen Kundendaten erstellt.
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </ModalBody>
+
+                <ModalFooter className="gap-2">
+                  <Button
+                    variant="flat"
+                    className="bg-white border border-[#E8C7C3]/40 text-[#1E1E1E] font-semibold"
+                    onPress={() => {
+                      setShowEmailConflictModal(false);
+                      setConflictData(null);
+                    }}
+                    startContent={<X size={14} />}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold shadow-lg shadow-amber-500/20"
+                    onPress={handleConflictConfirmed}
+                    isLoading={submitting}
+                    startContent={<Check size={14} />}
+                  >
+                    Trotzdem fortfahren
+                  </Button>
                 </ModalFooter>
               </>
             )}
