@@ -254,27 +254,34 @@ export function ContactForm({
           />
 
           <div className="space-y-1">
-            <Checkbox
-              isSelected={privacyAccepted}
-              onValueChange={onPrivacyChange}
-              classNames={{ wrapper: "before:border-[#E8C7C3]", icon: "text-white" }}
-            >
-              <span className="text-sm text-[#6B6B6B]">
+            <div className="flex items-start gap-2">
+              <Checkbox
+                isSelected={privacyAccepted}
+                onValueChange={onPrivacyChange}
+                classNames={{ wrapper: "before:border-[#E8C7C3]", icon: "text-white" }}
+              />
+              <span className="text-sm text-[#6B6B6B] mt-0.5">
                 Ich habe die{" "}
-                <a href="/datenschutz" className="text-[#E8C7C3] underline" target="_blank">
+                <a
+                  href="/datenschutz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#E8C7C3] underline hover:text-[#D8B0AC] transition-colors"
+                >
                   Datenschutzhinweise
                 </a>{" "}
                 gelesen und stimme diesen zu. *
               </span>
-            </Checkbox>
+            </div>
             {onSubmitAttempt && !privacyAccepted && (
               <p className="text-xs text-red-500 px-1">Bitte akzeptieren Sie die Datenschutzhinweise</p>
             )}
           </div>
+
         </div>
       </div>
 
-      {/* Sticky bottom bar — always visible on step 4 */}
+      {/* Sticky bottom bar */}
       <motion.div
         initial={{ opacity: 0, y: 60 }}
         animate={{ opacity: 1, y: 0 }}
