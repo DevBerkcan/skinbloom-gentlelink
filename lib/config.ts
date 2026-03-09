@@ -3,7 +3,7 @@ import { Calendar, Instagram, MapPin, MessageCircle } from "lucide-react";
 
 export const siteConfig = {
   title: "Skinbloom Aesthetics",
-  description: "Deine ästhetische Hautpflege in Basel",
+  description: "Medizinische Ästhetik & Anti-Aging in Basel",
   url: "https://skinbloom-aesthetics.ch",
   image: "/og-image.jpg",
 };

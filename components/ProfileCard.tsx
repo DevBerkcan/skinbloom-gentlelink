@@ -96,7 +96,7 @@ export const ProfileCard = () => {
         transition={{ delay: 0.4 }}
         className="mb-4 px-4 text-base text-[#8A8A8A] text-balance"
       >
-        Deine ästhetische Hautpflege in Basel
+        Medizinische Ästhetik & Anti-Aging in Basel
       </motion.p>
 
       <motion.div
@@ -109,7 +109,7 @@ export const ProfileCard = () => {
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#E8C7C3]" />
           <span>Elisabethenstrasse 41, 4051 Basel, Schweiz</span>
         </div>
-        <span className="text-xs">Termin nur mit Online-Buchung</span>
+        <span className="text-xs">Termine bequem online buchen oder telefonisch vereinbaren</span>
       </motion.div>
 
       <motion.div
